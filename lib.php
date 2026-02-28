@@ -76,6 +76,48 @@ class format_simple extends core_courseformat\base {
     }
 
     /**
+     * Load the cog navigation module on every page within this course.
+     *
+     * Called by Moodle whenever any page sets its course context, so the
+     * cog popover appears on participants, grades, settings, etc. — not
+     * just the main course view.
+     *
+     * @param moodle_page $page The current page object.
+     */
+    public function page_set_course(\moodle_page $page): void {
+        parent::page_set_course($page);
+        $page->requires->js_call_amd('format_simple/cognav', 'init');
+    }
+
+    /**
+     * Returns the URL for viewing a section.
+     *
+     * Always returns the main course view URL with a #section-N anchor.
+     * This format displays all sections on one page, so we never redirect
+     * to section.php.
+     *
+     * @param int|stdClass|\section_info $section The section number or object.
+     * @param array $options Options for the URL.
+     * @return \moodle_url
+     */
+    public function get_view_url($section, $options = []): \moodle_url {
+        $course = $this->get_course();
+        $url = new \moodle_url('/course/view.php', ['id' => $course->id]);
+
+        if (is_object($section)) {
+            $sectionno = $section->section;
+        } else {
+            $sectionno = $section;
+        }
+
+        if ($sectionno !== null) {
+            $url->set_anchor('section-' . $sectionno);
+        }
+
+        return $url;
+    }
+
+    /**
      * Returns whether this course format supports the reactive course editor components.
      *
      * @return bool

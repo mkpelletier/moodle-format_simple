@@ -67,13 +67,22 @@ class section extends section_base {
         $data->isactive = false;
         $data->editing = $PAGE->user_is_editing();
 
-        // Section summary.
+        // Section summary — rewrite @@PLUGINFILE@@ tokens before formatting.
         $data->summary = '';
         if (!empty($section->summary)) {
-            $data->summary = format_text(
+            $context = \context_course::instance($course->id);
+            $summarytext = file_rewrite_pluginfile_urls(
                 $section->summary,
+                'pluginfile.php',
+                $context->id,
+                'course',
+                'section',
+                $section->id
+            );
+            $data->summary = format_text(
+                $summarytext,
                 $section->summaryformat,
-                ['noclean' => true, 'context' => \context_course::instance($course->id)]
+                ['noclean' => true, 'overflowdiv' => true, 'context' => $context]
             );
         }
         $data->hassummary = !empty($data->summary);
@@ -243,6 +252,16 @@ class section extends section_base {
             $cmdata->hasinlinecontent = !empty($cmdata->inlinecontent);
             $cmdata->embedurl = $this->get_embed_url($cm);
             $cmdata->hasembedurl = !empty($cmdata->embedurl);
+            $cmdata->isembedh5p = ($cm->modname === 'h5pactivity' && $cmdata->hasembedurl);
+
+            // View completion tracking for inline/embedded content.
+            // These modules are displayed without visiting view.php, so JS
+            // will fetch the view URL in the background to trigger completion.
+            $viewmods = ['page', 'book', 'h5pactivity'];
+            if (($cmdata->hasinlinecontent || $cmdata->hasembedurl) && in_array($cm->modname, $viewmods, true)) {
+                $cmdata->viewurl = $cm->url ? $cm->url->out(false) : '';
+                $cmdata->hasviewtracking = !empty($cmdata->viewurl);
+            }
         }
 
         // Activity editing controls.
@@ -267,7 +286,7 @@ class section extends section_base {
     }
 
     /**
-     * Get inline content for a learning content module (e.g., mod_page).
+     * Get inline content for a learning content module (page or book).
      *
      * @param \cm_info $cm The course module info.
      * @return string HTML content to render inline, or empty string.
@@ -275,9 +294,29 @@ class section extends section_base {
     private function get_inline_content(\cm_info $cm): string {
         global $DB;
 
-        if ($cm->modname !== 'page' || !$cm->uservisible) {
+        if (!$cm->uservisible) {
             return '';
         }
+
+        if ($cm->modname === 'page') {
+            return $this->get_page_inline_content($cm);
+        }
+
+        if ($cm->modname === 'book') {
+            return $this->get_book_inline_content($cm);
+        }
+
+        return '';
+    }
+
+    /**
+     * Get inline content for a mod_page activity.
+     *
+     * @param \cm_info $cm The course module info.
+     * @return string HTML content or empty string.
+     */
+    private function get_page_inline_content(\cm_info $cm): string {
+        global $DB;
 
         $page = $DB->get_record('page', ['id' => $cm->instance], 'content, contentformat');
         if (!$page) {
@@ -301,7 +340,49 @@ class section extends section_base {
     }
 
     /**
-     * Get an embed URL for video content (YouTube/Vimeo) from a mod_url.
+     * Get inline content for a mod_book activity.
+     *
+     * Fetches all visible chapters and renders them sequentially.
+     *
+     * @param \cm_info $cm The course module info.
+     * @return string HTML content or empty string.
+     */
+    private function get_book_inline_content(\cm_info $cm): string {
+        global $DB;
+
+        $chapters = $DB->get_records('book_chapters',
+            ['bookid' => $cm->instance, 'hidden' => 0],
+            'pagenum ASC'
+        );
+        if (!$chapters) {
+            return '';
+        }
+
+        $context = \context_module::instance($cm->id);
+        $content = '';
+        foreach ($chapters as $chapter) {
+            $chaptercontent = file_rewrite_pluginfile_urls(
+                $chapter->content,
+                'pluginfile.php',
+                $context->id,
+                'mod_book',
+                'chapter',
+                $chapter->id
+            );
+            $tag = $chapter->subchapter ? 'h4' : 'h3';
+            $content .= '<' . $tag . '>' . format_string($chapter->title) . '</' . $tag . '>';
+            $content .= format_text($chaptercontent, $chapter->contentformat, [
+                'noclean' => true,
+                'context' => $context,
+            ]);
+        }
+        return $content;
+    }
+
+    /**
+     * Get an embed URL for inline iframe display.
+     *
+     * Supports video URLs (YouTube/Vimeo) and H5P activities.
      *
      * @param \cm_info $cm The course module info.
      * @return string Embed URL or empty string.
@@ -309,7 +390,17 @@ class section extends section_base {
     private function get_embed_url(\cm_info $cm): string {
         global $DB;
 
-        if ($cm->modname !== 'url' || !$cm->uservisible) {
+        if (!$cm->uservisible) {
+            return '';
+        }
+
+        // H5P activity — embed via the core H5P player (clean, no Moodle chrome).
+        if ($cm->modname === 'h5pactivity') {
+            return $this->get_h5p_embed_url($cm);
+        }
+
+        // URL module — check for YouTube/Vimeo video embeds.
+        if ($cm->modname !== 'url') {
             return '';
         }
 
@@ -335,6 +426,33 @@ class section extends section_base {
         }
 
         return '';
+    }
+
+    /**
+     * Get the embed URL for an H5P activity via the core H5P player.
+     *
+     * @param \cm_info $cm The course module info.
+     * @return string Embed URL or empty string.
+     */
+    private function get_h5p_embed_url(\cm_info $cm): string {
+        $context = \context_module::instance($cm->id);
+        $fs = get_file_storage();
+        $files = $fs->get_area_files($context->id, 'mod_h5pactivity', 'package', 0, 'id', false);
+        $file = reset($files);
+        if (!$file) {
+            return '';
+        }
+
+        $fileurl = \moodle_url::make_pluginfile_url(
+            $file->get_contextid(),
+            $file->get_component(),
+            $file->get_filearea(),
+            $file->get_itemid(),
+            $file->get_filepath(),
+            $file->get_filename()
+        );
+        $embedurl = new \moodle_url('/h5p/embed.php', ['url' => $fileurl->out(false)]);
+        return $embedurl->out(false);
     }
 
     /**

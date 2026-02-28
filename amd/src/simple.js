@@ -33,6 +33,9 @@ define(['core/ajax'], function(Ajax) {
     /** @type {number} Currently active section number. */
     let activeSection = 0;
 
+    /** @type {boolean} Whether we are in editing mode. */
+    let isEditing = false;
+
     /** @type {boolean} Whether the nav is open on mobile. */
     let navOpen = false;
 
@@ -41,6 +44,15 @@ define(['core/ajax'], function(Ajax) {
 
     /** @type {number} Delay in ms before nav collapses. */
     const COLLAPSE_DELAY = 3000;
+
+    /** @type {Set<string>} View URLs already fetched this session. */
+    const viewedUrls = new Set();
+
+    /** @type {number} Delay in ms before view completion fetch fires. */
+    const VIEW_DELAY = 30000;
+
+    /** @type {number} Circumference of the progress ring (2 * PI * r=16). */
+    const CIRCUMFERENCE = 2 * Math.PI * 16;
 
     /** @type {number|null} Timer ID for drawer auto-hide. */
     let drawerHideTimer = null;
@@ -59,18 +71,34 @@ define(['core/ajax'], function(Ajax) {
             return;
         }
 
+        isEditing = root.dataset.editing === 'true';
         activeSection = parseInt(root.dataset.activesection, 10) || 0;
 
-        setupNavigation();
-        setupNavCollapse();
-        setupOutcomesPopovers();
-        setupTopNavHover();
-        setupKeyboardNav();
-        setupMobileNav();
-        setupDrawerAutoHide();
-        setupZoneGrouping();
-        setupManualCompletion();
-        restoreFromHash();
+        // Cog nav is loaded globally via cognav.js on all course pages.
+        // No need to call it here — it runs independently.
+
+        if (isEditing) {
+            // Editing mode: all sections visible, nav scrolls to sections.
+            setupEditingNavigation();
+            setupOutcomesPopovers();
+            setupZoneGrouping();
+            setupManualCompletion();
+        } else {
+            // View mode: single-section display with transitions.
+            setupNavigation();
+            setupNavCollapse();
+            setupOutcomesPopovers();
+            setupTopNavHover();
+            setupKeyboardNav();
+            setupMobileNav();
+            setupDrawerAutoHide();
+            setupZoneGrouping();
+            setupManualCompletion();
+            restoreFromHash();
+
+            // Trigger view completion for inline pages in the initially active section.
+            triggerViewCompletion(activeSection);
+        }
     };
 
     /**
@@ -95,6 +123,86 @@ define(['core/ajax'], function(Ajax) {
 
                 switchSection(sectionNum);
             });
+        });
+    };
+
+    /**
+     * Set up navigation for editing mode.
+     *
+     * In editing mode all sections are visible on the page.
+     * Clicking a nav item smoothly scrolls to the corresponding section.
+     * An IntersectionObserver tracks which section is in view and
+     * highlights the corresponding nav item automatically.
+     */
+    const setupEditingNavigation = function() {
+        const navItems = root.querySelectorAll('.simple-nav-item');
+
+        // Click handler — scroll to section.
+        navItems.forEach(function(item) {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                var sectionNum = parseInt(item.dataset.section, 10);
+                var target = root.querySelector('#simple-section-' + sectionNum);
+                if (!target) {
+                    return;
+                }
+
+                // Smooth scroll to the section.
+                target.scrollIntoView({behavior: 'smooth', block: 'start'});
+            });
+        });
+
+        // Scroll-spy — observe sections entering the viewport and
+        // highlight the corresponding nav item.
+        var sections = root.querySelectorAll('.simple-section');
+        if (!sections.length) {
+            return;
+        }
+
+        // Track which sections are currently intersecting.
+        var visibleSections = new Map();
+
+        var updateActiveNav = function() {
+            // Pick the topmost visible section (smallest boundingClientRect.top).
+            var best = null;
+            var bestTop = Infinity;
+            visibleSections.forEach(function(top, num) {
+                if (top < bestTop) {
+                    bestTop = top;
+                    best = num;
+                }
+            });
+
+            if (best === null) {
+                return;
+            }
+
+            navItems.forEach(function(ni) {
+                var num = parseInt(ni.dataset.section, 10);
+                ni.classList.toggle('is-active', num === best);
+                ni.setAttribute('aria-current', num === best ? 'true' : 'false');
+            });
+        };
+
+        var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                var num = parseInt(entry.target.dataset.section, 10);
+                if (entry.isIntersecting) {
+                    visibleSections.set(num, entry.boundingClientRect.top);
+                } else {
+                    visibleSections.delete(num);
+                }
+            });
+            updateActiveNav();
+        }, {
+            // Fire when at least 10% of the section is in view.
+            threshold: 0,
+            rootMargin: '-10% 0px -80% 0px'
+        });
+
+        sections.forEach(function(section) {
+            observer.observe(section);
         });
     };
 
@@ -155,6 +263,9 @@ define(['core/ajax'], function(Ajax) {
         }
 
         activeSection = sectionNum;
+
+        // Trigger view completion for inline pages in the new section.
+        triggerViewCompletion(sectionNum);
 
         // Update URL hash.
         if (window.history && window.history.replaceState) {
@@ -652,6 +763,13 @@ define(['core/ajax'], function(Ajax) {
                 }
             }
 
+            // Immediately refresh nav progress (optimistic).
+            var sectionEl = btn.closest('.simple-section');
+            var sNum = sectionEl ? parseInt(sectionEl.dataset.section, 10) : -1;
+            if (sNum >= 0) {
+                refreshSectionProgress(sNum);
+            }
+
             // Call Moodle web service.
             Ajax.call([{
                 methodname: 'core_completion_update_activity_completion_status_manually',
@@ -668,9 +786,219 @@ define(['core/ajax'], function(Ajax) {
                             btn.title = 'Mark as not complete';
                         }
                     }
+                    // Revert progress indicator.
+                    if (sNum >= 0) {
+                        refreshSectionProgress(sNum);
+                    }
                 }
             }]);
         });
+    };
+
+    /**
+     * Trigger view completion for inline/embedded learning content in a section.
+     *
+     * Finds elements with data-viewmod and data-viewid attributes, then calls
+     * the appropriate Moodle web service (e.g. mod_page_view_page,
+     * mod_book_view_book, mod_h5pactivity_view_h5pactivity) to fire the view
+     * event. This ensures completion tracking works for content displayed
+     * without visiting its view.php.
+     *
+     * @param {number} sectionNum The section number to check.
+     */
+    const triggerViewCompletion = function(sectionNum) {
+        var section = root.querySelector('#simple-section-' + sectionNum);
+        if (!section) {
+            return;
+        }
+
+        var viewables = section.querySelectorAll('[data-viewurl]');
+        viewables.forEach(function(el) {
+            var url = el.getAttribute('data-viewurl');
+            if (!url || viewedUrls.has(url)) {
+                return;
+            }
+            viewedUrls.add(url);
+
+            // Wait VIEW_DELAY ms (counts as having read the content),
+            // then fetch view.php to trigger the view event and completion.
+            setTimeout(function() {
+                fetch(url, {credentials: 'same-origin'}).then(function() {
+                    el.classList.add('is-complete');
+                    refreshSectionProgress(sectionNum);
+                }).catch(function() {
+                    viewedUrls.delete(url);
+                });
+            }, VIEW_DELAY);
+        });
+    };
+
+    /**
+     * Refresh the nav progress indicator for a section with animation.
+     *
+     * Counts completion items in the section DOM and animates the
+     * percentage count-up and arc fill over 1 second.
+     *
+     * @param {number} sectionNum The section number.
+     */
+    const refreshSectionProgress = function(sectionNum) {
+        // Section 0 has an info icon, not a progress indicator.
+        if (sectionNum === 0) {
+            return;
+        }
+
+        var section = root.querySelector('#simple-section-' + sectionNum);
+        var navItem = root.querySelector('.simple-nav-item[data-section="' + sectionNum + '"]');
+        if (!section || !navItem) {
+            return;
+        }
+
+        var indicator = navItem.querySelector('.simple-nav-indicator');
+        if (!indicator) {
+            return;
+        }
+
+        // Count all trackable completion items.
+        var autoItems = section.querySelectorAll('.simple-cm-completion');
+        var manualItems = section.querySelectorAll('.simple-cm-manual-completion');
+        var inlineItems = section.querySelectorAll('[data-has-completion]');
+        var total = autoItems.length + manualItems.length + inlineItems.length;
+        if (total === 0) {
+            return;
+        }
+
+        var completed = 0;
+        autoItems.forEach(function(el) {
+            if (el.classList.contains('is-complete')) {
+                completed++;
+            }
+        });
+        manualItems.forEach(function(el) {
+            if (el.classList.contains('is-complete')) {
+                completed++;
+            }
+        });
+        inlineItems.forEach(function(el) {
+            if (el.classList.contains('is-complete')) {
+                completed++;
+            }
+        });
+
+        var targetPct = Math.round((completed / total) * 100);
+
+        // Determine current percentage from the existing SVG.
+        var currentPct = 0;
+        var existingText = indicator.querySelector('.simple-progress-text');
+        if (existingText) {
+            currentPct = parseInt(existingText.textContent, 10) || 0;
+        } else if (indicator.querySelector('.is-complete')) {
+            currentPct = 100;
+        }
+
+        if (currentPct === targetPct) {
+            return;
+        }
+
+        animateProgress(indicator, currentPct, targetPct);
+    };
+
+    /**
+     * Animate the progress indicator from one percentage to another.
+     *
+     * Builds an in-progress SVG and uses requestAnimationFrame to
+     * smoothly animate the arc fill and percentage text over 1 second.
+     * At 100% swaps to the complete check SVG; at 0% swaps to empty circle.
+     *
+     * @param {HTMLElement} indicator The .simple-nav-indicator element.
+     * @param {number} fromPct Starting percentage.
+     * @param {number} toPct Target percentage.
+     */
+    const animateProgress = function(indicator, fromPct, toPct) {
+        var duration = 1000;
+        var ns = 'http://www.w3.org/2000/svg';
+
+        // Build an in-progress SVG for the animation.
+        var svg = document.createElementNS(ns, 'svg');
+        svg.setAttribute('class', 'simple-progress-svg is-inprogress');
+        svg.setAttribute('viewBox', '0 0 36 36');
+        svg.setAttribute('width', '36');
+        svg.setAttribute('height', '36');
+
+        var bgCircle = document.createElementNS(ns, 'circle');
+        bgCircle.setAttribute('class', 'simple-progress-bg');
+        bgCircle.setAttribute('cx', '18');
+        bgCircle.setAttribute('cy', '18');
+        bgCircle.setAttribute('r', '16');
+        bgCircle.setAttribute('fill', 'none');
+        bgCircle.setAttribute('stroke', '#e5e7eb');
+        bgCircle.setAttribute('stroke-width', '2.5');
+
+        var progressBar = document.createElementNS(ns, 'circle');
+        progressBar.setAttribute('class', 'simple-progress-bar');
+        progressBar.setAttribute('cx', '18');
+        progressBar.setAttribute('cy', '18');
+        progressBar.setAttribute('r', '16');
+        progressBar.setAttribute('fill', 'none');
+        progressBar.setAttribute('stroke', '#10b981');
+        progressBar.setAttribute('stroke-width', '2.5');
+        progressBar.setAttribute('stroke-linecap', 'round');
+        progressBar.setAttribute('stroke-dasharray', CIRCUMFERENCE);
+        progressBar.setAttribute('transform', 'rotate(-90 18 18)');
+
+        var text = document.createElementNS(ns, 'text');
+        text.setAttribute('x', '18');
+        text.setAttribute('y', '21');
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('class', 'simple-progress-text');
+
+        svg.appendChild(bgCircle);
+        svg.appendChild(progressBar);
+        svg.appendChild(text);
+
+        // Set initial state and replace indicator content.
+        var initOffset = CIRCUMFERENCE * (1 - fromPct / 100);
+        progressBar.setAttribute('stroke-dashoffset', initOffset);
+        text.textContent = fromPct + '%';
+        indicator.innerHTML = '';
+        indicator.appendChild(svg);
+
+        var startTime = null;
+        var animate = function(timestamp) {
+            if (!startTime) {
+                startTime = timestamp;
+            }
+            var elapsed = timestamp - startTime;
+            var progress = Math.min(elapsed / duration, 1);
+            // Ease-out cubic for smooth deceleration.
+            var eased = 1 - Math.pow(1 - progress, 3);
+
+            var currentPct = Math.round(fromPct + (toPct - fromPct) * eased);
+            var dashoffset = CIRCUMFERENCE * (1 - currentPct / 100);
+
+            progressBar.setAttribute('stroke-dashoffset', dashoffset);
+            text.textContent = currentPct + '%';
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                // Animation done — show final SVG state.
+                if (toPct >= 100) {
+                    indicator.innerHTML =
+                        '<svg class="simple-progress-svg is-complete" viewBox="0 0 36 36" width="36" height="36">'
+                        + '<circle cx="18" cy="18" r="16" fill="#10b981" stroke="none"/>'
+                        + '<polyline points="12,18 16,22 24,14" fill="none" stroke="#ffffff" stroke-width="2.5"'
+                        + ' stroke-linecap="round" stroke-linejoin="round"/>'
+                        + '</svg>';
+                } else if (toPct <= 0) {
+                    indicator.innerHTML =
+                        '<svg class="simple-progress-svg is-notstarted" viewBox="0 0 36 36" width="36" height="36">'
+                        + '<circle cx="18" cy="18" r="16" fill="none" stroke="#d1d5db" stroke-width="2.5"/>'
+                        + '</svg>';
+                }
+            }
+        };
+
+        requestAnimationFrame(animate);
     };
 
     /**

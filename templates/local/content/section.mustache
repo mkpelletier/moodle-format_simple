@@ -57,7 +57,7 @@
          data-for="section"
          data-id="{{id}}"
          data-number="{{num}}"
-         {{^isactive}}hidden{{/isactive}}
+         {{^editing}}{{^isactive}}hidden{{/isactive}}{{/editing}}
          aria-labelledby="simple-section-title-{{num}}">
 
     {{! ---- Section Header ---- }}
@@ -239,13 +239,17 @@
 
             {{#isprimary}}
                 {{#hasinlinecontent}}
-                <div class="simple-inline-content">
+                <div class="simple-inline-content {{#iscomplete}}is-complete{{/iscomplete}}"
+                     {{#hasviewtracking}}data-viewurl="{{viewurl}}"{{/hasviewtracking}}
+                     {{#completionenabled}}data-has-completion="1"{{/completionenabled}}>
                     {{{inlinecontent}}}
                 </div>
                 {{/hasinlinecontent}}
 
                 {{#hasembedurl}}
-                <div class="simple-embed-container">
+                <div class="simple-embed-container {{#isembedh5p}}simple-embed-h5p{{/isembedh5p}} {{#iscomplete}}is-complete{{/iscomplete}}"
+                     {{#hasviewtracking}}data-viewurl="{{viewurl}}"{{/hasviewtracking}}
+                     {{#completionenabled}}data-has-completion="1"{{/completionenabled}}>
                     <iframe src="{{embedurl}}"
                             class="simple-embed-iframe"
                             allowfullscreen

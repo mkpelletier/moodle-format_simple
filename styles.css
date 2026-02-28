@@ -48,6 +48,159 @@
    ========================================================================= */
 
 
+/* Hide the page context header — redundant in this format. */
+.format-simple .page-context-header {
+    display: none !important;
+}
+
+/* Secondary navigation is hidden via JS in setupSecondaryNav() after
+   the cog popover is built. No CSS rule needed — this ensures subpages
+   (participants, settings, grades) keep their standard nav. */
+
+/* ---- Cog Popover (course tools) ---- */
+
+.format-simple .simple-cog-container {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    z-index: 1040;
+}
+
+.format-simple .simple-cog-btn {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    border: none;
+    border-radius: 0 10px 10px 0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+    font-size: 1.25rem;
+    color: #6b7280;
+    cursor: pointer;
+    transition: color 200ms, background 200ms, transform 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.format-simple .simple-cog-btn:hover {
+    color: #2563eb;
+    background: #f0f4ff;
+}
+
+.format-simple .simple-cog-btn.is-open {
+    color: #2563eb;
+    background: #dbeafe;
+}
+
+.format-simple .simple-cog-btn.is-open i {
+    display: inline-block;
+    transform: rotate(90deg);
+    transition: transform 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.format-simple .simple-cog-btn i {
+    transition: transform 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Popover panel — slides out from the cog. */
+.format-simple .simple-cog-popover {
+    position: absolute;
+    top: 0;
+    left: 48px;
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 4px 10px rgba(0, 0, 0, 0.06);
+    padding: 16px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-12px);
+    transition: opacity 300ms cubic-bezier(0.4, 0, 0.2, 1),
+                transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 340px;
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
+}
+
+.format-simple .simple-cog-popover.is-open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0);
+}
+
+/* Tile heading. */
+.format-simple .simple-cog-heading {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 10px 4px;
+}
+
+/* Tile grid. */
+.format-simple .simple-cog-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+}
+
+/* Individual tile. */
+.format-simple .simple-cog-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 14px 8px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: #f9fafb;
+    color: #374151;
+    text-decoration: none;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-align: center;
+    line-height: 1.3;
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.format-simple .simple-cog-tile:hover {
+    background: #eef2ff;
+    border-color: #c7d2fe;
+    color: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    text-decoration: none;
+}
+
+.format-simple .simple-cog-tile:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.format-simple .simple-cog-tile.is-active {
+    background: #dbeafe;
+    border-color: #93c5fd;
+    color: #1d4ed8;
+}
+
+.format-simple .simple-cog-tile-icon {
+    font-size: 1.25rem;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.format-simple .simple-cog-tile.is-active .simple-cog-tile-icon {
+    background: #2563eb;
+    color: #ffffff;
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
+}
+
 /* Hide the course navigation breadcrumb — reveal on hover. */
 .format-simple #page-navbar {
     opacity: 0;
@@ -633,7 +786,7 @@
     line-height: 1.7;
     margin-bottom: 32px;
     margin-left: 24px;
-    max-width: 720px;
+    max-width: 80vw;
     text-align: justify;
 }
 
@@ -762,6 +915,16 @@
     width: 100%;
     height: 100%;
     border: 0;
+}
+
+/* H5P embed — variable content height instead of fixed 16:9 aspect ratio. */
+.format-simple .simple-embed-container.simple-embed-h5p {
+    padding-bottom: 0;
+    height: 600px;
+}
+
+.format-simple .simple-embed-container.simple-embed-h5p .simple-embed-iframe {
+    position: relative;
 }
 
 /* =========================================================================
@@ -968,6 +1131,59 @@
    Editing Mode Adjustments
    ========================================================================= */
 
+/* ---- Editing: All Sections Visible ---- */
+
+/* In editing mode all sections are displayed — remove single-section animation. */
+.format-simple.editing .simple-section {
+    animation: none;
+}
+
+/* Visual divider between sections in editing mode. */
+.format-simple.editing .simple-section + .simple-section {
+    margin-top: 48px;
+    padding-top: 48px;
+    border-top: 2px dashed var(--simple-border);
+}
+
+/* Content area should scroll naturally in editing mode. */
+.format-simple.editing .simple-content {
+    overflow-y: visible;
+}
+
+/* Disable nav collapse in editing mode — always show full nav. */
+.format-simple.editing .simple-nav.is-collapsed {
+    width: var(--simple-nav-width);
+    min-width: var(--simple-nav-width);
+    overflow: visible;
+}
+
+.format-simple.editing .simple-nav.is-collapsed .simple-nav-label {
+    opacity: 1;
+    flex: 1;
+}
+
+.format-simple.editing .simple-nav.is-collapsed .simple-nav-item {
+    justify-content: flex-start;
+    padding-left: 20px;
+    padding-right: 20px;
+    gap: 12px;
+}
+
+.format-simple.editing .simple-nav.is-collapsed .simple-nav-item.is-active {
+    margin-right: -1px;
+    padding-right: 21px;
+    background: linear-gradient(to right, #dbeafe, var(--simple-bg));
+}
+
+.format-simple.editing .simple-nav.is-collapsed .simple-nav-item.is-active::before,
+.format-simple.editing .simple-nav.is-collapsed .simple-nav-item.is-active::after {
+    display: block;
+}
+
+.format-simple.editing .simple-nav.is-collapsed .simple-nav-addsection {
+    display: block;
+}
+
 .format-simple.editing .simple-nav-item.is-restricted {
     cursor: pointer;
     opacity: 0.7;
@@ -1074,7 +1290,7 @@
    ========================================================================= */
 
 .format-simple .simple-mobile-header {
-    display: none;
+    display: none !important;
     align-items: center;
     gap: 12px;
     padding: 12px 20px;
@@ -1084,7 +1300,7 @@
 }
 
 .format-simple .simple-mobile-nav-toggle {
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     width: 40px;
@@ -1126,6 +1342,10 @@
     }
 
     .format-simple .simple-mobile-header {
+        display: flex !important;
+    }
+
+    .format-simple .simple-mobile-nav-toggle {
         display: flex;
     }
 
