@@ -247,7 +247,7 @@
                 {{/hasinlinecontent}}
 
                 {{#hasembedurl}}
-                <div class="simple-embed-container {{#isembedh5p}}simple-embed-h5p{{/isembedh5p}} {{#iscomplete}}is-complete{{/iscomplete}}"
+                <div class="simple-embed-container {{#isembedh5p}}simple-embed-h5p{{/isembedh5p}} {{#isembedscorm}}simple-embed-scorm{{/isembedscorm}} {{#iscomplete}}is-complete{{/iscomplete}}"
                      {{#hasviewtracking}}data-viewurl="{{viewurl}}"{{/hasviewtracking}}
                      {{#completionenabled}}data-has-completion="1"{{/completionenabled}}>
                     <iframe src="{{embedurl}}"
@@ -255,6 +255,12 @@
                             allowfullscreen
                             loading="lazy"
                             title="{{name}}"></iframe>
+                    <button class="simple-embed-fullscreen-btn"
+                            type="button"
+                            data-action="toggle-fullscreen"
+                            aria-label="Toggle fullscreen">
+                        <i class="fa fa-expand" aria-hidden="true"></i>
+                    </button>
                 </div>
                 {{/hasembedurl}}
 

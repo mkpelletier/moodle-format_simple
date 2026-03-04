@@ -26,8 +26,8 @@ defined('MOODLE_INTERNAL') || die();
 
 // Plugin name.
 $string['pluginname'] = 'Simple format';
-$string['pluginname_help'] = 'A minimalist course format with a clean, modern interface. '
-    . 'Content is organised into units with a simple navigation panel, three-zone layout, and smooth transitions.';
+$string['plugin_description'] = 'A clean, minimalist course format that presents content one unit at a time. '
+    . 'Each unit displays learning outcomes, related resources, and related activities in distinct zones for a focused learning experience.';
 
 // Section defaults.
 $string['sectionname'] = 'Unit';

@@ -927,6 +927,111 @@
     position: relative;
 }
 
+/* SCORM embed — variable content height like H5P. */
+.format-simple .simple-embed-container.simple-embed-scorm {
+    padding-bottom: 0;
+    height: 700px;
+}
+
+.format-simple .simple-embed-container.simple-embed-scorm .simple-embed-iframe {
+    position: relative;
+}
+
+/* ---- Embed Fullscreen Button ---- */
+.format-simple .simple-embed-fullscreen-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 10;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border: none;
+    border-radius: var(--simple-radius-sm);
+    color: #ffffff;
+    font-size: 1rem;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity var(--simple-transition-fast),
+                background var(--simple-transition-fast),
+                transform var(--simple-transition-fast);
+}
+
+.format-simple .simple-embed-container:hover .simple-embed-fullscreen-btn {
+    opacity: 1;
+}
+
+.format-simple .simple-embed-fullscreen-btn:hover {
+    background: rgba(0, 0, 0, 0.7);
+    transform: scale(1.05);
+}
+
+.format-simple .simple-embed-fullscreen-btn:active {
+    transform: scale(0.95);
+}
+
+/* Fullscreen state. */
+.format-simple .simple-embed-container:fullscreen {
+    padding-bottom: 0;
+    height: 100vh;
+    width: 100vw;
+    border-radius: 0;
+    background: #000;
+}
+
+.format-simple .simple-embed-container:fullscreen .simple-embed-iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.format-simple .simple-embed-container:fullscreen .simple-embed-fullscreen-btn {
+    opacity: 1;
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 9999;
+}
+
+/* Safari fullscreen prefix. */
+.format-simple .simple-embed-container:-webkit-full-screen {
+    padding-bottom: 0;
+    height: 100vh;
+    width: 100vw;
+    border-radius: 0;
+    background: #000;
+}
+
+.format-simple .simple-embed-container:-webkit-full-screen .simple-embed-iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.format-simple .simple-embed-container:-webkit-full-screen .simple-embed-fullscreen-btn {
+    opacity: 1;
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 9999;
+}
+
+/* Mobile: always show fullscreen button. */
+@media (max-width: 1024px) {
+    .format-simple .simple-embed-fullscreen-btn {
+        opacity: 1;
+    }
+}
+
 /* =========================================================================
    Course Module Cards
    ========================================================================= */

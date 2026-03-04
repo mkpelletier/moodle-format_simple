@@ -253,11 +253,12 @@ class section extends section_base {
             $cmdata->embedurl = $this->get_embed_url($cm);
             $cmdata->hasembedurl = !empty($cmdata->embedurl);
             $cmdata->isembedh5p = ($cm->modname === 'h5pactivity' && $cmdata->hasembedurl);
+            $cmdata->isembedscorm = ($cm->modname === 'scorm' && $cmdata->hasembedurl);
 
             // View completion tracking for inline/embedded content.
             // These modules are displayed without visiting view.php, so JS
             // will fetch the view URL in the background to trigger completion.
-            $viewmods = ['page', 'book', 'h5pactivity'];
+            $viewmods = ['page', 'book', 'h5pactivity', 'scorm', 'url'];
             if (($cmdata->hasinlinecontent || $cmdata->hasembedurl) && in_array($cm->modname, $viewmods, true)) {
                 $cmdata->viewurl = $cm->url ? $cm->url->out(false) : '';
                 $cmdata->hasviewtracking = !empty($cmdata->viewurl);
@@ -399,6 +400,11 @@ class section extends section_base {
             return $this->get_h5p_embed_url($cm);
         }
 
+        // SCORM activity — embed via the Moodle SCORM player in popup mode.
+        if ($cm->modname === 'scorm') {
+            return $this->get_scorm_embed_url($cm);
+        }
+
         // URL module — check for YouTube/Vimeo video embeds.
         if ($cm->modname !== 'url') {
             return '';
@@ -452,6 +458,37 @@ class section extends section_base {
             $file->get_filename()
         );
         $embedurl = new \moodle_url('/h5p/embed.php', ['url' => $fileurl->out(false)]);
+        return $embedurl->out(false);
+    }
+
+    /**
+     * Get the embed URL for a SCORM activity via the Moodle SCORM player.
+     *
+     * Uses popup display mode for a clean embedded layout without Moodle chrome.
+     *
+     * @param \cm_info $cm The course module info.
+     * @return string Embed URL or empty string.
+     */
+    private function get_scorm_embed_url(\cm_info $cm): string {
+        global $DB;
+
+        // Find the first launchable SCO.
+        $sco = $DB->get_record_select(
+            'scorm_scoes',
+            'scorm = ? AND ' . $DB->sql_isnotempty('scorm_scoes', 'launch', false, true),
+            [$cm->instance],
+            'id',
+            IGNORE_MULTIPLE
+        );
+        if (!$sco) {
+            return '';
+        }
+
+        $embedurl = new \moodle_url('/mod/scorm/player.php', [
+            'cm' => $cm->id,
+            'scoid' => $sco->id,
+            'display' => 'popup',
+        ]);
         return $embedurl->out(false);
     }
 

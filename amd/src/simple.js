@@ -83,6 +83,7 @@ define(['core/ajax'], function(Ajax) {
             setupOutcomesPopovers();
             setupZoneGrouping();
             setupManualCompletion();
+            setupEmbedFullscreen();
         } else {
             // View mode: single-section display with transitions.
             setupNavigation();
@@ -94,6 +95,7 @@ define(['core/ajax'], function(Ajax) {
             setupDrawerAutoHide();
             setupZoneGrouping();
             setupManualCompletion();
+            setupEmbedFullscreen();
             restoreFromHash();
 
             // Trigger view completion for inline pages in the initially active section.
@@ -999,6 +1001,73 @@ define(['core/ajax'], function(Ajax) {
         };
 
         requestAnimationFrame(animate);
+    };
+
+    /**
+     * Set up fullscreen toggle buttons on embed containers.
+     *
+     * Uses the Browser Fullscreen API to fullscreen the .simple-embed-container
+     * element. Saves and restores scroll position for seamless return.
+     */
+    const setupEmbedFullscreen = function() {
+        var savedScrollY = 0;
+
+        root.addEventListener('click', function(e) {
+            var btn = e.target.closest('[data-action="toggle-fullscreen"]');
+            if (!btn) {
+                return;
+            }
+            e.preventDefault();
+            e.stopPropagation();
+
+            var container = btn.closest('.simple-embed-container');
+            if (!container) {
+                return;
+            }
+
+            if (document.fullscreenElement === container ||
+                document.webkitFullscreenElement === container) {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+            } else {
+                savedScrollY = window.scrollY || window.pageYOffset;
+                if (container.requestFullscreen) {
+                    container.requestFullscreen();
+                } else if (container.webkitRequestFullscreen) {
+                    container.webkitRequestFullscreen();
+                }
+            }
+        });
+
+        var onFullscreenChange = function() {
+            var fsElement = document.fullscreenElement || document.webkitFullscreenElement || null;
+
+            var buttons = root.querySelectorAll('[data-action="toggle-fullscreen"]');
+            buttons.forEach(function(btn) {
+                var container = btn.closest('.simple-embed-container');
+                var icon = btn.querySelector('i');
+                if (!icon) {
+                    return;
+                }
+                if (container === fsElement) {
+                    icon.className = 'fa fa-compress';
+                    btn.setAttribute('aria-label', 'Exit fullscreen');
+                } else {
+                    icon.className = 'fa fa-expand';
+                    btn.setAttribute('aria-label', 'Toggle fullscreen');
+                }
+            });
+
+            if (!fsElement) {
+                window.scrollTo(0, savedScrollY);
+            }
+        };
+
+        document.addEventListener('fullscreenchange', onFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', onFullscreenChange);
     };
 
     /**

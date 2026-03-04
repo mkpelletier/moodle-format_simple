@@ -39,7 +39,7 @@ class format_simple extends core_courseformat\base {
     /**
      * Activity types categorised as primary learning content.
      */
-    private const ZONE_LEARNING = ['page', 'h5p', 'scorm', 'lti', 'lesson', 'label'];
+    private const ZONE_LEARNING = ['page', 'h5pactivity', 'scorm', 'lti', 'lesson', 'label'];
 
     /**
      * Activity types categorised as related resources.
@@ -290,6 +290,11 @@ class format_simple extends core_courseformat\base {
     public static function get_activity_zone(\cm_info $mod): string {
         $modname = $mod->modname;
 
+        // URL modules with video links are learning content, not resources.
+        if ($modname === 'url' && self::is_video_url($mod)) {
+            return 'learning';
+        }
+
         if (in_array($modname, self::ZONE_LEARNING, true)) {
             return 'learning';
         }
@@ -297,6 +302,32 @@ class format_simple extends core_courseformat\base {
             return 'resources';
         }
         return 'activities';
+    }
+
+    /**
+     * Check whether a URL module points to a video hosting service.
+     *
+     * @param \cm_info $mod The course module info for a URL activity.
+     * @return bool True if the URL is a YouTube or Vimeo link.
+     */
+    private static function is_video_url(\cm_info $mod): bool {
+        global $DB;
+
+        $urlrecord = $DB->get_record('url', ['id' => $mod->instance], 'externalurl');
+        if (!$urlrecord || empty($urlrecord->externalurl)) {
+            return false;
+        }
+
+        $url = $urlrecord->externalurl;
+
+        if (preg_match('/(?:youtube\.com|youtu\.be)/', $url)) {
+            return true;
+        }
+        if (preg_match('/vimeo\.com/', $url)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
