@@ -148,6 +148,20 @@ class format_simple extends core_courseformat\base {
     }
 
     /**
+     * Allow the "Available but not shown on course page" (stealth) visibility state.
+     *
+     * This is permitted inside visible sections and section 0, matching the
+     * behaviour of the topics and weeks formats.
+     *
+     * @param \stdClass|\cm_info $cm Course module (may be null for new modules).
+     * @param \stdClass|\section_info $section Section where the module is located.
+     * @return bool
+     */
+    public function allow_stealth_module_visibility($cm, $section): bool {
+        return !$section->section || $section->visible;
+    }
+
+    /**
      * Returns the display name for a section.
      *
      * Uses the custom section name if set, otherwise falls back to the default.

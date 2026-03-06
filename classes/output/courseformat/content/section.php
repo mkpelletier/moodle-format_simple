@@ -139,7 +139,7 @@ class section extends section_base {
             if ($cm->section != $section->id) {
                 continue;
             }
-            if (!$cm->uservisible && !$cm->is_visible_on_course_page()) {
+            if (!$cm->is_visible_on_course_page()) {
                 continue;
             }
 
@@ -219,6 +219,8 @@ class section extends section_base {
         $cmdata->url = $cm->url ? $cm->url->out(false) : '';
         $cmdata->iconurl = $cm->get_icon_url()->out(false);
         $cmdata->uservisible = $cm->uservisible;
+        $cmdata->ishidden = !$cm->visible;
+        $cmdata->isstealth = $cm->is_stealth();
         $cmdata->isprimary = false;
         $cmdata->editing = $PAGE->user_is_editing();
 

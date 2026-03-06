@@ -1071,6 +1071,24 @@
     box-shadow: var(--simple-shadow);
 }
 
+/* Hidden / stealth activity dimming (visible only to editors). */
+.format-simple .is-dimmed {
+    opacity: 0.5;
+}
+
+.format-simple .is-dimmed .simple-cm-card::after {
+    content: '\f070';
+    font-family: 'FontAwesome';
+    font-size: 0.75rem;
+    color: var(--simple-text-muted);
+    margin-left: auto;
+    padding-left: 8px;
+}
+
+.format-simple .is-stealth .simple-cm-card::after {
+    content: '\f21b';
+}
+
 /* Primary learning content card — larger and more prominent. */
 .format-simple .simple-cm-card.simple-cm-card-primary {
     padding: 24px;
@@ -1335,18 +1353,23 @@
 
 .format-simple .simple-cm-wrapper .simple-cm-card {
     flex: 1;
+    min-width: 0;
 }
 
 .format-simple .simple-cm-edit {
     display: flex;
     align-items: center;
+    flex-shrink: 0;
     opacity: 0;
     transition: opacity var(--simple-transition-fast);
-    padding: 0 4px;
+    margin-left: 8px;
+    padding: 0 2px 0 8px;
+    border-left: 1px solid var(--simple-border);
 }
 
 .format-simple .simple-cm-wrapper:hover .simple-cm-edit,
-.format-simple.editing .simple-cm-wrapper .simple-cm-edit {
+.format-simple.editing .simple-cm-wrapper .simple-cm-edit,
+.format-simple .simple-cm-edit:has(.dropdown-menu.show) {
     opacity: 1;
 }
 
@@ -1355,7 +1378,8 @@
     position: relative;
 }
 
-/* Learning content zone edit button (positioned top-right). */
+/* Learning content zone edit button — absolute for embeds/inline,
+   but flex for card-based items (matching resources/activities). */
 .format-simple .simple-cm-learning .simple-cm-edit {
     position: absolute;
     top: 8px;
@@ -1364,22 +1388,56 @@
     z-index: 5;
 }
 
+/* When a learning item contains a card link (not inline/embed), use flex
+   layout so the card and edit button sit side-by-side like other zones. */
+.format-simple .simple-cm-learning:has(.simple-cm-card) {
+    display: flex;
+    align-items: stretch;
+}
+
+.format-simple .simple-cm-learning:has(.simple-cm-card) .simple-cm-card {
+    flex: 1;
+    min-width: 0;
+}
+
+.format-simple .simple-cm-learning:has(.simple-cm-card) .simple-cm-edit {
+    position: static;
+    margin-left: 8px;
+    padding: 0 2px 0 8px;
+    border-left: 1px solid var(--simple-border);
+}
+
 .format-simple .simple-cm-learning:hover .simple-cm-edit,
-.format-simple.editing .simple-cm-learning .simple-cm-edit {
+.format-simple.editing .simple-cm-learning .simple-cm-edit,
+.format-simple .simple-cm-learning .simple-cm-edit:has(.dropdown-menu.show) {
     opacity: 1;
 }
 
-/* Ensure action menu dropdowns stay near their trigger. */
+/* Action menus inside activity items. */
 .format-simple .simple-cm-edit .action-menu,
 .format-simple .simple-section-controlmenu .action-menu,
 .format-simple .simple-banner-actions .action-menu {
     position: relative;
 }
 
-.format-simple .simple-cm-edit .dropdown-menu,
-.format-simple .simple-section-controlmenu .dropdown-menu,
-.format-simple .simple-banner-actions .dropdown-menu {
-    z-index: 1050;
+/* All dropdown menus within the format — ensure they escape any overflow
+   constraints and sit above all other content. Using position:fixed via
+   Popper.js keeps them viewport-anchored so they never get clipped by
+   parent overflow or flex containers. */
+.format-simple .dropdown-menu {
+    z-index: 1070;
+}
+
+.format-simple .dropdown-menu.show {
+    min-width: 220px;
+}
+
+/* Prevent parent containers from clipping dropdown menus. */
+.format-simple .simple-cm-wrapper,
+.format-simple .simple-cm-learning,
+.format-simple .simple-inline-content,
+.format-simple [data-for="cmitem"] {
+    overflow: visible;
 }
 
 /* ---- Add Activity Button ---- */

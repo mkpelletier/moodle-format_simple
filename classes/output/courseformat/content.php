@@ -78,7 +78,7 @@ class content extends content_base {
         $data->hassection0 = false;
         $data->section0nav = null;
         $section0 = $modinfo->get_section_info(0);
-        if ($section0 !== null && ($section0->uservisible || $section0->visible)) {
+        if ($section0 !== null && $format->is_section_visible($section0)) {
             $data->hassection0 = true;
 
             // Build section 0 nav item.
@@ -135,7 +135,7 @@ class content extends content_base {
             }
 
             // Skip sections not visible to the user.
-            if (!$section->uservisible && !$section->visible) {
+            if (!$format->is_section_visible($section)) {
                 continue;
             }
 

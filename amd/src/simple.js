@@ -77,6 +77,9 @@ define(['core/ajax'], function(Ajax) {
         // Cog nav is loaded globally via cognav.js on all course pages.
         // No need to call it here — it runs independently.
 
+        // Subpanel tolerance applies globally (editing and view mode).
+        setupSubpanelTolerance();
+
         if (isEditing) {
             // Editing mode: all sections visible, nav scrolls to sections.
             setupEditingNavigation();
@@ -1068,6 +1071,66 @@ define(['core/ajax'], function(Ajax) {
 
         document.addEventListener('fullscreenchange', onFullscreenChange);
         document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+    };
+
+    /**
+     * Fix subpanel flyout menus (e.g. Availability) closing too quickly.
+     *
+     * Moodle's subpanel JS hides the flyout immediately on mouseout from
+     * the trigger item. When moving the cursor diagonally toward the flyout,
+     * the cursor often crosses the next menu item below the trigger, which
+     * fires mouseout with a relatedTarget outside the subpanel — causing
+     * an instant close.
+     *
+     * This fix intercepts mouseout in the capture phase (before Moodle's
+     * handler) and adds a 400ms grace period. If the cursor reaches the
+     * flyout content or re-enters the trigger within that window, the
+     * hide is cancelled.
+     */
+    const setupSubpanelTolerance = function() {
+        document.addEventListener('mouseout', function(e) {
+            // Find the subpanel trigger (.dropdown-item) being left.
+            var menuItem = e.target.closest
+                ? e.target.closest('.format-simple .dropdown-subpanel > .dropdown-item')
+                : null;
+            if (!menuItem) {
+                return;
+            }
+
+            var subpanel = menuItem.closest('.dropdown-subpanel');
+            var content = subpanel ? subpanel.querySelector('.dropdown-subpanel-content') : null;
+            if (!content || !content.classList.contains('show')) {
+                return;
+            }
+
+            var related = e.relatedTarget;
+            // If moving directly into the panel content or staying in the trigger, Moodle handles it fine.
+            if (related && (menuItem.contains(related) || content.contains(related))) {
+                return;
+            }
+
+            // Prevent Moodle's handler from hiding immediately.
+            e.stopImmediatePropagation();
+
+            // Give the user 400ms to reach the flyout.
+            clearTimeout(subpanel._spHideTimer);
+            subpanel._spHideTimer = setTimeout(function() {
+                if (content.classList.contains('show')) {
+                    content.classList.remove('show');
+                    subpanel.classList.remove('content-displayed');
+                    menuItem.setAttribute('aria-expanded', 'false');
+                }
+            }, 400);
+
+            // Cancel the delayed hide if cursor reaches the content or re-enters the trigger.
+            var cleanup = function() {
+                clearTimeout(subpanel._spHideTimer);
+                content.removeEventListener('mouseenter', cleanup);
+                menuItem.removeEventListener('mouseenter', cleanup);
+            };
+            content.addEventListener('mouseenter', cleanup);
+            menuItem.addEventListener('mouseenter', cleanup);
+        }, true); // Capture phase — fires BEFORE Moodle's bubble-phase handler.
     };
 
     /**
