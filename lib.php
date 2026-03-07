@@ -315,6 +315,13 @@ class format_simple extends core_courseformat\base {
         if (in_array($modname, self::ZONE_RESOURCES, true)) {
             return 'resources';
         }
+
+        // Modules that provide inline content via the standard Moodle cm_info hook
+        // (e.g. courseschedule with showinline) belong in the learning zone.
+        if (!empty($mod->content)) {
+            return 'learning';
+        }
+
         return 'activities';
     }
 

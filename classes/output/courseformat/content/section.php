@@ -311,6 +311,12 @@ class section extends section_base {
             return $this->get_book_inline_content($cm);
         }
 
+        // Fall back to content provided by the module via the standard Moodle
+        // cm_info callback (e.g. mod_courseschedule with showinline enabled).
+        if (!empty($cm->content)) {
+            return $cm->content;
+        }
+
         return '';
     }
 

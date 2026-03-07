@@ -170,6 +170,12 @@
         {{#hasallcms}}
         {{#allcms}}
         <div class="simple-cm-wrapper {{#ishidden}}is-dimmed{{/ishidden}} {{#isstealth}}is-dimmed is-stealth{{/isstealth}}" id="module-{{id}}" data-for="cmitem" data-id="{{id}}">
+            {{#hasinlinecontent}}
+            <div class="simple-inline-content">
+                {{{inlinecontent}}}
+            </div>
+            {{/hasinlinecontent}}
+            {{^hasinlinecontent}}
             <a href="{{url}}" class="simple-cm-card simple-cm-card-activity">
                 <img src="{{iconurl}}" alt="" class="simple-cm-icon" aria-hidden="true">
                 <span class="simple-cm-name">{{name}}</span>
@@ -202,6 +208,7 @@
                 {{/ismanualcompletion}}
                 {{/completionenabled}}
             </a>
+            {{/hasinlinecontent}}
             {{#editing}}
             {{#hascmcontrolmenu}}
             <div class="simple-cm-edit">
