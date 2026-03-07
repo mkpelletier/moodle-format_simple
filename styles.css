@@ -881,6 +881,9 @@
     color: var(--simple-text);
     margin-bottom: 24px;
     text-align: justify;
+    margin-right: auto;
+    margin-left: auto;
+    min-width: 67vw;
 }
 
 .format-simple .simple-inline-content img {
