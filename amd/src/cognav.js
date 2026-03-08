@@ -199,9 +199,34 @@ define([], function() {
     };
 
     /**
-     * Build and inject the cog popover.
+     * Build and inject the home button.
+     *
+     * @param {HTMLElement} container The cog container to append the home button to.
+     * @param {string} courseUrl The course home URL.
      */
-    var setup = function() {
+    var addHomeButton = function(container, courseUrl) {
+        // Don't show the home button on the course main page itself.
+        var viewUrl = new URL(courseUrl, window.location.origin);
+        if (window.location.pathname === viewUrl.pathname
+            && window.location.search === viewUrl.search) {
+            return;
+        }
+
+        var homeBtn = document.createElement('a');
+        homeBtn.className = 'simple-home-btn';
+        homeBtn.href = courseUrl;
+        homeBtn.setAttribute('aria-label', 'Back to course');
+        homeBtn.setAttribute('title', 'Back to course');
+        homeBtn.innerHTML = '<i class="fa fa-home" aria-hidden="true"></i>';
+        container.appendChild(homeBtn);
+    };
+
+    /**
+     * Build and inject the cog popover.
+     *
+     * @param {string} courseUrl The course home URL.
+     */
+    var setup = function(courseUrl) {
         var secnav = document.querySelector('.format-simple .secondary-navigation');
         if (!secnav) {
             return;
@@ -268,6 +293,11 @@ define([], function() {
         container.appendChild(popover);
         document.body.appendChild(container);
 
+        // Add the home button for navigating back to the course.
+        if (courseUrl) {
+            addHomeButton(container, courseUrl);
+        }
+
         // Hide the original secondary navigation.
         secnav.style.display = 'none';
 
@@ -304,13 +334,15 @@ define([], function() {
          * Initialise the cog navigation.
          *
          * Safe to call multiple times — only runs once.
+         *
+         * @param {string} courseUrl The course home URL.
          */
-        init: function() {
+        init: function(courseUrl) {
             if (initialised) {
                 return;
             }
             initialised = true;
-            setup();
+            setup(courseUrl);
         }
     };
 });

@@ -66,6 +66,30 @@
     z-index: 1040;
 }
 
+.format-simple .simple-home-btn {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    border: none;
+    border-radius: 0 10px 10px 0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+    font-size: 1.25rem;
+    color: #6b7280;
+    cursor: pointer;
+    transition: color 200ms, background 200ms;
+    text-decoration: none;
+    margin-top: 6px;
+}
+
+.format-simple .simple-home-btn:hover {
+    color: #2563eb;
+    background: #f0f4ff;
+    text-decoration: none;
+}
+
 .format-simple .simple-cog-btn {
     width: 44px;
     height: 44px;

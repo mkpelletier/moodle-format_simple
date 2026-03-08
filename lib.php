@@ -86,7 +86,9 @@ class format_simple extends core_courseformat\base {
      */
     public function page_set_course(\moodle_page $page): void {
         parent::page_set_course($page);
-        $page->requires->js_call_amd('format_simple/cognav', 'init');
+        $course = $this->get_course();
+        $courseurl = new \moodle_url('/course/view.php', ['id' => $course->id]);
+        $page->requires->js_call_amd('format_simple/cognav', 'init', [$courseurl->out(false)]);
     }
 
     /**
