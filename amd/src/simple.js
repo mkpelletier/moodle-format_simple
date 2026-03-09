@@ -24,11 +24,14 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define(['core/ajax'], function(Ajax) {
+define(['core/ajax', 'core/str'], function(Ajax, Str) {
     'use strict';
 
     /** @type {HTMLElement} Root element. */
     let root = null;
+
+    /** @type {Object} Pre-loaded language strings. */
+    var langStrings = {};
 
     /** @type {number} Currently active section number. */
     let activeSection = 0;
@@ -70,6 +73,26 @@ define(['core/ajax'], function(Ajax) {
         if (!root) {
             return;
         }
+
+        // Pre-load language strings for interactive elements.
+        Str.get_strings([
+            {key: 'markcomplete', component: 'format_simple'},
+            {key: 'marknotcomplete', component: 'format_simple'},
+            {key: 'togglefullscreen', component: 'format_simple'},
+            {key: 'exitfullscreen', component: 'format_simple'},
+        ]).then(function(strings) {
+            langStrings.markcomplete = strings[0];
+            langStrings.marknotcomplete = strings[1];
+            langStrings.togglefullscreen = strings[2];
+            langStrings.exitfullscreen = strings[3];
+            return;
+        }).catch(function() {
+            // Fallback to English.
+            langStrings.markcomplete = 'Mark as complete';
+            langStrings.marknotcomplete = 'Mark as not complete';
+            langStrings.togglefullscreen = 'Toggle fullscreen';
+            langStrings.exitfullscreen = 'Exit fullscreen';
+        });
 
         isEditing = root.dataset.editing === 'true';
         activeSection = parseInt(root.dataset.activesection, 10) || 0;
@@ -764,10 +787,10 @@ define(['core/ajax'], function(Ajax) {
             if (icon) {
                 if (newState) {
                     icon.className = 'fa fa-check-square';
-                    btn.title = 'Mark as not complete';
+                    btn.title = langStrings.marknotcomplete;
                 } else {
                     icon.className = 'fa fa-square-o';
-                    btn.title = 'Mark as complete';
+                    btn.title = langStrings.markcomplete;
                 }
             }
 
@@ -788,10 +811,10 @@ define(['core/ajax'], function(Ajax) {
                     if (icon) {
                         if (newState) {
                             icon.className = 'fa fa-square-o';
-                            btn.title = 'Mark as complete';
+                            btn.title = langStrings.markcomplete;
                         } else {
                             icon.className = 'fa fa-check-square';
-                            btn.title = 'Mark as not complete';
+                            btn.title = langStrings.marknotcomplete;
                         }
                     }
                     // Revert progress indicator.
@@ -1060,10 +1083,10 @@ define(['core/ajax'], function(Ajax) {
                 }
                 if (container === fsElement) {
                     icon.className = 'fa fa-compress';
-                    btn.setAttribute('aria-label', 'Exit fullscreen');
+                    btn.setAttribute('aria-label', langStrings.exitfullscreen);
                 } else {
                     icon.className = 'fa fa-expand';
-                    btn.setAttribute('aria-label', 'Toggle fullscreen');
+                    btn.setAttribute('aria-label', langStrings.togglefullscreen);
                 }
             });
 
@@ -1137,22 +1160,36 @@ define(['core/ajax'], function(Ajax) {
     };
 
     /**
-     * Hide activity cards in section 0 when a module injects inline content.
+     * Hide activity cards when a module injects inline content.
      *
      * Some modules (e.g. mod_syllabus with inline display) append their
      * rendered content to the cmitem wrapper via JavaScript after page load.
      * Since this happens outside our Mustache template, the card link is
      * already present. A MutationObserver detects when new children are
      * added to a cmitem and hides the card to prevent overlap.
+     *
+     * Runs on ALL sections (not just section 0) and also covers content
+     * inside hidden containers (e.g. pre-rendered section 0 modal HTML).
      */
     const setupInlineContentDetection = function() {
-        var section0 = root.querySelector('#simple-section-0');
-        if (!section0) {
-            return;
-        }
+        // Watch all cmitems across the entire root, including hidden containers.
+        var cmitems = root.querySelectorAll('[data-for="cmitem"]');
+        watchCmitemsForInlineContent(cmitems);
+    };
 
-        var cmitems = section0.querySelectorAll('[data-for="cmitem"]');
+    /**
+     * Set up MutationObservers on a set of cmitem elements to detect inline content.
+     *
+     * @param {NodeList|Array} cmitems The cmitem elements to watch.
+     */
+    const watchCmitemsForInlineContent = function(cmitems) {
         cmitems.forEach(function(cmitem) {
+            // Skip if already being watched.
+            if (cmitem.dataset.inlineWatched) {
+                return;
+            }
+            cmitem.dataset.inlineWatched = '1';
+
             // If already has extra content beyond the card and edit controls, hide the card now.
             hideCardIfInlineContent(cmitem);
 
@@ -1160,7 +1197,7 @@ define(['core/ajax'], function(Ajax) {
             var observer = new MutationObserver(function() {
                 hideCardIfInlineContent(cmitem);
             });
-            observer.observe(cmitem, {childList: true});
+            observer.observe(cmitem, {childList: true, subtree: true});
         });
     };
 

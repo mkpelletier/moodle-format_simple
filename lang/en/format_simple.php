@@ -80,6 +80,28 @@ $string['nocoursesections'] = 'No units have been added to this course yet.';
 
 // Section 0.
 $string['courseinfo'] = 'Course Info';
+$string['section0modal'] = 'Show Course Info as overlay';
+$string['section0modal_help'] = 'When enabled, the Course Info section is displayed in a floating overlay '
+    . 'accessible from a tab on every course page, instead of being shown inline in the navigation panel.';
+
+// Completion.
+$string['markcomplete'] = 'Mark as complete';
+$string['marknotcomplete'] = 'Mark as not complete';
+
+// Fullscreen.
+$string['togglefullscreen'] = 'Toggle fullscreen';
+$string['exitfullscreen'] = 'Exit fullscreen';
+
+// Unread posts.
+$string['unreadposts'] = 'Unread posts';
+$string['unreadcount'] = '{$a} unread';
+
+// Cog navigation (JS).
+$string['backtocourse'] = 'Back to course';
+$string['coursetools'] = 'Course tools';
+$string['close'] = 'Close';
+$string['loading'] = 'Loading...';
+$string['failedtoload'] = 'Failed to load course info.';
 
 // Privacy.
 $string['privacy:metadata'] = 'The Simple format plugin does not store any personal data.';

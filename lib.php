@@ -88,7 +88,50 @@ class format_simple extends core_courseformat\base {
         parent::page_set_course($page);
         $course = $this->get_course();
         $courseurl = new \moodle_url('/course/view.php', ['id' => $course->id]);
-        $page->requires->js_call_amd('format_simple/cognav', 'init', [$courseurl->out(false)]);
+        $formatoptions = $this->get_format_options();
+        $section0modal = !empty($formatoptions['section0modal']) ? 1 : 0;
+
+        // Count unread forum posts in section 0 for the cog nav badge.
+        $unreadcount = $this->count_section0_unread($course);
+
+        $page->requires->js_call_amd('format_simple/cognav', 'init', [
+            $courseurl->out(false),
+            (int) $course->id,
+            $section0modal,
+            $unreadcount,
+        ]);
+    }
+
+    /**
+     * Count unread forum posts in section 0 for the current user.
+     *
+     * @param stdClass $course The course object.
+     * @return int Total unread post count.
+     */
+    private function count_section0_unread(\stdClass $course): int {
+        global $CFG, $USER;
+
+        if (empty($CFG->forum_trackreadposts) || isguestuser() || empty($USER->id)) {
+            return 0;
+        }
+
+        require_once($CFG->dirroot . '/mod/forum/lib.php');
+
+        $modinfo = get_fast_modinfo($course);
+        $section0 = $modinfo->get_section_info(0);
+        if ($section0 === null) {
+            return 0;
+        }
+
+        $unread = 0;
+        foreach ($modinfo->get_cms() as $cm) {
+            if ($cm->section != $section0->id || $cm->modname !== 'forum' || !$cm->uservisible) {
+                continue;
+            }
+            $unread += forum_tp_count_forum_unread_posts($cm, $course);
+        }
+
+        return $unread;
     }
 
     /**
@@ -215,6 +258,10 @@ class format_simple extends core_courseformat\base {
                     'default' => 1,
                     'type' => PARAM_INT,
                 ],
+                'section0modal' => [
+                    'default' => 0,
+                    'type' => PARAM_INT,
+                ],
             ];
         }
 
@@ -249,6 +296,21 @@ class format_simple extends core_courseformat\base {
                     ],
                 ]
             );
+            $courseformatoptions['section0modal'] = array_merge(
+                $courseformatoptions['section0modal'],
+                [
+                    'label' => new \lang_string('section0modal', 'format_simple'),
+                    'help' => 'section0modal',
+                    'help_component' => 'format_simple',
+                    'element_type' => 'select',
+                    'element_attributes' => [
+                        [
+                            0 => new \lang_string('no'),
+                            1 => new \lang_string('yes'),
+                        ],
+                    ],
+                ]
+            );
         }
 
         return $courseformatoptions;
@@ -266,7 +328,7 @@ class format_simple extends core_courseformat\base {
         $options = [
             'learningoutcomes' => [
                 'default' => '',
-                'type' => PARAM_RAW,
+                'type' => PARAM_TEXT,
             ],
         ];
 

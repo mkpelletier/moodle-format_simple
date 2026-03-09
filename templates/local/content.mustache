@@ -53,6 +53,9 @@
                     aria-label="{{name}}">
                 <span class="simple-nav-indicator simple-nav-indicator-info" aria-hidden="true">
                     <i class="fa fa-book"></i>
+                    {{#hassection0unread}}
+                    <span class="simple-unread-badge" title="{{section0unreadlabel}}">{{section0unread}}</span>
+                    {{/hassection0unread}}
                 </span>
                 <span class="simple-nav-label">{{name}}</span>
                 <span class="simple-nav-callout" aria-hidden="true"></span>
@@ -158,6 +161,7 @@
         <p>{{#str}}nocoursesections, format_simple{{/str}}</p>
     </div>
     {{/hassections}}
+
 </div>
 
 {{! Initialise the JavaScript modules. }}

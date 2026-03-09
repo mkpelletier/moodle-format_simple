@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information for format_simple.
+ * External function declarations for format_simple.
  *
  * @package    format_simple
  * @copyright  2025 South African Theological Seminary <ict@sats.ac.za>
@@ -24,8 +24,12 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026031001;        // The current plugin version (Date: YYYYMMDDXX).
-$plugin->requires  = 2025041400;        // Requires Moodle 5.0+.
-$plugin->component = 'format_simple';   // Full name of the plugin (used for diagnostics).
-$plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '0.6.0';
+$functions = [
+    'format_simple_get_section0_content' => [
+        'classname'     => 'format_simple\external\get_section0_content',
+        'description'   => 'Returns rendered section 0 HTML for the Simple format overlay.',
+        'type'          => 'read',
+        'ajax'          => true,
+        'loginrequired' => true,
+    ],
+];

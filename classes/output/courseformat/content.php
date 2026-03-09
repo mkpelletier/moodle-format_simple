@@ -75,28 +75,26 @@ class content extends content_base {
         $firstvisible = null;
 
         // Handle section 0 (Course Info) separately.
+        $formatoptions = $format->get_format_options();
+        $section0modal = !empty($formatoptions['section0modal']);
         $data->hassection0 = false;
         $data->section0nav = null;
+        $data->section0modal = $section0modal;
+        $data->section0modalhtml = '';
         $section0 = $modinfo->get_section_info(0);
+        $section0unread = $this->count_section_unread_posts($section0, $course, $modinfo);
+        $data->section0unread = $section0unread;
+        $data->hassection0unread = ($section0unread > 0);
+        $data->section0unreadlabel = ($section0unread > 0)
+            ? get_string('unreadcount', 'format_simple', $section0unread) : '';
+
         if ($section0 !== null && $format->is_section_visible($section0)) {
-            $data->hassection0 = true;
-
-            // Build section 0 nav item.
-            $navitem = new stdClass();
-            $navitem->num = 0;
-            $navitem->id = (int) $section0->id;
-            $navitem->name = get_string('courseinfo', 'format_simple');
-            $navitem->isactive = false;
-            $navitem->issection0 = true;
-            $data->section0nav = $navitem;
-
             // Build section 0 content.
             $sectionclass = $format->get_output_classname('content\\section');
             $sectionoutput = new $sectionclass($format, $section0);
             $sectiondata = $sectionoutput->export_for_template($output);
 
             // Banner data for section 0 (controlled by format setting).
-            $formatoptions = $format->get_format_options();
             $sectiondata->showbanner = !empty($formatoptions['showsection0banner']);
 
             if ($sectiondata->showbanner) {
@@ -125,7 +123,27 @@ class content extends content_base {
                 }
             }
 
-            $data->sections[] = $sectiondata;
+            if ($section0modal && !$data->editing) {
+                // Modal mode (non-editing): render section 0 as a regular
+                // (hidden) section so Moodle's JS fully initialises its
+                // content. cognav.js will move the live DOM node into the
+                // modal on first open, preserving all event listeners.
+                $sectiondata->isactive = false;
+                $data->sections[] = $sectiondata;
+            } else {
+                // Inline mode (or editing): show section 0 in nav and inline as usual.
+                $data->hassection0 = true;
+
+                $navitem = new stdClass();
+                $navitem->num = 0;
+                $navitem->id = (int) $section0->id;
+                $navitem->name = get_string('courseinfo', 'format_simple');
+                $navitem->isactive = false;
+                $navitem->issection0 = true;
+                $data->section0nav = $navitem;
+
+                $data->sections[] = $sectiondata;
+            }
         }
 
         foreach ($sections as $section) {
@@ -155,7 +173,7 @@ class content extends content_base {
         }
 
         // Determine active section.
-        // Allow section 0 if it exists; otherwise fall back to first visible unit.
+        // When section 0 is in modal mode or not present, fall back to the first visible unit.
         if ($activesection === 0 && !$data->hassection0 && $firstvisible !== null) {
             $activesection = $firstvisible;
         }
@@ -240,6 +258,46 @@ class content extends content_base {
         $navitem->dashoffset = $circumference - ($circumference * $progress->percentage / 100);
 
         return $navitem;
+    }
+
+    /**
+     * Count unread forum posts in a given section for the current user.
+     *
+     * @param \section_info|null $section The section info.
+     * @param stdClass $course The course object.
+     * @param \course_modinfo $modinfo The course module info.
+     * @return int Total unread post count across all forums in the section.
+     */
+    private function count_section_unread_posts(?\section_info $section, stdClass $course, \course_modinfo $modinfo): int {
+        global $CFG;
+
+        if ($section === null) {
+            return 0;
+        }
+
+        // Forum tracking must be enabled at the site level.
+        if (empty($CFG->forum_trackreadposts)) {
+            return 0;
+        }
+
+        require_once($CFG->dirroot . '/mod/forum/lib.php');
+
+        $unread = 0;
+        $cms = $modinfo->get_cms();
+        foreach ($cms as $cm) {
+            if ($cm->section != $section->id) {
+                continue;
+            }
+            if ($cm->modname !== 'forum') {
+                continue;
+            }
+            if (!$cm->uservisible) {
+                continue;
+            }
+            $unread += forum_tp_count_forum_unread_posts($cm, $course);
+        }
+
+        return $unread;
     }
 
     /**

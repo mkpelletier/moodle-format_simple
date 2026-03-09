@@ -25,11 +25,23 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define([], function() {
+define(['core/ajax', 'core/str'], function(Ajax, Str) {
     'use strict';
 
     /** @type {boolean} Whether the cog has already been initialised. */
     var initialised = false;
+
+    /** @type {HTMLElement|null} The modal backdrop element. */
+    var modalBackdrop = null;
+
+    /** @type {HTMLElement|null} The modal panel element. */
+    var modalPanel = null;
+
+    /** @type {HTMLElement|null} The button that triggered the modal. */
+    var modalTrigger = null;
+
+    /** @type {Object} Pre-loaded language strings. */
+    var langStrings = {};
 
     /**
      * Icon map for secondary nav items.
@@ -105,7 +117,8 @@ define([], function() {
         'submissions': 'fa-list-alt',
         'override': 'fa-redo-alt',
         'overrides': 'fa-redo-alt',
-        'freeze': 'fa-ban'
+        'freeze': 'fa-ban',
+        'syllabus': 'fa-info-circle'
     };
 
     /** @type {string} Default icon when no match is found. */
@@ -215,20 +228,238 @@ define([], function() {
         var homeBtn = document.createElement('a');
         homeBtn.className = 'simple-home-btn';
         homeBtn.href = courseUrl;
-        homeBtn.setAttribute('aria-label', 'Back to course');
-        homeBtn.setAttribute('title', 'Back to course');
+        homeBtn.setAttribute('aria-label', langStrings.backtocourse);
+        homeBtn.setAttribute('title', langStrings.backtocourse);
         homeBtn.innerHTML = '<i class="fa fa-home" aria-hidden="true"></i>';
         container.appendChild(homeBtn);
     };
+
+    // ---------------------------------------------------------------
+    // Section 0 Modal Overlay
+    // ---------------------------------------------------------------
+
+    /**
+     * Add the section 0 modal trigger button to the cog container.
+     *
+     * @param {HTMLElement} container The cog container.
+     * @param {number} courseId The course ID.
+     * @param {number} unreadCount Number of unread forum posts in section 0.
+     */
+    var addSection0ModalButton = function(container, courseId, unreadCount) {
+        var btn = document.createElement('button');
+        btn.className = 'simple-s0-modal-btn';
+        btn.type = 'button';
+        btn.setAttribute('aria-label', langStrings.courseinfo);
+        btn.setAttribute('title', langStrings.courseinfo);
+        btn.innerHTML = '<i class="fa fa-info-circle" aria-hidden="true"></i>';
+
+        if (unreadCount > 0) {
+            var badge = document.createElement('span');
+            badge.className = 'simple-unread-badge';
+            badge.textContent = unreadCount;
+            badge.setAttribute('title', unreadCount + ' ' + langStrings.unreadposts);
+            btn.appendChild(badge);
+        }
+
+        btn.addEventListener('click', function() {
+            modalTrigger = btn;
+            openSection0Modal(courseId);
+        });
+
+        container.appendChild(btn);
+    };
+
+    /**
+     * Create the modal DOM structure (once).
+     */
+    var createModalDom = function() {
+        if (modalBackdrop) {
+            return;
+        }
+
+        modalBackdrop = document.createElement('div');
+        modalBackdrop.className = 'simple-s0-modal-backdrop';
+        modalBackdrop.setAttribute('aria-hidden', 'true');
+
+        modalPanel = document.createElement('div');
+        modalPanel.className = 'simple-s0-modal';
+        modalPanel.setAttribute('role', 'dialog');
+        modalPanel.setAttribute('aria-label', langStrings.courseinfo);
+
+        var closeBtn = document.createElement('button');
+        closeBtn.className = 'simple-s0-modal-close';
+        closeBtn.type = 'button';
+        closeBtn.setAttribute('aria-label', langStrings.close);
+        closeBtn.innerHTML = '<i class="fa fa-times" aria-hidden="true"></i>';
+        closeBtn.addEventListener('click', closeSection0Modal);
+
+        var body = document.createElement('div');
+        body.className = 'simple-s0-modal-body';
+
+        modalPanel.appendChild(closeBtn);
+        modalPanel.appendChild(body);
+        document.body.appendChild(modalBackdrop);
+        document.body.appendChild(modalPanel);
+
+        // Close on backdrop click.
+        modalBackdrop.addEventListener('click', closeSection0Modal);
+
+        // Close on Escape.
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && modalPanel.classList.contains('is-open')) {
+                closeSection0Modal();
+            }
+        });
+    };
+
+    /**
+     * Hide activity cards inside a container when a module has injected inline content.
+     *
+     * @param {HTMLElement} container The container to scan for cmitems.
+     */
+    var hideInlineContentCards = function(container) {
+        var cmitems = container.querySelectorAll('[data-for="cmitem"]');
+        cmitems.forEach(function(cmitem) {
+            var card = cmitem.querySelector('.simple-cm-card');
+            if (!card) {
+                return;
+            }
+            var children = cmitem.children;
+            for (var i = 0; i < children.length; i++) {
+                var child = children[i];
+                if (child === card || child.classList.contains('simple-cm-edit')) {
+                    continue;
+                }
+                card.style.display = 'none';
+                return;
+            }
+        });
+    };
+
+    /**
+     * Open the section 0 modal overlay.
+     *
+     * On the course view page, section 0 is rendered as a normal (hidden)
+     * section in the page so Moodle's JS fully initialises its content.
+     * On first open we physically move that live DOM element into the
+     * modal, preserving all event listeners, menus, and widget state.
+     *
+     * On non-course-view pages we fall back to an AJAX fetch.
+     *
+     * @param {number} courseId The course ID.
+     */
+    var openSection0Modal = function(courseId) {
+        createModalDom();
+
+        var body = modalPanel.querySelector('.simple-s0-modal-body');
+
+        // If we already populated the body, just re-show.
+        if (body.dataset.populated) {
+            showModal();
+            return;
+        }
+
+        // Look for the live section 0 element in the page (rendered as a
+        // regular hidden section by the course format output class).
+        var section0 = document.getElementById('simple-section-0');
+        if (section0) {
+            // Move the live DOM node — preserves all JS bindings.
+            section0.removeAttribute('hidden');
+            section0.classList.add('is-active');
+            body.appendChild(section0);
+            body.dataset.populated = '1';
+            hideInlineContentCards(body);
+            showModal();
+            return;
+        }
+
+        // Fetch via AJAX on non-course-view pages.
+        body.innerHTML = '<div class="simple-s0-modal-loading">'
+            + '<div class="spinner-border text-primary" role="status">'
+            + '<span class="sr-only">' + langStrings.loading + '</span></div></div>';
+        showModal();
+
+        Ajax.call([{
+            methodname: 'format_simple_get_section0_content',
+            args: {courseid: courseId}
+        }])[0].then(function(response) {
+            body.innerHTML = response.html;
+            body.dataset.populated = '1';
+            hideInlineContentCards(body);
+        }).catch(function() {
+            body.innerHTML = '<div class="alert alert-danger">' + langStrings.failedtoload + '</div>';
+        });
+    };
+
+    /**
+     * Show the modal with animation.
+     */
+    var showModal = function() {
+        document.body.style.overflow = 'hidden';
+        modalBackdrop.style.display = 'block';
+        modalPanel.style.display = 'flex';
+        modalBackdrop.setAttribute('aria-hidden', 'false');
+
+        // Force reflow before adding the animation class.
+        void modalPanel.offsetHeight;
+
+        modalBackdrop.classList.add('is-open');
+        modalPanel.classList.add('is-open');
+
+        // Focus the close button.
+        var closeBtn = modalPanel.querySelector('.simple-s0-modal-close');
+        if (closeBtn) {
+            closeBtn.focus();
+        }
+    };
+
+    /**
+     * Close the section 0 modal with animation.
+     */
+    var closeSection0Modal = function() {
+        if (!modalPanel) {
+            return;
+        }
+
+        modalBackdrop.classList.remove('is-open');
+        modalPanel.classList.remove('is-open');
+
+        var onEnd = function() {
+            modalPanel.removeEventListener('transitionend', onEnd);
+            modalBackdrop.style.display = 'none';
+            modalPanel.style.display = 'none';
+            modalBackdrop.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+
+            if (modalTrigger) {
+                modalTrigger.focus();
+                modalTrigger = null;
+            }
+        };
+
+        modalPanel.addEventListener('transitionend', onEnd);
+    };
+
+    // ---------------------------------------------------------------
+    // Main setup
+    // ---------------------------------------------------------------
 
     /**
      * Build and inject the cog popover.
      *
      * @param {string} courseUrl The course home URL.
+     * @param {number} courseId The course ID.
+     * @param {number} section0Modal Whether section 0 modal mode is enabled.
+     * @param {number} unreadCount Number of unread forum posts in section 0.
      */
-    var setup = function(courseUrl) {
+    var setup = function(courseUrl, courseId, section0Modal, unreadCount) {
         // Ensure the .format-simple body class is present.
         if (!document.body.classList.contains('format-simple')) {
+            return;
+        }
+
+        // Skip on embedded/fullscreen layouts (e.g. grading interfaces).
+        if (document.body.classList.contains('pagelayout-embedded')) {
             return;
         }
 
@@ -244,7 +475,7 @@ define([], function() {
             var btn = document.createElement('button');
             btn.className = 'simple-cog-btn';
             btn.type = 'button';
-            btn.setAttribute('aria-label', 'Course tools');
+            btn.setAttribute('aria-label', langStrings.coursetools);
             btn.setAttribute('aria-expanded', 'false');
             btn.innerHTML = '<i class="fa fa-cog" aria-hidden="true"></i>';
 
@@ -254,7 +485,7 @@ define([], function() {
 
             var heading = document.createElement('div');
             heading.className = 'simple-cog-heading';
-            heading.textContent = 'Course Tools';
+            heading.textContent = langStrings.coursetools;
             popover.appendChild(heading);
 
             var grid = document.createElement('div');
@@ -328,7 +559,12 @@ define([], function() {
             addHomeButton(container, courseUrl);
         }
 
-        // Only append the container if it has children (cog and/or home button).
+        // Add the section 0 modal button when the setting is enabled.
+        if (section0Modal && courseId) {
+            addSection0ModalButton(container, courseId, unreadCount);
+        }
+
+        // Only append the container if it has children (cog, home button, and/or s0 button).
         if (container.children.length) {
             document.body.appendChild(container);
         }
@@ -341,13 +577,48 @@ define([], function() {
          * Safe to call multiple times — only runs once.
          *
          * @param {string} courseUrl The course home URL.
+         * @param {number} courseId The course ID.
+         * @param {number} section0Modal Whether section 0 modal mode is enabled.
+         * @param {number} unreadCount Number of unread forum posts in section 0.
          */
-        init: function(courseUrl) {
+        init: function(courseUrl, courseId, section0Modal, unreadCount) {
             if (initialised) {
                 return;
             }
             initialised = true;
-            setup(courseUrl);
+
+            // Load language strings before building the UI.
+            Str.get_strings([
+                {key: 'backtocourse', component: 'format_simple'},
+                {key: 'coursetools', component: 'format_simple'},
+                {key: 'courseinfo', component: 'format_simple'},
+                {key: 'close', component: 'format_simple'},
+                {key: 'loading', component: 'format_simple'},
+                {key: 'failedtoload', component: 'format_simple'},
+                {key: 'unreadposts', component: 'format_simple'},
+            ]).then(function(strings) {
+                langStrings.backtocourse = strings[0];
+                langStrings.coursetools = strings[1];
+                langStrings.courseinfo = strings[2];
+                langStrings.close = strings[3];
+                langStrings.loading = strings[4];
+                langStrings.failedtoload = strings[5];
+                langStrings.unreadposts = strings[6];
+
+                setup(courseUrl, courseId, section0Modal, unreadCount);
+                return;
+            }).catch(function() {
+                // Fallback: use English strings if loading fails.
+                langStrings.backtocourse = 'Back to course';
+                langStrings.coursetools = 'Course tools';
+                langStrings.courseinfo = 'Course Info';
+                langStrings.close = 'Close';
+                langStrings.loading = 'Loading...';
+                langStrings.failedtoload = 'Failed to load course info.';
+                langStrings.unreadposts = 'Unread posts';
+
+                setup(courseUrl, courseId, section0Modal, unreadCount);
+            });
         }
     };
 });
