@@ -144,6 +144,9 @@ class section extends section_base {
             }
 
             $zone = \format_simple::get_activity_zone($cm);
+            if ($zone === 'hidden') {
+                continue;
+            }
             $cmdata = $this->build_cm_data($cm, $course, $zone, $output);
 
             if ($data->issection0) {

@@ -2,6 +2,16 @@
 
 All notable changes to the Simple course format plugin are documented in this file.
 
+## v0.7.0 (2026-03-16) - Beta
+
+### Added
+- Inline LTI embedding via `/mod/lti/launch.php` in an iframe, with view completion tracking and dedicated CSS styling.
+- `ZONE_HIDDEN` list for administrative module types that should never render as activity cards (e.g. question banks).
+
+### Fixed
+- Question bank (`qbank`) modules no longer appear as cards in course sections.
+- Graded LTI, H5P, and SCORM activities remain in the learning zone regardless of grade configuration.
+
 ## v0.6.0 (2026-03-10) - Beta
 
 ### Added

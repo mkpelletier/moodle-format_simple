@@ -47,6 +47,12 @@ class format_simple extends core_courseformat\base {
     private const ZONE_RESOURCES = ['url', 'resource', 'book', 'folder'];
 
     /**
+     * Module types that should never render as cards in any section.
+     * These are administrative or teacher-only modules with no student-facing content.
+     */
+    private const ZONE_HIDDEN = ['qbank'];
+
+    /**
      * Returns whether this course format uses sections.
      *
      * @return bool
@@ -363,10 +369,15 @@ class format_simple extends core_courseformat\base {
      * Determine which content zone an activity belongs to.
      *
      * @param \cm_info $mod The course module info.
-     * @return string One of 'learning', 'resources', or 'activities'.
+     * @return string One of 'learning', 'resources', 'activities', or 'hidden'.
      */
     public static function get_activity_zone(\cm_info $mod): string {
         $modname = $mod->modname;
+
+        // Administrative modules that should never render as cards.
+        if (in_array($modname, self::ZONE_HIDDEN, true)) {
+            return 'hidden';
+        }
 
         // URL modules with video links are learning content, not resources.
         if ($modname === 'url' && self::is_video_url($mod)) {
