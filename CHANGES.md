@@ -2,6 +2,17 @@
 
 All notable changes to the Simple course format plugin are documented in this file.
 
+## v0.7.1 (2026-03-20) - Beta
+
+### Added
+- GitHub Actions CI workflow for automated Moodle plugin checks on push and PR.
+- Mustache templates for all JS-rendered markup (cog container, mobile header, modal, progress indicators).
+
+### Changed
+- External service now validates context and checks `moodle/course:view` capability.
+- Language file string values no longer use concatenation (Moodle coding standards compliance).
+- JavaScript HTML rendering replaced with `core/templates` Mustache rendering.
+
 ## v0.7.0 (2026-03-16) - Beta
 
 ### Added
