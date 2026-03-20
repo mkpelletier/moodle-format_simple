@@ -61,6 +61,7 @@ class get_section0_content extends external_api {
 
         $context = \context_course::instance($courseid);
         self::validate_context($context);
+        require_capability('moodle/course:view', $context);
 
         $course = get_course($courseid);
         $format = course_get_format($course);

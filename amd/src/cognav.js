@@ -25,7 +25,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define(['core/ajax', 'core/str'], function(Ajax, Str) {
+define(['core/ajax', 'core/str', 'core/templates'], function(Ajax, Str, Templates) {
     'use strict';
 
     /** @type {boolean} Whether the cog has already been initialised. */
@@ -217,21 +217,16 @@ define(['core/ajax', 'core/str'], function(Ajax, Str) {
      * @param {HTMLElement} container The cog container to append the home button to.
      * @param {string} courseUrl The course home URL.
      */
-    var addHomeButton = function(container, courseUrl) {
-        // Don't show the home button on the course main page itself.
+    /**
+     * Check whether we are on the course main page.
+     *
+     * @param {string} courseUrl The course view URL.
+     * @return {boolean}
+     */
+    var isOnCourseMainPage = function(courseUrl) {
         var viewUrl = new URL(courseUrl, window.location.origin);
-        if (window.location.pathname === viewUrl.pathname
-            && window.location.search === viewUrl.search) {
-            return;
-        }
-
-        var homeBtn = document.createElement('a');
-        homeBtn.className = 'simple-home-btn';
-        homeBtn.href = courseUrl;
-        homeBtn.setAttribute('aria-label', langStrings.backtocourse);
-        homeBtn.setAttribute('title', langStrings.backtocourse);
-        homeBtn.innerHTML = '<i class="fa fa-home" aria-hidden="true"></i>';
-        container.appendChild(homeBtn);
+        return window.location.pathname === viewUrl.pathname
+            && window.location.search === viewUrl.search;
     };
 
     // ---------------------------------------------------------------
@@ -239,76 +234,44 @@ define(['core/ajax', 'core/str'], function(Ajax, Str) {
     // ---------------------------------------------------------------
 
     /**
-     * Add the section 0 modal trigger button to the cog container.
+     * Create the modal DOM structure (once) using a Mustache template.
      *
-     * @param {HTMLElement} container The cog container.
-     * @param {number} courseId The course ID.
-     * @param {number} unreadCount Number of unread forum posts in section 0.
-     */
-    var addSection0ModalButton = function(container, courseId, unreadCount) {
-        var btn = document.createElement('button');
-        btn.className = 'simple-s0-modal-btn';
-        btn.type = 'button';
-        btn.setAttribute('aria-label', langStrings.courseinfo);
-        btn.setAttribute('title', langStrings.courseinfo);
-        btn.innerHTML = '<i class="fa fa-info-circle" aria-hidden="true"></i>';
-
-        if (unreadCount > 0) {
-            var badge = document.createElement('span');
-            badge.className = 'simple-unread-badge';
-            badge.textContent = unreadCount;
-            badge.setAttribute('title', unreadCount + ' ' + langStrings.unreadposts);
-            btn.appendChild(badge);
-        }
-
-        btn.addEventListener('click', function() {
-            modalTrigger = btn;
-            openSection0Modal(courseId);
-        });
-
-        container.appendChild(btn);
-    };
-
-    /**
-     * Create the modal DOM structure (once).
+     * @return {Promise} Resolved when the modal DOM is ready.
      */
     var createModalDom = function() {
         if (modalBackdrop) {
-            return;
+            return Promise.resolve();
         }
 
-        modalBackdrop = document.createElement('div');
-        modalBackdrop.className = 'simple-s0-modal-backdrop';
-        modalBackdrop.setAttribute('aria-hidden', 'true');
+        return Templates.render('format_simple/local/modal', {
+            courseinfo: langStrings.courseinfo,
+            closelabel: langStrings.close
+        }).then(function(html) {
+            var temp = document.createElement('div');
+            temp.innerHTML = html;
 
-        modalPanel = document.createElement('div');
-        modalPanel.className = 'simple-s0-modal';
-        modalPanel.setAttribute('role', 'dialog');
-        modalPanel.setAttribute('aria-label', langStrings.courseinfo);
+            modalBackdrop = temp.querySelector('.simple-s0-modal-backdrop');
+            modalPanel = temp.querySelector('.simple-s0-modal');
 
-        var closeBtn = document.createElement('button');
-        closeBtn.className = 'simple-s0-modal-close';
-        closeBtn.type = 'button';
-        closeBtn.setAttribute('aria-label', langStrings.close);
-        closeBtn.innerHTML = '<i class="fa fa-times" aria-hidden="true"></i>';
-        closeBtn.addEventListener('click', closeSection0Modal);
+            document.body.appendChild(modalBackdrop);
+            document.body.appendChild(modalPanel);
 
-        var body = document.createElement('div');
-        body.className = 'simple-s0-modal-body';
-
-        modalPanel.appendChild(closeBtn);
-        modalPanel.appendChild(body);
-        document.body.appendChild(modalBackdrop);
-        document.body.appendChild(modalPanel);
-
-        // Close on backdrop click.
-        modalBackdrop.addEventListener('click', closeSection0Modal);
-
-        // Close on Escape.
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && modalPanel.classList.contains('is-open')) {
-                closeSection0Modal();
+            var closeBtn = modalPanel.querySelector('.simple-s0-modal-close');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', closeSection0Modal);
             }
+
+            // Close on backdrop click.
+            modalBackdrop.addEventListener('click', closeSection0Modal);
+
+            // Close on Escape.
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && modalPanel.classList.contains('is-open')) {
+                    closeSection0Modal();
+                }
+            });
+
+            return;
         });
     };
 
@@ -349,45 +312,57 @@ define(['core/ajax', 'core/str'], function(Ajax, Str) {
      * @param {number} courseId The course ID.
      */
     var openSection0Modal = function(courseId) {
-        createModalDom();
+        createModalDom().then(function() {
+            var body = modalPanel.querySelector('.simple-s0-modal-body');
 
-        var body = modalPanel.querySelector('.simple-s0-modal-body');
+            // If we already populated the body, just re-show.
+            if (body.dataset.populated) {
+                showModal();
+                return;
+            }
 
-        // If we already populated the body, just re-show.
-        if (body.dataset.populated) {
-            showModal();
-            return;
-        }
+            // Look for the live section 0 element in the page (rendered as a
+            // regular hidden section by the course format output class).
+            var section0 = document.getElementById('simple-section-0');
+            if (section0) {
+                // Move the live DOM node — preserves all JS bindings.
+                section0.removeAttribute('hidden');
+                section0.classList.add('is-active');
+                body.appendChild(section0);
+                body.dataset.populated = '1';
+                hideInlineContentCards(body);
+                showModal();
+                return;
+            }
 
-        // Look for the live section 0 element in the page (rendered as a
-        // regular hidden section by the course format output class).
-        var section0 = document.getElementById('simple-section-0');
-        if (section0) {
-            // Move the live DOM node — preserves all JS bindings.
-            section0.removeAttribute('hidden');
-            section0.classList.add('is-active');
-            body.appendChild(section0);
-            body.dataset.populated = '1';
-            hideInlineContentCards(body);
-            showModal();
-            return;
-        }
+            // Fetch via AJAX on non-course-view pages.
+            Templates.render('format_simple/local/modal_loading', {
+                loadingtext: langStrings.loading
+            }).then(function(html) {
+                body.innerHTML = html;
+                showModal();
 
-        // Fetch via AJAX on non-course-view pages.
-        body.innerHTML = '<div class="simple-s0-modal-loading">'
-            + '<div class="spinner-border text-primary" role="status">'
-            + '<span class="sr-only">' + langStrings.loading + '</span></div></div>';
-        showModal();
-
-        Ajax.call([{
-            methodname: 'format_simple_get_section0_content',
-            args: {courseid: courseId}
-        }])[0].then(function(response) {
-            body.innerHTML = response.html;
-            body.dataset.populated = '1';
-            hideInlineContentCards(body);
+                return Ajax.call([{
+                    methodname: 'format_simple_get_section0_content',
+                    args: {courseid: courseId}
+                }])[0];
+            }).then(function(response) {
+                body.innerHTML = response.html;
+                body.dataset.populated = '1';
+                hideInlineContentCards(body);
+                return;
+            }).catch(function() {
+                Templates.render('format_simple/local/modal_error', {
+                    message: langStrings.failedtoload
+                }).then(function(html) {
+                    body.innerHTML = html;
+                    return;
+                }).catch(function() {
+                    // Last resort fallback.
+                });
+            });
         }).catch(function() {
-            body.innerHTML = '<div class="alert alert-danger">' + langStrings.failedtoload + '</div>';
+            // Modal DOM creation failed.
         });
     };
 
@@ -463,111 +438,101 @@ define(['core/ajax', 'core/str'], function(Ajax, Str) {
             return;
         }
 
-        // Build the cog container — always created so the home button has a parent.
-        var container = document.createElement('div');
-        container.className = 'simple-cog-container';
-
-        // Try to build the cog popover from secondary navigation.
+        // Extract nav items from secondary navigation.
         var secnav = document.querySelector('.secondary-navigation');
-        var items = secnav ? extractNavItems(secnav) : [];
+        var rawItems = secnav ? extractNavItems(secnav) : [];
 
-        if (items.length) {
-            var btn = document.createElement('button');
-            btn.className = 'simple-cog-btn';
-            btn.type = 'button';
-            btn.setAttribute('aria-label', langStrings.coursetools);
-            btn.setAttribute('aria-expanded', 'false');
-            btn.innerHTML = '<i class="fa fa-cog" aria-hidden="true"></i>';
+        // Determine whether to show home button.
+        var showhome = courseUrl && !isOnCourseMainPage(courseUrl);
 
-            var popover = document.createElement('div');
-            popover.className = 'simple-cog-popover';
-            popover.setAttribute('role', 'menu');
+        // Determine whether to show modal button.
+        var showmodal = !!(section0Modal && courseId);
 
-            var heading = document.createElement('div');
-            heading.className = 'simple-cog-heading';
-            heading.textContent = langStrings.coursetools;
-            popover.appendChild(heading);
-
-            var grid = document.createElement('div');
-            grid.className = 'simple-cog-grid';
-
-            items.forEach(function(item) {
-                var tile = document.createElement('a');
-                tile.className = 'simple-cog-tile';
-                tile.href = item.url;
-                tile.setAttribute('role', 'menuitem');
-                if (item.active) {
-                    tile.classList.add('is-active');
-                }
-
-                var iconWrap = document.createElement('span');
-                iconWrap.className = 'simple-cog-tile-icon';
-                if (item.icon.indexOf('img:') === 0) {
-                    var imgPath = item.icon.substring(4);
-                    var wwwroot = (window.M && M.cfg && M.cfg.wwwroot) || '';
-                    iconWrap.innerHTML = '<img src="' + wwwroot + imgPath + '" alt="" width="20" height="20"'
-                        + ' class="simple-cog-tile-img">';
-                } else {
-                    iconWrap.innerHTML = '<i class="fa ' + item.icon + '" aria-hidden="true"></i>';
-                }
-
-                var label = document.createElement('span');
-                label.textContent = item.text;
-
-                tile.appendChild(iconWrap);
-                tile.appendChild(label);
-                grid.appendChild(tile);
-            });
-
-            popover.appendChild(grid);
-            container.appendChild(btn);
-            container.appendChild(popover);
-
-            // Click toggle.
-            btn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                var open = popover.classList.toggle('is-open');
-                btn.classList.toggle('is-open', open);
-                btn.setAttribute('aria-expanded', open);
-            });
-
-            // Close on click outside.
-            document.addEventListener('click', function(e) {
-                if (!container.contains(e.target)) {
-                    popover.classList.remove('is-open');
-                    btn.classList.remove('is-open');
-                    btn.setAttribute('aria-expanded', 'false');
-                }
-            });
-
-            // Close on Escape.
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape' && popover.classList.contains('is-open')) {
-                    popover.classList.remove('is-open');
-                    btn.classList.remove('is-open');
-                    btn.setAttribute('aria-expanded', 'false');
-                    btn.focus();
-                }
-            });
-
-            // Hide the original secondary navigation.
-            secnav.style.display = 'none';
+        // Nothing to render — bail out.
+        if (!rawItems.length && !showhome && !showmodal) {
+            return;
         }
 
-        // Add the home button — independent of whether the cog was created.
-        if (courseUrl) {
-            addHomeButton(container, courseUrl);
-        }
+        // Prepare template context with resolved image paths.
+        var wwwroot = (window.M && M.cfg && M.cfg.wwwroot) || '';
+        var templateItems = rawItems.map(function(item) {
+            var isimg = item.icon.indexOf('img:') === 0;
+            return {
+                url: item.url,
+                icon: isimg ? wwwroot + item.icon.substring(4) : item.icon,
+                text: item.text,
+                active: item.active,
+                isimg: isimg
+            };
+        });
 
-        // Add the section 0 modal button when the setting is enabled.
-        if (section0Modal && courseId) {
-            addSection0ModalButton(container, courseId, unreadCount);
-        }
+        var context = {
+            hasitems: templateItems.length > 0,
+            items: templateItems,
+            coursetools: langStrings.coursetools,
+            showhome: showhome,
+            courseurl: courseUrl,
+            backtocourse: langStrings.backtocourse,
+            showmodal: showmodal,
+            courseinfo: langStrings.courseinfo,
+            unreadcount: unreadCount,
+            hasunread: unreadCount > 0,
+            unreadlabel: unreadCount + ' ' + langStrings.unreadposts
+        };
 
-        // Only append the container if it has children (cog, home button, and/or s0 button).
-        if (container.children.length) {
+        Templates.render('format_simple/local/cog_container', context).then(function(html) {
+            var temp = document.createElement('div');
+            temp.innerHTML = html;
+            var container = temp.firstElementChild;
             document.body.appendChild(container);
-        }
+
+            // Wire up cog popover toggle.
+            var btn = container.querySelector('.simple-cog-btn');
+            var popover = container.querySelector('.simple-cog-popover');
+            if (btn && popover) {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    var open = popover.classList.toggle('is-open');
+                    btn.classList.toggle('is-open', open);
+                    btn.setAttribute('aria-expanded', open);
+                });
+
+                document.addEventListener('click', function(e) {
+                    if (!container.contains(e.target)) {
+                        popover.classList.remove('is-open');
+                        btn.classList.remove('is-open');
+                        btn.setAttribute('aria-expanded', 'false');
+                    }
+                });
+
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape' && popover.classList.contains('is-open')) {
+                        popover.classList.remove('is-open');
+                        btn.classList.remove('is-open');
+                        btn.setAttribute('aria-expanded', 'false');
+                        btn.focus();
+                    }
+                });
+
+                // Hide the original secondary navigation.
+                if (secnav) {
+                    secnav.style.display = 'none';
+                }
+            }
+
+            // Wire up section 0 modal button.
+            var modalBtn = container.querySelector('.simple-s0-modal-btn');
+            if (modalBtn && courseId) {
+                modalBtn.addEventListener('click', function() {
+                    modalTrigger = modalBtn;
+                    openSection0Modal(courseId);
+                });
+            }
+
+            return;
+        }).catch(function() {
+            // Cog container rendering failed — fall back silently.
+        });
     };
 
     return {

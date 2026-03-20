@@ -1,0 +1,18 @@
+{{!
+    @template format_simple/local/modal_loading
+
+    Loading spinner for the section 0 modal overlay.
+
+    Context variables required:
+    * loadingtext - The loading message text
+
+    Example context (json):
+    {
+        "loadingtext": "Loading..."
+    }
+}}
+<div class="simple-s0-modal-loading">
+    <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">{{loadingtext}}</span>
+    </div>
+</div>

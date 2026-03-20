@@ -1,0 +1,14 @@
+{{!
+    @template format_simple/local/modal_error
+
+    Error message displayed when the section 0 modal content fails to load.
+
+    Context variables required:
+    * message - The error message text
+
+    Example context (json):
+    {
+        "message": "Failed to load course info."
+    }
+}}
+<div class="alert alert-danger">{{message}}</div>

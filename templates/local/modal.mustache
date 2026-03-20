@@ -1,0 +1,28 @@
+{{!
+    @template format_simple/local/modal
+
+    Section 0 modal overlay with backdrop and close button.
+
+    Classes required for JS:
+    * .simple-s0-modal-backdrop - backdrop overlay
+    * .simple-s0-modal - modal dialog
+    * .simple-s0-modal-close - close button
+    * .simple-s0-modal-body - scrollable content area
+
+    Context variables required:
+    * courseinfo - ARIA label for the modal
+    * closelabel - ARIA label for the close button
+
+    Example context (json):
+    {
+        "courseinfo": "Course Info",
+        "closelabel": "Close"
+    }
+}}
+<div class="simple-s0-modal-backdrop" aria-hidden="true"></div>
+<div class="simple-s0-modal" role="dialog" aria-label="{{courseinfo}}">
+    <button class="simple-s0-modal-close" type="button" aria-label="{{closelabel}}">
+        <i class="fa fa-times" aria-hidden="true"></i>
+    </button>
+    <div class="simple-s0-modal-body"></div>
+</div>

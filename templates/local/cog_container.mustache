@@ -1,0 +1,79 @@
+{{!
+    @template format_simple/local/cog_container
+
+    Cog navigation container with popover grid, home button, and section 0 modal button.
+
+    Classes required for JS:
+    * .simple-cog-container - root element
+    * .simple-cog-btn - cog toggle button
+    * .simple-cog-popover - popover panel
+    * .simple-cog-grid - tile grid
+    * .simple-home-btn - home button link
+    * .simple-s0-modal-btn - section 0 modal trigger
+
+    Context variables required:
+    * hasitems - Whether there are nav items to display
+    * items - Array of nav items with url, icon, text, active, isimg fields
+    * coursetools - Label for the cog heading
+    * showhome - Whether to show the home button
+    * courseurl - The course view URL (for home button)
+    * backtocourse - Tooltip for the home button
+    * showmodal - Whether to show the section 0 modal button
+    * courseinfo - Label for the modal button
+    * unreadcount - Number of unread forum posts
+    * hasunread - Whether there are unread posts
+    * unreadlabel - Tooltip for the unread badge
+
+    Example context (json):
+    {
+        "hasitems": true,
+        "items": [{"url": "/mod/forum/view.php", "icon": "fa-comments", "text": "Forum", "active": false, "isimg": false}],
+        "coursetools": "Course tools",
+        "showhome": true,
+        "courseurl": "/course/view.php?id=2",
+        "backtocourse": "Back to course",
+        "showmodal": false,
+        "courseinfo": "Course Info",
+        "unreadcount": 0,
+        "hasunread": false,
+        "unreadlabel": ""
+    }
+}}
+<div class="simple-cog-container">
+    {{#hasitems}}
+    <button class="simple-cog-btn" type="button" aria-label="{{coursetools}}" aria-expanded="false">
+        <i class="fa fa-cog" aria-hidden="true"></i>
+    </button>
+    <div class="simple-cog-popover" role="menu">
+        <div class="simple-cog-heading">{{coursetools}}</div>
+        <div class="simple-cog-grid">
+            {{#items}}
+            <a class="simple-cog-tile {{#active}}is-active{{/active}}" href="{{url}}" role="menuitem">
+                <span class="simple-cog-tile-icon">
+                    {{#isimg}}
+                    <img src="{{icon}}" alt="" width="20" height="20" class="simple-cog-tile-img">
+                    {{/isimg}}
+                    {{^isimg}}
+                    <i class="fa {{icon}}" aria-hidden="true"></i>
+                    {{/isimg}}
+                </span>
+                <span>{{text}}</span>
+            </a>
+            {{/items}}
+        </div>
+    </div>
+    {{/hasitems}}
+    {{#showhome}}
+    <a class="simple-home-btn" href="{{courseurl}}" aria-label="{{backtocourse}}" title="{{backtocourse}}">
+        <i class="fa fa-home" aria-hidden="true"></i>
+    </a>
+    {{/showhome}}
+    {{#showmodal}}
+    <button class="simple-s0-modal-btn" type="button" aria-label="{{courseinfo}}" title="{{courseinfo}}">
+        <i class="fa fa-info-circle" aria-hidden="true"></i>
+        {{#hasunread}}
+        <span class="simple-unread-badge" title="{{unreadlabel}}">{{unreadcount}}</span>
+        {{/hasunread}}
+    </button>
+    {{/showmodal}}
+</div>

@@ -172,11 +172,22 @@ class section extends section_base {
         $data->hasresources = !empty($data->resources);
         $data->hasactivities = !empty($data->activities);
 
-        // Prepare the primary (first) learning content for inline display.
+        // Prepare the primary learning content for inline display.
+        // Use the teacher-selected primary item if set, otherwise default to the first.
         if ($data->haslearningcontent) {
-            $primary = $data->learningcontent[0];
+            $primarycmid = (int) ($format->get_format_options($section)['primarycontent'] ?? 0);
+            $primaryindex = 0;
+            if ($primarycmid > 0) {
+                foreach ($data->learningcontent as $i => $item) {
+                    if ((int) $item->id === $primarycmid) {
+                        $primaryindex = $i;
+                        break;
+                    }
+                }
+            }
+            $primary = $data->learningcontent[$primaryindex];
             $primary->isprimary = true;
-            $data->learningcontent[0] = $primary;
+            $data->learningcontent[$primaryindex] = $primary;
         }
 
         // Section completion progress.

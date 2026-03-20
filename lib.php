@@ -336,6 +336,10 @@ class format_simple extends core_courseformat\base {
                 'default' => '',
                 'type' => PARAM_TEXT,
             ],
+            'primarycontent' => [
+                'default' => 0,
+                'type' => PARAM_INT,
+            ],
         ];
 
         if ($foreditform) {
@@ -349,6 +353,44 @@ class format_simple extends core_courseformat\base {
                     'element_attributes' => [
                         ['rows' => 5, 'cols' => 60],
                     ],
+                ]
+            );
+
+            // Build choices for the primary content selector.
+            $choices = [0 => get_string('primarycontent_auto', 'format_simple')];
+            $course = $this->get_course();
+            $modinfo = get_fast_modinfo($course);
+            // Determine which section is being edited from the form data.
+            $sectionnum = optional_param('sectionid', 0, PARAM_INT);
+            if ($sectionnum > 0) {
+                $sectioninfo = $modinfo->get_section_info_by_id($sectionnum);
+            } else {
+                $sectionnum = optional_param('id', 0, PARAM_INT);
+                $sectioninfo = $sectionnum > 0 ? $modinfo->get_section_info_by_id($sectionnum) : null;
+            }
+            if ($sectioninfo !== null) {
+                foreach ($modinfo->get_cms() as $cm) {
+                    if ($cm->section != $sectioninfo->id) {
+                        continue;
+                    }
+                    if (!$cm->is_visible_on_course_page()) {
+                        continue;
+                    }
+                    $zone = self::get_activity_zone($cm);
+                    if ($zone === 'learning') {
+                        $choices[$cm->id] = format_string($cm->name);
+                    }
+                }
+            }
+
+            $options['primarycontent'] = array_merge(
+                $options['primarycontent'],
+                [
+                    'label' => new \lang_string('primarycontent', 'format_simple'),
+                    'help' => 'primarycontent',
+                    'help_component' => 'format_simple',
+                    'element_type' => 'select',
+                    'element_attributes' => [$choices],
                 ]
             );
         }

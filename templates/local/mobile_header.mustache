@@ -1,0 +1,25 @@
+{{!
+    @template format_simple/local/mobile_header
+
+    Mobile header bar with hamburger toggle and course title.
+
+    Classes required for JS:
+    * .simple-mobile-header - root element
+    * .simple-mobile-nav-toggle - hamburger toggle button
+    * .simple-mobile-course-title - course title text
+
+    Context variables required:
+    * coursetitle - The course title text
+
+    Example context (json):
+    {
+        "coursetitle": "Introduction to Theology"
+    }
+}}
+<div class="simple-mobile-header">
+    <button class="simple-mobile-nav-toggle" type="button">
+        <i class="fa fa-bars" aria-hidden="true"></i>
+        <span class="sr-only">{{#str}} togglenav, format_simple {{/str}}</span>
+    </button>
+    <span class="simple-mobile-course-title">{{coursetitle}}</span>
+</div>

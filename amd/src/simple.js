@@ -24,7 +24,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define(['core/ajax', 'core/str'], function(Ajax, Str) {
+define(['core/ajax', 'core/str', 'core/templates'], function(Ajax, Str, Templates) {
     'use strict';
 
     /** @type {HTMLElement} Root element. */
@@ -517,30 +517,26 @@ define(['core/ajax', 'core/str'], function(Ajax, Str) {
             if (mobileHeader) {
                 return;
             }
-            mobileHeader = document.createElement('div');
-            mobileHeader.className = 'simple-mobile-header';
-
-            var toggleBtn = document.createElement('button');
-            toggleBtn.className = 'simple-mobile-nav-toggle';
-            toggleBtn.type = 'button';
-            toggleBtn.innerHTML = '<i class="fa fa-bars" aria-hidden="true"></i>'
-                + '<span class="sr-only">Toggle navigation</span>';
-            toggleBtn.addEventListener('click', toggleMobileNav);
-
-            var courseTitle = document.createElement('span');
-            courseTitle.className = 'simple-mobile-course-title';
             var pageHeading = document.querySelector('#page-header h1, #page-header .h2');
-            if (pageHeading) {
-                courseTitle.textContent = pageHeading.textContent.trim();
-            }
-
-            mobileHeader.appendChild(toggleBtn);
-            mobileHeader.appendChild(courseTitle);
-
-            var nav = root.querySelector('.simple-nav');
-            if (nav) {
-                root.insertBefore(mobileHeader, nav);
-            }
+            var coursetitle = pageHeading ? pageHeading.textContent.trim() : '';
+            Templates.render('format_simple/local/mobile_header', {coursetitle: coursetitle})
+                .then(function(html) {
+                    var temp = document.createElement('div');
+                    temp.innerHTML = html;
+                    mobileHeader = temp.firstElementChild;
+                    var toggleBtn = mobileHeader.querySelector('.simple-mobile-nav-toggle');
+                    if (toggleBtn) {
+                        toggleBtn.addEventListener('click', toggleMobileNav);
+                    }
+                    var nav = root.querySelector('.simple-nav');
+                    if (nav) {
+                        root.insertBefore(mobileHeader, nav);
+                    }
+                    return;
+                })
+                .catch(function() {
+                    // Silently fail — mobile header is non-critical.
+                });
         };
 
         var removeMobileHeader = function() {
@@ -1014,17 +1010,23 @@ define(['core/ajax', 'core/str'], function(Ajax, Str) {
             } else {
                 // Animation done — show final SVG state.
                 if (toPct >= 100) {
-                    indicator.innerHTML =
-                        '<svg class="simple-progress-svg is-complete" viewBox="0 0 36 36" width="36" height="36">'
-                        + '<circle cx="18" cy="18" r="16" fill="#10b981" stroke="none"/>'
-                        + '<polyline points="12,18 16,22 24,14" fill="none" stroke="#ffffff" stroke-width="2.5"'
-                        + ' stroke-linecap="round" stroke-linejoin="round"/>'
-                        + '</svg>';
+                    Templates.render('format_simple/local/progress_complete', {})
+                        .then(function(html) {
+                            indicator.innerHTML = html;
+                            return;
+                        })
+                        .catch(function() {
+                            // Keep current state on failure.
+                        });
                 } else if (toPct <= 0) {
-                    indicator.innerHTML =
-                        '<svg class="simple-progress-svg is-notstarted" viewBox="0 0 36 36" width="36" height="36">'
-                        + '<circle cx="18" cy="18" r="16" fill="none" stroke="#d1d5db" stroke-width="2.5"/>'
-                        + '</svg>';
+                    Templates.render('format_simple/local/progress_empty', {})
+                        .then(function(html) {
+                            indicator.innerHTML = html;
+                            return;
+                        })
+                        .catch(function() {
+                            // Keep current state on failure.
+                        });
                 }
             }
         };
