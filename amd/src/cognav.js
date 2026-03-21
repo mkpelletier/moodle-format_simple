@@ -369,6 +369,8 @@ define(['core/ajax', 'core/str', 'core/templates'], function(Ajax, Str, Template
                 body.innerHTML = html;
             }
             return undefined;
+        }).catch(function() {
+            // Final catch — modal operation failed silently.
         });
     };
 
