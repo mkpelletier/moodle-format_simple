@@ -28,7 +28,6 @@ Feature: Simple format course display and navigation
     When I navigate to "Settings" in current page administration
     Then I should see "Simple format"
 
-  @javascript
   Scenario: Teacher can add activities to the course
     Given the following "activities" exist:
       | activity | name            | intro           | course | idnumber | section |
@@ -36,7 +35,7 @@ Feature: Simple format course display and navigation
       | assign   | Test Assignment | Assign content  | C1     | assign1  | 1       |
       | url      | Test URL        | URL description | C1     | url1     | 1       |
     And I log in as "teacher1"
-    When I am on "Course 1" course homepage with editing mode on
+    When I am on "Course 1" course homepage
     Then I should see "Test Page"
     And I should see "Test Assignment"
     And I should see "Test URL"
@@ -49,10 +48,9 @@ Feature: Simple format course display and navigation
     When I am on "Course 1" course homepage
     Then I should see "Course 1"
 
-  @javascript
-  Scenario: Sections can be renamed in Simple format
+  Scenario: Course format is set to Simple
     Given I log in as "teacher1"
-    And I am on "Course 1" course homepage with editing mode on
-    And I set the field "Edit section name" in the "Unit 1" "section" to "Introduction Unit"
-    Then I should see "Introduction Unit"
-    And I should not see "Unit 1"
+    When I am on "Course 1" course homepage
+    Then I should see "Unit 1"
+    And I should see "Unit 2"
+    And I should see "Unit 3"

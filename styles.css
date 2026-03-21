@@ -447,7 +447,12 @@ body.format-simple .drawer-toggler.drawer-left-toggle {
 /* ---- Right Drawer Smooth Animation ---- */
 
 body.format-simple .drawer.drawer-right {
-    transition: right 600ms cubic-bezier(0.25, 0.1, 0.25, 1), transform 600ms cubic-bezier(0.25, 0.1, 0.25, 1), margin-right 600ms cubic-bezier(0.25, 0.1, 0.25, 1), visibility 600ms cubic-bezier(0.25, 0.1, 0.25, 1), box-shadow 600ms cubic-bezier(0.25, 0.1, 0.25, 1);
+    transition:
+        right 600ms cubic-bezier(0.25, 0.1, 0.25, 1),
+        transform 600ms cubic-bezier(0.25, 0.1, 0.25, 1),
+        margin-right 600ms cubic-bezier(0.25, 0.1, 0.25, 1),
+        visibility 600ms cubic-bezier(0.25, 0.1, 0.25, 1),
+        box-shadow 600ms cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 .format-simple .drawer.drawer-right.show {
@@ -571,12 +576,20 @@ body.format-simple .drawer.drawer-right {
 
 .format-simple .simple-nav-item.is-active::before {
     bottom: 100%;
-    background: radial-gradient(circle at 0% 0%, var(--simple-surface) calc(var(--simple-radius-lg) - 0.5px), var(--simple-bg) var(--simple-radius-lg));
+    background: radial-gradient(
+        circle at 0% 0%,
+        var(--simple-surface) calc(var(--simple-radius-lg) - 0.5px),
+        var(--simple-bg) var(--simple-radius-lg)
+    );
 }
 
 .format-simple .simple-nav-item.is-active::after {
     top: 100%;
-    background: radial-gradient(circle at 0% 100%, var(--simple-surface) calc(var(--simple-radius-lg) - 0.5px), var(--simple-bg) var(--simple-radius-lg));
+    background: radial-gradient(
+        circle at 0% 100%,
+        var(--simple-surface) calc(var(--simple-radius-lg) - 0.5px),
+        var(--simple-bg) var(--simple-radius-lg)
+    );
 }
 
 /* Legacy callout element — hidden, superseded by pseudo-element curves. */
@@ -1123,7 +1136,10 @@ body.format-simple .simple-nav-callout {
     font-size: 1rem;
     cursor: pointer;
     opacity: 0;
-    transition: opacity var(--simple-transition-fast), background var(--simple-transition-fast), transform var(--simple-transition-fast);
+    transition:
+        opacity var(--simple-transition-fast),
+        background var(--simple-transition-fast),
+        transform var(--simple-transition-fast);
 }
 
 .format-simple .simple-embed-container:hover .simple-embed-fullscreen-btn {
@@ -1624,8 +1640,8 @@ body.format-simple .simple-nav-callout {
    Mobile Header Bar (hamburger + course title)
    ========================================================================= */
 
-.format-simple .simple-mobile-header {
-    display: none !important;
+body.format-simple .simple-mobile-header {
+    display: none;
     align-items: center;
     gap: 12px;
     padding: 12px 20px;
@@ -1676,8 +1692,8 @@ body.format-simple .simple-nav-callout {
         display: none;
     }
 
-    .format-simple .simple-mobile-header {
-        display: flex !important;
+    body.format-simple .simple-mobile-header {
+        display: flex;
     }
 
     .format-simple .simple-mobile-nav-toggle {

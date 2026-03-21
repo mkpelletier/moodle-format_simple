@@ -318,7 +318,7 @@ define(['core/ajax', 'core/str', 'core/templates'], function(Ajax, Str, Template
             // If we already populated the body, just re-show.
             if (body.dataset.populated) {
                 showModal();
-                return;
+                return undefined;
             }
 
             // Look for the live section 0 element in the page (rendered as a
@@ -332,7 +332,7 @@ define(['core/ajax', 'core/str', 'core/templates'], function(Ajax, Str, Template
                 body.dataset.populated = '1';
                 hideInlineContentCards(body);
                 showModal();
-                return;
+                return undefined;
             }
 
             // Fetch via AJAX on non-course-view pages.
@@ -354,12 +354,12 @@ define(['core/ajax', 'core/str', 'core/templates'], function(Ajax, Str, Template
             }).catch(function() {
                 return Templates.render('format_simple/local/modal_error', {
                     message: langStrings.failedtoload
-                }).then(function(html) {
-                    body.innerHTML = html;
-                    return undefined;
-                }).catch(function() {
-                    // Last resort fallback.
                 });
+            }).then(function(html) {
+                if (html) {
+                    body.innerHTML = html;
+                }
+                return undefined;
             });
         }).catch(function() {
             // Modal DOM creation failed.
@@ -529,7 +529,7 @@ define(['core/ajax', 'core/str', 'core/templates'], function(Ajax, Str, Template
                 });
             }
 
-            return;
+            return undefined;
         }).catch(function() {
             // Cog container rendering failed — fall back silently.
         });
