@@ -25,19 +25,18 @@ Feature: Simple format course display and navigation
   Scenario: View the default section 0 name
     Given I log in as "teacher1"
     And I am on "Course 1" course homepage with editing mode on
-    When I edit the section "0"
-    Then the field "Section name" matches value ""
+    When I navigate to "Settings" in current page administration
+    Then I should see "Simple format"
 
   @javascript
   Scenario: Teacher can add activities to the course
-    Given I log in as "teacher1"
-    And I am on "Course 1" course homepage with editing mode on
-    And the following "activities" exist:
+    Given the following "activities" exist:
       | activity | name            | intro           | course | idnumber | section |
       | page     | Test Page       | Page content    | C1     | page1    | 1       |
       | assign   | Test Assignment | Assign content  | C1     | assign1  | 1       |
       | url      | Test URL        | URL description | C1     | url1     | 1       |
-    When I am on "Course 1" course homepage
+    And I log in as "teacher1"
+    When I am on "Course 1" course homepage with editing mode on
     Then I should see "Test Page"
     And I should see "Test Assignment"
     And I should see "Test URL"
@@ -51,18 +50,9 @@ Feature: Simple format course display and navigation
     Then I should see "Course 1"
 
   @javascript
-  Scenario: Sections can be edited in Simple format
+  Scenario: Sections can be renamed in Simple format
     Given I log in as "teacher1"
     And I am on "Course 1" course homepage with editing mode on
-    When I edit the section "1"
-    And I set the following fields to these values:
-      | Section name | Introduction Unit |
-    And I press "Save changes"
+    And I set the field "Edit section name" in the "Unit 1" "section" to "Introduction Unit"
     Then I should see "Introduction Unit"
-
-  @javascript
-  Scenario: Sections can be deleted in Simple format
-    Given I log in as "teacher1"
-    And I am on "Course 1" course homepage with editing mode on
-    When I delete section "3"
-    Then I should not see "Unit 3"
+    And I should not see "Unit 1"

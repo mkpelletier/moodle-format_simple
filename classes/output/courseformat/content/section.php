@@ -35,7 +35,6 @@ use stdClass;
  * content embedding, resource icons, and learning outcomes display.
  */
 class section extends section_base {
-
     /**
      * Returns the template name for this output class.
      *
@@ -114,7 +113,7 @@ class section extends section_base {
                 }
             }
 
-            // "Add an activity or resource" button.
+            // Add an activity or resource button.
             if (has_capability('moodle/course:manageactivities', $coursecontext)) {
                 $data->cmcontrols = $output->course_section_add_cm_control(
                     $course,
@@ -379,7 +378,8 @@ class section extends section_base {
     private function get_book_inline_content(\cm_info $cm): string {
         global $DB;
 
-        $chapters = $DB->get_records('book_chapters',
+        $chapters = $DB->get_records(
+            'book_chapters',
             ['bookid' => $cm->instance, 'hidden' => 0],
             'pagenum ASC'
         );
@@ -451,11 +451,13 @@ class section extends section_base {
         $url = $urlrecord->externalurl;
 
         // YouTube detection.
-        if (preg_match(
-            '/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/',
-            $url,
-            $matches
-        )) {
+        if (
+            preg_match(
+                '/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/',
+                $url,
+                $matches
+            )
+        ) {
             return 'https://www.youtube-nocookie.com/embed/' . $matches[1] . '?rel=0';
         }
 

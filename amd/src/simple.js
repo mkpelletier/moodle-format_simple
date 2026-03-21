@@ -853,6 +853,7 @@ define(['core/ajax', 'core/str', 'core/templates'], function(Ajax, Str, Template
                 fetch(url, {credentials: 'same-origin'}).then(function() {
                     el.classList.add('is-complete');
                     refreshSectionProgress(sectionNum);
+                    return undefined;
                 }).catch(function() {
                     viewedUrls.delete(url);
                 });

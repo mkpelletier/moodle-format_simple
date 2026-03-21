@@ -35,7 +35,6 @@ require_once($CFG->dirroot . '/course/format/lib.php');
  * related activities.
  */
 class format_simple extends core_courseformat\base {
-
     /**
      * Activity types categorised as primary learning content.
      */

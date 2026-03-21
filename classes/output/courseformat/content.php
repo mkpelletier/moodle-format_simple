@@ -35,7 +35,6 @@ use stdClass;
  * navigation panel and the single-section content area.
  */
 class content extends content_base {
-
     /**
      * Returns the template name for this output class.
      *
@@ -192,7 +191,7 @@ class content extends content_base {
 
         $data->hassections = !empty($data->navitems) || $data->hassection0;
 
-        // "Add section" button for editing mode.
+        // Add section button for editing mode.
         $data->addsectionhtml = '';
         $data->hasaddsection = false;
         if ($data->editing) {
@@ -219,6 +218,7 @@ class content extends content_base {
      * @param \section_info $section The section info.
      * @param stdClass $course The course object.
      * @param \core_courseformat\base $format The course format.
+     * @param renderer_base $output The renderer.
      * @return stdClass Navigation item data.
      */
     private function build_nav_item(

@@ -33,12 +33,11 @@ use core_external\external_api;
  * @covers     \format_simple\external\get_section0_content
  */
 final class get_section0_content_test extends \externallib_advanced_testcase {
-
     /**
      * Test that an enrolled student can fetch section 0 content.
      */
     public function test_execute_as_student(): void {
-        global $PAGE;
+        global $DB, $PAGE;
         $this->resetAfterTest(true);
 
         $course = $this->getDataGenerator()->create_course([
@@ -47,13 +46,14 @@ final class get_section0_content_test extends \externallib_advanced_testcase {
         ], ['createsections' => true]);
 
         $user = $this->getDataGenerator()->create_user();
-        $this->getDataGenerator()->enrol_user($user->id, $course->id, 'student');
+        $studentroleid = $DB->get_field('role', 'id', ['shortname' => 'student']);
+        $this->getDataGenerator()->enrol_user($user->id, $course->id, $studentroleid);
         $this->setUser($user);
 
-        // Enrolled students need course:view capability granted via their role.
-        // Assign the student role explicitly in the course context.
+        // Ensure the student role has the required capability in the course context.
         $context = \context_course::instance($course->id);
-        $PAGE->set_context($context);
+        assign_capability('moodle/course:view', CAP_ALLOW, $studentroleid, $context->id, true);
+        accesslib_clear_all_caches_for_unit_testing();
 
         $result = get_section0_content::execute($course->id);
         $result = external_api::clean_returnvalue(

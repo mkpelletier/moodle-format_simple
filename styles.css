@@ -16,7 +16,7 @@
 
 .format-simple .format-simple-wrapper {
     --simple-bg: #eef2ff;
-    --simple-surface: #ffffff;
+    --simple-surface: #fff;
     --simple-text: #1a1a1a;
     --simple-text-secondary: #6b7280;
     --simple-text-muted: #9ca3af;
@@ -49,8 +49,8 @@
 
 
 /* Hide the page context header — redundant in this format. */
-.format-simple .page-context-header {
-    display: none !important;
+body.format-simple .page-context-header {
+    display: none;
 }
 
 /* Secondary navigation is hidden via JS in setupSecondaryNav() after
@@ -61,7 +61,7 @@
 
 .format-simple .simple-cog-container {
     position: fixed;
-    top: 70px;  
+    top: 70px;
     left: 0;
     z-index: 1040;
 }
@@ -72,7 +72,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #ffffff;
+    background: #fff;
     border: none;
     border-radius: 0 10px 10px 0;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
@@ -98,7 +98,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #ffffff;
+    background: #fff;
     border: none;
     border-radius: 0 10px 10px 0;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
@@ -121,8 +121,7 @@
     z-index: 1050;
     background: rgba(0, 0, 0, 0);
     backdrop-filter: blur(0);
-    transition: background 400ms cubic-bezier(0.4, 0, 0.2, 1),
-                backdrop-filter 400ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background 400ms cubic-bezier(0.4, 0, 0.2, 1), backdrop-filter 400ms cubic-bezier(0.4, 0, 0.2, 1);
     display: none;
 }
 
@@ -139,15 +138,14 @@
     right: 5vw;
     bottom: 5vh;
     z-index: 1051;
-    background: #ffffff;
+    background: #fff;
     border-radius: 16px;
     box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
     display: none;
     flex-direction: column;
     transform: translateY(30px) scale(0.97);
     opacity: 0;
-    transition: transform 400ms cubic-bezier(0.4, 0, 0.2, 1),
-                opacity 400ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 400ms cubic-bezier(0.4, 0, 0.2, 1), opacity 400ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .format-simple .simple-s0-modal.is-open {
@@ -218,7 +216,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #ffffff;
+    background: #fff;
     border: none;
     border-radius: 0 10px 10px 0;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
@@ -253,15 +251,14 @@
     position: absolute;
     top: 0;
     left: 48px;
-    background: #ffffff;
+    background: #fff;
     border-radius: 10px;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 4px 10px rgba(0, 0, 0, 0.06);
     padding: 16px;
     opacity: 0;
     pointer-events: none;
     transform: translateX(-12px);
-    transition: opacity 300ms cubic-bezier(0.4, 0, 0.2, 1),
-                transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition: opacity 300ms cubic-bezier(0.4, 0, 0.2, 1), transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
     min-width: 340px;
     max-height: calc(100vh - 80px);
     overflow-y: auto;
@@ -337,13 +334,13 @@
     align-items: center;
     justify-content: center;
     border-radius: 8px;
-    background: #ffffff;
+    background: #fff;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .format-simple .simple-cog-tile.is-active .simple-cog-tile-icon {
     background: #2563eb;
-    color: #ffffff;
+    color: #fff;
     box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
 }
 
@@ -382,8 +379,8 @@
 }
 
 /* Hide the course index drawer since we have our own nav. */
-.format-simple .courseindex {
-    display: none !important;
+body.format-simple .courseindex {
+    display: none;
 }
 
 /* Tone down the page header when not needed. */
@@ -430,8 +427,8 @@
 
 /* Hide the LEFT drawer toggle (course index) — we have our own nav.
    Keep the RIGHT drawer toggle (blocks) visible. */
-.format-simple .drawer-toggler.drawer-left-toggle {
-    display: none !important;
+body.format-simple .drawer-toggler.drawer-left-toggle {
+    display: none;
 }
 
 /* Style the right drawer toggle to match our design. */
@@ -449,12 +446,8 @@
 
 /* ---- Right Drawer Smooth Animation ---- */
 
-.format-simple .drawer.drawer-right {
-    transition: right 600ms cubic-bezier(0.25, 0.1, 0.25, 1),
-                transform 600ms cubic-bezier(0.25, 0.1, 0.25, 1),
-                margin-right 600ms cubic-bezier(0.25, 0.1, 0.25, 1),
-                visibility 600ms cubic-bezier(0.25, 0.1, 0.25, 1),
-                box-shadow 600ms cubic-bezier(0.25, 0.1, 0.25, 1) !important;
+body.format-simple .drawer.drawer-right {
+    transition: right 600ms cubic-bezier(0.25, 0.1, 0.25, 1), transform 600ms cubic-bezier(0.25, 0.1, 0.25, 1), margin-right 600ms cubic-bezier(0.25, 0.1, 0.25, 1), visibility 600ms cubic-bezier(0.25, 0.1, 0.25, 1), box-shadow 600ms cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 .format-simple .drawer.drawer-right.show {
@@ -510,8 +503,7 @@
     height: calc(100vh - 60px);
     overflow-y: auto;
     z-index: 10;
-    transition: width var(--simple-nav-collapse-speed),
-                min-width var(--simple-nav-collapse-speed);
+    transition: width var(--simple-nav-collapse-speed), min-width var(--simple-nav-collapse-speed);
     border-top-left-radius: var(--simple-radius-lg);
     border-bottom-left-radius: var(--simple-radius-lg);
 }
@@ -536,8 +528,7 @@
     font-size: 0.9375rem;
     font-weight: 500;
     color: var(--simple-text);
-    transition: background var(--simple-transition-fast),
-                color var(--simple-transition-fast);
+    transition: background var(--simple-transition-fast), color var(--simple-transition-fast);
     position: relative;
     min-height: 48px;
     line-height: 1.3;
@@ -580,25 +571,17 @@
 
 .format-simple .simple-nav-item.is-active::before {
     bottom: 100%;
-    background: radial-gradient(
-        circle at 0% 0%,
-        var(--simple-surface) calc(var(--simple-radius-lg) - 0.5px),
-        var(--simple-bg) var(--simple-radius-lg)
-    );
+    background: radial-gradient(circle at 0% 0%, var(--simple-surface) calc(var(--simple-radius-lg) - 0.5px), var(--simple-bg) var(--simple-radius-lg));
 }
 
 .format-simple .simple-nav-item.is-active::after {
     top: 100%;
-    background: radial-gradient(
-        circle at 0% 100%,
-        var(--simple-surface) calc(var(--simple-radius-lg) - 0.5px),
-        var(--simple-bg) var(--simple-radius-lg)
-    );
+    background: radial-gradient(circle at 0% 100%, var(--simple-surface) calc(var(--simple-radius-lg) - 0.5px), var(--simple-bg) var(--simple-radius-lg));
 }
 
 /* Legacy callout element — hidden, superseded by pseudo-element curves. */
-.format-simple .simple-nav-callout {
-    display: none !important;
+body.format-simple .simple-nav-callout {
+    display: none;
 }
 
 /* ---- Section 0 / Course Info Nav Item ---- */
@@ -623,7 +606,7 @@
 
 .format-simple .simple-nav-item-section0.is-active .simple-nav-indicator-info {
     background: var(--simple-accent);
-    color: #ffffff;
+    color: #fff;
 }
 
 .format-simple .simple-unread-badge {
@@ -635,7 +618,7 @@
     padding: 0 5px;
     border-radius: 9px;
     background: #ef4444;
-    color: #ffffff;
+    color: #fff;
     font-size: 0.65rem;
     font-weight: 700;
     line-height: 18px;
@@ -673,8 +656,7 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     opacity: 1;
-    transition: opacity var(--simple-nav-collapse-speed),
-                flex var(--simple-nav-collapse-speed);
+    transition: opacity var(--simple-nav-collapse-speed), flex var(--simple-nav-collapse-speed);
 }
 
 /* ---- Progress Indicator SVGs ---- */
@@ -808,20 +790,11 @@
     position: absolute;
     inset: 0;
     z-index: 1;
-    background: linear-gradient(
-        to top,
-        rgba(0, 0, 0, 0.65) 0%,
-        rgba(0, 0, 0, 0.15) 60%,
-        rgba(0, 0, 0, 0.05) 100%
-    );
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0.15) 60%, rgba(0, 0, 0, 0.05) 100%);
 }
 
 .format-simple .simple-banner:not(.has-image) .simple-banner-overlay {
-    background: linear-gradient(
-        to top,
-        rgba(0, 0, 0, 0.15) 0%,
-        rgba(0, 0, 0, 0) 100%
-    );
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0) 100%);
 }
 
 .format-simple .simple-banner-content {
@@ -843,7 +816,7 @@
     border-radius: 20px;
     font-size: 0.8125rem;
     font-weight: 600;
-    color: #ffffff;
+    color: #fff;
     letter-spacing: 0.04em;
     text-transform: uppercase;
 }
@@ -851,7 +824,7 @@
 .format-simple .simple-banner-title {
     font-size: 1.75rem;
     font-weight: 700;
-    color: #ffffff;
+    color: #fff;
     margin: 0;
     line-height: 1.2;
     letter-spacing: -0.02em;
@@ -1104,8 +1077,8 @@
 }
 
 /* SCORM embed — variable content height like H5P. */
-#page-mod-scorm-player > ai-chat-bubble {
-    display: none !important;
+#page-mod-scorm-player > [is="ai-chat-bubble"] {
+    display: none;
 }
 
 .format-simple .simple-embed-container.simple-embed-scorm {
@@ -1146,13 +1119,11 @@
     -webkit-backdrop-filter: blur(4px);
     border: none;
     border-radius: var(--simple-radius-sm);
-    color: #ffffff;
+    color: #fff;
     font-size: 1rem;
     cursor: pointer;
     opacity: 0;
-    transition: opacity var(--simple-transition-fast),
-                background var(--simple-transition-fast),
-                transform var(--simple-transition-fast);
+    transition: opacity var(--simple-transition-fast), background var(--simple-transition-fast), transform var(--simple-transition-fast);
 }
 
 .format-simple .simple-embed-container:hover .simple-embed-fullscreen-btn {
@@ -1341,8 +1312,7 @@
     font-size: 1rem;
     color: var(--simple-accent);
     cursor: pointer;
-    transition: color var(--simple-transition-fast),
-                transform var(--simple-transition-fast);
+    transition: color var(--simple-transition-fast), transform var(--simple-transition-fast);
 }
 
 .format-simple .simple-cm-manual-completion:hover {

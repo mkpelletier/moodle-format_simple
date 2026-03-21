@@ -336,7 +336,7 @@ define(['core/ajax', 'core/str', 'core/templates'], function(Ajax, Str, Template
             }
 
             // Fetch via AJAX on non-course-view pages.
-            Templates.render('format_simple/local/modal_loading', {
+            return Templates.render('format_simple/local/modal_loading', {
                 loadingtext: langStrings.loading
             }).then(function(html) {
                 body.innerHTML = html;
@@ -350,13 +350,13 @@ define(['core/ajax', 'core/str', 'core/templates'], function(Ajax, Str, Template
                 body.innerHTML = response.html;
                 body.dataset.populated = '1';
                 hideInlineContentCards(body);
-                return;
+                return undefined;
             }).catch(function() {
-                Templates.render('format_simple/local/modal_error', {
+                return Templates.render('format_simple/local/modal_error', {
                     message: langStrings.failedtoload
                 }).then(function(html) {
                     body.innerHTML = html;
-                    return;
+                    return undefined;
                 }).catch(function() {
                     // Last resort fallback.
                 });

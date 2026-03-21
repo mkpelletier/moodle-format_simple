@@ -30,7 +30,6 @@ require_once($CFG->dirroot . '/course/lib.php');
  * @covers     \format_simple
  */
 final class format_simple_test extends \advanced_testcase {
-
     /**
      * Test that the format declares section support.
      */
