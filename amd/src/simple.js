@@ -24,7 +24,12 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define(['core/ajax', 'core/str', 'core/templates'], function(Ajax, Str, Templates) {
+define([
+    'core/ajax',
+    'core/str',
+    'core/templates',
+    'core_course/events',
+], function(Ajax, Str, Templates, CourseEvents) {
     'use strict';
 
     /** @type {HTMLElement} Root element. */
@@ -48,11 +53,17 @@ define(['core/ajax', 'core/str', 'core/templates'], function(Ajax, Str, Template
     /** @type {number} Delay in ms before nav collapses. */
     const COLLAPSE_DELAY = 3000;
 
-    /** @type {Set<string>} View URLs already fetched this session. */
+    /** @type {Set<string>} Module view events already raised this session. */
     const viewedUrls = new Set();
 
-    /** @type {number} Delay in ms before view completion fetch fires. */
-    const VIEW_DELAY = 30000;
+    /** @type {Map<HTMLElement, number>} Pending dwell timers keyed by observed element. */
+    const dwellTimers = new Map();
+
+    /** @type {number} Time in ms content must stay visible before its view event is raised. */
+    const VIEW_DWELL = 3000;
+
+    /** @type {number} Fraction of the content that must be visible to start the dwell timer. */
+    const VIEW_VISIBLE_RATIO = 0.25;
 
     /** @type {number} Circumference of the progress ring (2 * PI * r=16). */
     const CIRCUMFERENCE = 2 * Math.PI * 16;
@@ -74,22 +85,17 @@ define(['core/ajax', 'core/str', 'core/templates'], function(Ajax, Str, Template
             return;
         }
 
-        // Pre-load language strings for interactive elements.
+        // Pre-load language strings for interactive elements. Completion strings come from
+        // core along with its completion markup.
         Str.get_strings([
-            {key: 'markcomplete', component: 'format_simple'},
-            {key: 'marknotcomplete', component: 'format_simple'},
             {key: 'togglefullscreen', component: 'format_simple'},
             {key: 'exitfullscreen', component: 'format_simple'},
         ]).then(function(strings) {
-            langStrings.markcomplete = strings[0];
-            langStrings.marknotcomplete = strings[1];
-            langStrings.togglefullscreen = strings[2];
-            langStrings.exitfullscreen = strings[3];
+            langStrings.togglefullscreen = strings[0];
+            langStrings.exitfullscreen = strings[1];
             return;
         }).catch(function() {
             // Fallback to English.
-            langStrings.markcomplete = 'Mark as complete';
-            langStrings.marknotcomplete = 'Mark as not complete';
             langStrings.togglefullscreen = 'Toggle fullscreen';
             langStrings.exitfullscreen = 'Exit fullscreen';
         });
@@ -759,77 +765,99 @@ define(['core/ajax', 'core/str', 'core/templates'], function(Ajax, Str, Template
     };
 
     /**
-     * Set up manual completion toggle buttons.
+     * Keep the section progress ring in step with core's manual completion button.
      *
-     * Listens for clicks on [data-action="toggle-completion"] buttons
-     * and calls the Moodle web service to toggle the completion state.
+     * The button itself belongs to core, which re-renders it and announces the change with a
+     * bubbling event. All this format has to do is record the new state and redraw the ring.
      */
     const setupManualCompletion = function() {
-        root.addEventListener('click', function(e) {
-            var btn = e.target.closest('[data-action="toggle-completion"]');
-            if (!btn) {
+        root.addEventListener(CourseEvents.manualCompletionToggled, function(e) {
+            var wrapper = e.target.closest('[data-for="cmitem"]');
+            if (!wrapper) {
                 return;
             }
-            e.preventDefault();
-            e.stopPropagation();
 
-            var cmid = parseInt(btn.dataset.cmid, 10);
-            var isComplete = btn.classList.contains('is-complete');
-            var newState = isComplete ? 0 : 1;
-
-            // Optimistic UI update.
-            btn.classList.toggle('is-complete');
-            var icon = btn.querySelector('i');
-            if (icon) {
-                if (newState) {
-                    icon.className = 'fa fa-check-square';
-                    btn.title = langStrings.marknotcomplete;
-                } else {
-                    icon.className = 'fa fa-square-o';
-                    btn.title = langStrings.markcomplete;
-                }
+            var region = wrapper.querySelector('[data-completion-tracked="1"]');
+            if (region) {
+                region.setAttribute('data-completion-state', e.detail.completed ? 'complete' : 'incomplete');
             }
 
-            // Immediately refresh nav progress (optimistic).
-            var sectionEl = btn.closest('.simple-section');
+            var sectionEl = wrapper.closest('.simple-section');
             var sNum = sectionEl ? parseInt(sectionEl.dataset.section, 10) : -1;
             if (sNum >= 0) {
                 refreshSectionProgress(sNum);
             }
-
-            // Call Moodle web service.
-            Ajax.call([{
-                methodname: 'core_completion_update_activity_completion_status_manually',
-                args: {cmid: cmid, completed: newState},
-                fail: function() {
-                    // Revert on failure.
-                    btn.classList.toggle('is-complete');
-                    if (icon) {
-                        if (newState) {
-                            icon.className = 'fa fa-square-o';
-                            btn.title = langStrings.markcomplete;
-                        } else {
-                            icon.className = 'fa fa-check-square';
-                            btn.title = langStrings.marknotcomplete;
-                        }
-                    }
-                    // Revert progress indicator.
-                    if (sNum >= 0) {
-                        refreshSectionProgress(sNum);
-                    }
-                }
-            }]);
         });
     };
 
     /**
-     * Trigger view completion for inline/embedded learning content in a section.
+     * Raise a module's view event once its content has actually been seen.
      *
-     * Finds elements with data-viewmod and data-viewid attributes, then calls
-     * the appropriate Moodle web service (e.g. mod_page_view_page,
-     * mod_book_view_book, mod_h5pactivity_view_h5pactivity) to fire the view
-     * event. This ensures completion tracking works for content displayed
-     * without visiting its view.php.
+     * Content shown in place is never opened through the activity's own view.php, so the view
+     * event that ordinarily records the visit and satisfies view based completion never fires.
+     * Each module exposes a mod_<name>_view_<name> web service that raises exactly that event.
+     *
+     * The call is made only once the content has been in the viewport continuously for
+     * VIEW_DWELL ms, so that merely rendering a section off screen does not mark it read.
+     *
+     * @param {HTMLElement} el The element carrying the view service attributes.
+     * @param {number} sectionNum The section the element belongs to.
+     */
+    const raiseViewEvent = function(el, sectionNum) {
+        var service = el.getAttribute('data-viewservice');
+        var param = el.getAttribute('data-viewparam');
+        var instance = parseInt(el.getAttribute('data-viewinstance'), 10);
+        if (!service || !param || !instance) {
+            return;
+        }
+
+        var key = service + ':' + instance;
+        if (viewedUrls.has(key)) {
+            return;
+        }
+        viewedUrls.add(key);
+
+        // Each module names its instance parameter after itself, so it is supplied by the server.
+        var args = {};
+        args[param] = instance;
+
+        Ajax.call([{
+            methodname: service,
+            args: args,
+            done: function() {
+                markCompletionState(el, 'complete');
+                refreshSectionProgress(sectionNum);
+            },
+            fail: function() {
+                // Allow a later attempt, for instance after the student returns to the section.
+                viewedUrls.delete(key);
+            }
+        }]);
+    };
+
+    /**
+     * Record a course module's completion state for the section progress ring.
+     *
+     * @param {HTMLElement} el An element inside the course module's wrapper.
+     * @param {string} state Either complete or incomplete.
+     */
+    const markCompletionState = function(el, state) {
+        var wrapper = el.closest('[data-for="cmitem"]');
+        if (!wrapper) {
+            return;
+        }
+        var region = wrapper.querySelector('[data-completion-tracked="1"]');
+        if (region) {
+            region.setAttribute('data-completion-state', state);
+        }
+        var inline = wrapper.querySelector('.simple-inline-content, .simple-embed-container');
+        if (inline) {
+            inline.classList.toggle('is-complete', state === 'complete');
+        }
+    };
+
+    /**
+     * Watch a section's in-place content and raise view events once it has been seen.
      *
      * @param {number} sectionNum The section number to check.
      */
@@ -839,25 +867,41 @@ define(['core/ajax', 'core/str', 'core/templates'], function(Ajax, Str, Template
             return;
         }
 
-        var viewables = section.querySelectorAll('[data-viewurl]');
-        viewables.forEach(function(el) {
-            var url = el.getAttribute('data-viewurl');
-            if (!url || viewedUrls.has(url)) {
-                return;
-            }
-            viewedUrls.add(url);
+        var viewables = section.querySelectorAll('[data-viewservice]');
+        if (!viewables.length) {
+            return;
+        }
 
-            // Wait VIEW_DELAY ms (counts as having read the content),
-            // then fetch view.php to trigger the view event and completion.
-            setTimeout(function() {
-                fetch(url, {credentials: 'same-origin'}).then(function() {
-                    el.classList.add('is-complete');
-                    refreshSectionProgress(sectionNum);
-                    return undefined;
-                }).catch(function() {
-                    viewedUrls.delete(url);
-                });
-            }, VIEW_DELAY);
+        // Without IntersectionObserver, fall back to raising the events straight away.
+        if (typeof IntersectionObserver === 'undefined') {
+            viewables.forEach(function(el) {
+                raiseViewEvent(el, sectionNum);
+            });
+            return;
+        }
+
+        var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                var el = entry.target;
+                if (entry.isIntersecting) {
+                    // Start the dwell timer; it is cleared if the content leaves again.
+                    dwellTimers.set(el, setTimeout(function() {
+                        dwellTimers.delete(el);
+                        observer.unobserve(el);
+                        raiseViewEvent(el, sectionNum);
+                    }, VIEW_DWELL));
+                } else if (dwellTimers.has(el)) {
+                    clearTimeout(dwellTimers.get(el));
+                    dwellTimers.delete(el);
+                }
+            });
+        }, {threshold: VIEW_VISIBLE_RATIO});
+
+        viewables.forEach(function(el) {
+            if (!viewedUrls.has(el.getAttribute('data-viewservice') + ':'
+                    + parseInt(el.getAttribute('data-viewinstance'), 10))) {
+                observer.observe(el);
+            }
         });
     };
 
@@ -886,28 +930,17 @@ define(['core/ajax', 'core/str', 'core/templates'], function(Ajax, Str, Template
             return;
         }
 
-        // Count all trackable completion items.
-        var autoItems = section.querySelectorAll('.simple-cm-completion');
-        var manualItems = section.querySelectorAll('.simple-cm-manual-completion');
-        var inlineItems = section.querySelectorAll('[data-has-completion]');
-        var total = autoItems.length + manualItems.length + inlineItems.length;
+        // Count trackable items from our own state attributes rather than from core's
+        // completion markup, whose shape is not ours to depend on.
+        var trackedItems = section.querySelectorAll('[data-completion-tracked="1"]');
+        var total = trackedItems.length;
         if (total === 0) {
             return;
         }
 
         var completed = 0;
-        autoItems.forEach(function(el) {
-            if (el.classList.contains('is-complete')) {
-                completed++;
-            }
-        });
-        manualItems.forEach(function(el) {
-            if (el.classList.contains('is-complete')) {
-                completed++;
-            }
-        });
-        inlineItems.forEach(function(el) {
-            if (el.classList.contains('is-complete')) {
+        trackedItems.forEach(function(el) {
+            if (el.getAttribute('data-completion-state') === 'complete') {
                 completed++;
             }
         });

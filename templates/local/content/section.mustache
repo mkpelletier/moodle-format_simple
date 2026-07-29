@@ -45,6 +45,15 @@
     * hasactivities - Whether there are activity items.
     * activities - Array of activity module data.
 
+    Each activity in the arrays above additionally carries:
+    * hascompletion - Whether there is completion information to render.
+    * completion - Core's completion export, rendered by the cm/completion partial.
+    * completionstate - Either complete or incomplete, counted by the progress ring.
+    * hasviewtracking - Whether the activity's view event can be raised from JavaScript.
+    * viewservice - Name of the web service that raises the view event.
+    * viewparam - Name of that service's instance id parameter.
+    * viewinstance - The activity instance id to pass to the service.
+
     @package    format_simple
     @copyright  2025 South African Theological Seminary <ict@sats.ac.za>
     @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -187,43 +196,18 @@
         {{#allcms}}
         <div class="simple-cm-wrapper {{#ishidden}}is-dimmed{{/ishidden}} {{#isstealth}}is-dimmed is-stealth{{/isstealth}}" id="module-{{id}}" data-for="cmitem" data-id="{{id}}">
             {{#hasinlinecontent}}
-            <div class="simple-inline-content">
+            <div class="simple-inline-content"
+                 {{#hasviewtracking}}data-viewservice="{{viewservice}}" data-viewparam="{{viewparam}}" data-viewinstance="{{viewinstance}}"{{/hasviewtracking}}>
                 {{{inlinecontent}}}
             </div>
+            {{> format_simple/local/content/cm/completion }}
             {{/hasinlinecontent}}
             {{^hasinlinecontent}}
             <a href="{{url}}" class="aalink simple-cm-card simple-cm-card-activity">
                 <img src="{{iconurl}}" alt="" class="simple-cm-icon" aria-hidden="true">
                 <span class="simple-cm-name">{{name}}</span>
-                {{#completionenabled}}
-                {{^ismanualcompletion}}
-                <span class="simple-cm-completion {{#iscomplete}}is-complete{{/iscomplete}}">
-                    {{#iscomplete}}
-                    <i class="fa fa-check-circle" aria-hidden="true"></i>
-                    {{/iscomplete}}
-                    {{^iscomplete}}
-                    <i class="fa fa-circle-o" aria-hidden="true"></i>
-                    {{/iscomplete}}
-                </span>
-                {{/ismanualcompletion}}
-                {{#ismanualcompletion}}
-                <span class="simple-cm-manual-completion {{#iscomplete}}is-complete{{/iscomplete}}"
-                      role="checkbox"
-                      tabindex="0"
-                      aria-checked="{{#iscomplete}}true{{/iscomplete}}{{^iscomplete}}false{{/iscomplete}}"
-                      data-action="toggle-completion"
-                      data-cmid="{{id}}"
-                      title="{{#iscomplete}}{{#str}}marknotcomplete, format_simple{{/str}}{{/iscomplete}}{{^iscomplete}}{{#str}}markcomplete, format_simple{{/str}}{{/iscomplete}}">
-                    {{#iscomplete}}
-                    <i class="fa fa-check-square" aria-hidden="true"></i>
-                    {{/iscomplete}}
-                    {{^iscomplete}}
-                    <i class="fa fa-square-o" aria-hidden="true"></i>
-                    {{/iscomplete}}
-                </span>
-                {{/ismanualcompletion}}
-                {{/completionenabled}}
             </a>
+            {{> format_simple/local/content/cm/completion }}
             {{/hasinlinecontent}}
             {{#editing}}
             {{#hascmcontrolmenu}}
@@ -263,16 +247,15 @@
             {{#isprimary}}
                 {{#hasinlinecontent}}
                 <div class="simple-inline-content {{#iscomplete}}is-complete{{/iscomplete}}"
-                     {{#hasviewtracking}}data-viewurl="{{viewurl}}"{{/hasviewtracking}}
-                     {{#completionenabled}}data-has-completion="1"{{/completionenabled}}>
+                     {{#hasviewtracking}}data-viewservice="{{viewservice}}" data-viewparam="{{viewparam}}" data-viewinstance="{{viewinstance}}"{{/hasviewtracking}}>
                     {{{inlinecontent}}}
                 </div>
+                {{> format_simple/local/content/cm/completion }}
                 {{/hasinlinecontent}}
 
                 {{#hasembedurl}}
                 <div class="simple-embed-container {{#isembedh5p}}simple-embed-h5p{{/isembedh5p}} {{#isembedscorm}}simple-embed-scorm{{/isembedscorm}} {{#isembedlti}}simple-embed-lti{{/isembedlti}} {{#iscomplete}}is-complete{{/iscomplete}}"
-                     {{#hasviewtracking}}data-viewurl="{{viewurl}}"{{/hasviewtracking}}
-                     {{#completionenabled}}data-has-completion="1"{{/completionenabled}}>
+                     {{#hasviewtracking}}data-viewservice="{{viewservice}}" data-viewparam="{{viewparam}}" data-viewinstance="{{viewinstance}}"{{/hasviewtracking}}>
                     <iframe src="{{embedurl}}"
                             class="simple-embed-iframe"
                             allowfullscreen
@@ -285,6 +268,7 @@
                         <i class="fa fa-expand" aria-hidden="true"></i>
                     </button>
                 </div>
+                {{> format_simple/local/content/cm/completion }}
                 {{/hasembedurl}}
 
                 {{^hasinlinecontent}}
@@ -292,35 +276,8 @@
                 <a href="{{url}}" class="aalink simple-cm-card simple-cm-card-primary">
                     <img src="{{iconurl}}" alt="" class="simple-cm-icon" aria-hidden="true">
                     <span class="simple-cm-name">{{name}}</span>
-                    {{#completionenabled}}
-                    {{^ismanualcompletion}}
-                    <span class="simple-cm-completion {{#iscomplete}}is-complete{{/iscomplete}}">
-                        {{#iscomplete}}
-                        <i class="fa fa-check-circle" aria-hidden="true"></i>
-                        {{/iscomplete}}
-                        {{^iscomplete}}
-                        <i class="fa fa-circle-o" aria-hidden="true"></i>
-                        {{/iscomplete}}
-                    </span>
-                    {{/ismanualcompletion}}
-                    {{#ismanualcompletion}}
-                    <span class="simple-cm-manual-completion {{#iscomplete}}is-complete{{/iscomplete}}"
-                          role="checkbox"
-                          tabindex="0"
-                          aria-checked="{{#iscomplete}}true{{/iscomplete}}{{^iscomplete}}false{{/iscomplete}}"
-                          data-action="toggle-completion"
-                          data-cmid="{{id}}"
-                          title="{{#iscomplete}}{{#str}}marknotcomplete, format_simple{{/str}}{{/iscomplete}}{{^iscomplete}}{{#str}}markcomplete, format_simple{{/str}}{{/iscomplete}}">
-                        {{#iscomplete}}
-                        <i class="fa fa-check-square" aria-hidden="true"></i>
-                        {{/iscomplete}}
-                        {{^iscomplete}}
-                        <i class="fa fa-square-o" aria-hidden="true"></i>
-                        {{/iscomplete}}
-                    </span>
-                    {{/ismanualcompletion}}
-                    {{/completionenabled}}
                 </a>
+                {{> format_simple/local/content/cm/completion }}
                 {{/hasembedurl}}
                 {{/hasinlinecontent}}
             {{/isprimary}}
@@ -329,35 +286,8 @@
             <a href="{{url}}" class="aalink simple-cm-card simple-cm-card-learning">
                 <img src="{{iconurl}}" alt="" class="simple-cm-icon" aria-hidden="true">
                 <span class="simple-cm-name">{{name}}</span>
-                {{#completionenabled}}
-                {{^ismanualcompletion}}
-                <span class="simple-cm-completion {{#iscomplete}}is-complete{{/iscomplete}}">
-                    {{#iscomplete}}
-                    <i class="fa fa-check-circle" aria-hidden="true"></i>
-                    {{/iscomplete}}
-                    {{^iscomplete}}
-                    <i class="fa fa-circle-o" aria-hidden="true"></i>
-                    {{/iscomplete}}
-                </span>
-                {{/ismanualcompletion}}
-                {{#ismanualcompletion}}
-                <span class="simple-cm-manual-completion {{#iscomplete}}is-complete{{/iscomplete}}"
-                      role="checkbox"
-                      tabindex="0"
-                      aria-checked="{{#iscomplete}}true{{/iscomplete}}{{^iscomplete}}false{{/iscomplete}}"
-                      data-action="toggle-completion"
-                      data-cmid="{{id}}"
-                      title="{{#iscomplete}}{{#str}}marknotcomplete, format_simple{{/str}}{{/iscomplete}}{{^iscomplete}}{{#str}}markcomplete, format_simple{{/str}}{{/iscomplete}}">
-                    {{#iscomplete}}
-                    <i class="fa fa-check-square" aria-hidden="true"></i>
-                    {{/iscomplete}}
-                    {{^iscomplete}}
-                    <i class="fa fa-square-o" aria-hidden="true"></i>
-                    {{/iscomplete}}
-                </span>
-                {{/ismanualcompletion}}
-                {{/completionenabled}}
             </a>
+            {{> format_simple/local/content/cm/completion }}
             {{/isprimary}}
 
             {{#editing}}
@@ -383,35 +313,8 @@
                     <i class="fa {{faicon}}"></i>
                 </span>
                 <span class="simple-cm-name">{{name}}</span>
-                {{#completionenabled}}
-                {{^ismanualcompletion}}
-                <span class="simple-cm-completion {{#iscomplete}}is-complete{{/iscomplete}}">
-                    {{#iscomplete}}
-                    <i class="fa fa-check-circle" aria-hidden="true"></i>
-                    {{/iscomplete}}
-                    {{^iscomplete}}
-                    <i class="fa fa-circle-o" aria-hidden="true"></i>
-                    {{/iscomplete}}
-                </span>
-                {{/ismanualcompletion}}
-                {{#ismanualcompletion}}
-                <span class="simple-cm-manual-completion {{#iscomplete}}is-complete{{/iscomplete}}"
-                      role="checkbox"
-                      tabindex="0"
-                      aria-checked="{{#iscomplete}}true{{/iscomplete}}{{^iscomplete}}false{{/iscomplete}}"
-                      data-action="toggle-completion"
-                      data-cmid="{{id}}"
-                      title="{{#iscomplete}}{{#str}}marknotcomplete, format_simple{{/str}}{{/iscomplete}}{{^iscomplete}}{{#str}}markcomplete, format_simple{{/str}}{{/iscomplete}}">
-                    {{#iscomplete}}
-                    <i class="fa fa-check-square" aria-hidden="true"></i>
-                    {{/iscomplete}}
-                    {{^iscomplete}}
-                    <i class="fa fa-square-o" aria-hidden="true"></i>
-                    {{/iscomplete}}
-                </span>
-                {{/ismanualcompletion}}
-                {{/completionenabled}}
             </a>
+            {{> format_simple/local/content/cm/completion }}
             {{#editing}}
             {{#hascmcontrolmenu}}
             <div class="simple-cm-edit">
@@ -433,40 +336,13 @@
             <a href="{{url}}" class="aalink simple-cm-card simple-cm-card-activity">
                 <img src="{{iconurl}}" alt="" class="simple-cm-icon" aria-hidden="true">
                 <span class="simple-cm-name">{{name}}</span>
-                {{#completionenabled}}
-                {{^ismanualcompletion}}
-                <span class="simple-cm-completion {{#iscomplete}}is-complete{{/iscomplete}}">
-                    {{#iscomplete}}
-                    <i class="fa fa-check-circle" aria-hidden="true"></i>
-                    {{/iscomplete}}
-                    {{^iscomplete}}
-                    <i class="fa fa-circle-o" aria-hidden="true"></i>
-                    {{/iscomplete}}
-                </span>
-                {{/ismanualcompletion}}
-                {{#ismanualcompletion}}
-                <span class="simple-cm-manual-completion {{#iscomplete}}is-complete{{/iscomplete}}"
-                      role="checkbox"
-                      tabindex="0"
-                      aria-checked="{{#iscomplete}}true{{/iscomplete}}{{^iscomplete}}false{{/iscomplete}}"
-                      data-action="toggle-completion"
-                      data-cmid="{{id}}"
-                      title="{{#iscomplete}}{{#str}}marknotcomplete, format_simple{{/str}}{{/iscomplete}}{{^iscomplete}}{{#str}}markcomplete, format_simple{{/str}}{{/iscomplete}}">
-                    {{#iscomplete}}
-                    <i class="fa fa-check-square" aria-hidden="true"></i>
-                    {{/iscomplete}}
-                    {{^iscomplete}}
-                    <i class="fa fa-square-o" aria-hidden="true"></i>
-                    {{/iscomplete}}
-                </span>
-                {{/ismanualcompletion}}
-                {{/completionenabled}}
                 {{#isrestricted}}
                 <span class="simple-cm-restricted" title="{{availabilitytext}}">
                     <i class="fa fa-lock" aria-hidden="true"></i>
                 </span>
                 {{/isrestricted}}
             </a>
+            {{> format_simple/local/content/cm/completion }}
             {{#editing}}
             {{#hascmcontrolmenu}}
             <div class="simple-cm-edit">

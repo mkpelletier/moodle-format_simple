@@ -1310,35 +1310,53 @@ body.format-simple .simple-nav-callout {
     line-height: 1.3;
 }
 
-/* ---- Completion Indicator (auto) ---- */
+/* ---- Completion ----
+   Completion markup comes from core so that every condition type is supported. These rules
+   only soften its default chrome to match the rest of the format. */
 
-.format-simple .simple-cm-completion {
+.format-simple .simple-cm-completion-region {
+    display: flex;
+    align-items: center;
     flex-shrink: 0;
-    font-size: 1rem;
-    color: var(--simple-text-muted);
-    transition: color var(--simple-transition-slow);
+    gap: 6px;
 }
 
-.format-simple .simple-cm-completion.is-complete {
+/* Beside an activity card, sit at the right-hand end of the row. */
+.format-simple .simple-cm-wrapper > .simple-cm-completion-region,
+.format-simple .simple-cm-learning > .simple-cm-completion-region {
+    padding-left: 10px;
+}
+
+/* Below featured content, the completion controls get their own quiet strip. */
+.format-simple .simple-inline-content + .simple-cm-completion-region,
+.format-simple .simple-embed-container + .simple-cm-completion-region {
+    justify-content: flex-end;
+    padding: 10px 4px 0;
+    margin-top: 4px;
+    border-top: 1px solid var(--simple-border);
+}
+
+/* Tone down core's buttons and condition badges. */
+.format-simple .simple-cm-completion-region .btn {
+    border-radius: var(--simple-radius-sm);
+    font-size: 0.8125rem;
+    padding: 4px 12px;
+    transition: all var(--simple-transition-fast);
+}
+
+.format-simple .simple-cm-completion-region .badge {
+    font-weight: 400;
+    font-size: 0.75rem;
+}
+
+/* Completed activities pick up the format's success colour. */
+.format-simple .simple-cm-completion-region[data-completion-state="complete"] .badge {
     color: var(--simple-success);
 }
 
-/* ---- Manual Completion Checkbox ---- */
-
-.format-simple .simple-cm-manual-completion {
-    flex-shrink: 0;
-    font-size: 1rem;
-    color: var(--simple-accent);
-    cursor: pointer;
-    transition: color var(--simple-transition-fast), transform var(--simple-transition-fast);
-}
-
-.format-simple .simple-cm-manual-completion:hover {
-    transform: scale(1.15);
-}
-
-.format-simple .simple-cm-manual-completion.is-complete {
-    color: var(--simple-success);
+.format-simple .simple-inline-content.is-complete,
+.format-simple .simple-embed-container.is-complete {
+    transition: border-color var(--simple-transition-slow);
 }
 
 /* ---- Restricted Indicator ---- */

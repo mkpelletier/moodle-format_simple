@@ -237,9 +237,9 @@ class section extends section_base {
         $cmdata->isprimary = false;
         $cmdata->editing = $PAGE->user_is_editing();
 
-        // Completion state.
+        // Completion. Rendering is delegated to core so that every completion condition is
+        // represented, not just the manual/automatic split this format used to draw itself.
         $cmdata->completionenabled = ($cm->completion != COMPLETION_TRACKING_NONE);
-        $cmdata->ismanualcompletion = ($cm->completion == COMPLETION_TRACKING_MANUAL);
         $cmdata->iscomplete = false;
         if ($cmdata->completionenabled) {
             $completion = new \completion_info($course);
@@ -249,6 +249,11 @@ class section extends section_base {
                 || $completiondata->completionstate == COMPLETION_COMPLETE_PASS
             );
         }
+        // Machine readable state for the section progress ring, which must not depend on
+        // the shape of core's completion markup.
+        $cmdata->completionstate = $cmdata->iscomplete ? 'complete' : 'incomplete';
+        $cmdata->completion = $this->get_completion_data($cm, $output);
+        $cmdata->hascompletion = !empty($cmdata->completion);
 
         // Availability restrictions.
         $cmdata->isrestricted = !$cm->uservisible && $cm->visible;
@@ -275,16 +280,11 @@ class section extends section_base {
             $cmdata->isembedh5p = ($cm->modname === 'h5pactivity' && $cmdata->hasembedurl);
             $cmdata->isembedscorm = ($cm->modname === 'scorm' && $cmdata->hasembedurl);
             $cmdata->isembedlti = ($cm->modname === 'lti' && $cmdata->hasembedurl);
-
-            // View completion tracking for inline/embedded content.
-            // These modules are displayed without visiting view.php, so JS
-            // will fetch the view URL in the background to trigger completion.
-            $viewmods = ['page', 'book', 'h5pactivity', 'scorm', 'url', 'lti'];
-            if (($cmdata->hasinlinecontent || $cmdata->hasembedurl) && in_array($cm->modname, $viewmods, true)) {
-                $cmdata->viewurl = $cm->url ? $cm->url->out(false) : '';
-                $cmdata->hasviewtracking = !empty($cmdata->viewurl);
-            }
         }
+
+        // View tracking, after the zone blocks so embedded content is covered too. Applies to
+        // every zone because section 0's flat list also renders modules inline.
+        $this->add_view_tracking_data($cmdata, $cm);
 
         // Activity editing controls.
         $cmdata->cmcontrolmenu = '';
@@ -305,6 +305,83 @@ class section extends section_base {
         }
 
         return $cmdata;
+    }
+
+    /**
+     * Modules whose view event can be raised from JavaScript.
+     *
+     * Content shown inline is never opened through the activity's own view.php, so the view
+     * event that ordinarily records the visit and satisfies view based completion never
+     * happens. Each of these modules exposes a mod_<name>_view_<name> web service that raises
+     * exactly that event, which the JavaScript calls once the content has been seen.
+     *
+     * Keyed by module name, holding the service name and the name of its instance id
+     * parameter. Every module names that parameter after itself rather than using a common
+     * one, so it has to be carried through to the caller.
+     *
+     * @var array<string, array{0: string, 1: string}>
+     */
+    private const VIEW_SERVICES = [
+        'book' => ['mod_book_view_book', 'bookid'],
+        'folder' => ['mod_folder_view_folder', 'folderid'],
+        'h5pactivity' => ['mod_h5pactivity_view_h5pactivity', 'h5pactivityid'],
+        'lesson' => ['mod_lesson_view_lesson', 'lessonid'],
+        'lti' => ['mod_lti_view_lti', 'ltiid'],
+        'page' => ['mod_page_view_page', 'pageid'],
+        'resource' => ['mod_resource_view_resource', 'resourceid'],
+        'scorm' => ['mod_scorm_view_scorm', 'scormid'],
+        'url' => ['mod_url_view_url', 'urlid'],
+    ];
+
+    /**
+     * Add the data JavaScript needs to raise a module's view event.
+     *
+     * Only added for content actually rendered in place. Anything the student has to click
+     * through to reaches its own view.php and records the visit the usual way.
+     *
+     * @param stdClass $cmdata The course module template data, modified in place.
+     * @param \cm_info $cm The course module info.
+     */
+    private function add_view_tracking_data(stdClass $cmdata, \cm_info $cm): void {
+        $cmdata->hasviewtracking = false;
+
+        $renderedinplace = !empty($cmdata->hasinlinecontent) || !empty($cmdata->hasembedurl);
+        if (!$renderedinplace || !$cm->uservisible) {
+            return;
+        }
+
+        if (!isset(self::VIEW_SERVICES[$cm->modname])) {
+            return;
+        }
+
+        [$service, $param] = self::VIEW_SERVICES[$cm->modname];
+        $cmdata->viewservice = $service;
+        $cmdata->viewparam = $param;
+        $cmdata->viewinstance = (int) $cm->instance;
+        $cmdata->hasviewtracking = true;
+    }
+
+    /**
+     * Export core's completion information for a course module.
+     *
+     * Delegating to core keeps every completion condition supported, including combinations
+     * such as view plus grade, and gives the manual completion button its standard behaviour.
+     *
+     * @param \cm_info $cm The course module info.
+     * @param renderer_base $output The renderer.
+     * @return stdClass|null Completion template data, or null when there is nothing to show.
+     */
+    private function get_completion_data(\cm_info $cm, renderer_base $output): ?stdClass {
+        $format = $this->format;
+        $sectioninfo = $format->get_modinfo()->get_section_info_by_id($cm->section);
+        if ($sectioninfo === null) {
+            return null;
+        }
+
+        $completionclass = $format->get_output_classname('content\\cm\\completion');
+        $completion = new $completionclass($format, $sectioninfo, $cm);
+
+        return $completion->export_for_template($output);
     }
 
     /**

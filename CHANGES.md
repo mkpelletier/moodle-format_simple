@@ -2,6 +2,33 @@
 
 All notable changes to the Simple course format plugin are documented in this file.
 
+## v0.7.4 (2026-07-29) - Beta
+
+### Fixed
+- Featured content had no completion control. The template rendered the content only, so a
+  student could not mark an activity done and could not see its completion state. Completion
+  now appears beneath featured and inline content as well as on activity cards.
+- The view event for content rendered in place did not reliably fire. It waited thirty seconds
+  before doing anything, it was limited to a hardcoded list of module types, and it worked by
+  fetching the activity's view.php, which for URL and SCORM activities redirects away from
+  Moodle. Modules now raise their view event through the dedicated web service instead.
+
+### Changed
+- Completion rendering is delegated to core's completion component, so every condition type is
+  represented rather than only the manual and automatic split the format drew itself. Combined
+  conditions such as view plus grade, and states such as passed, now display correctly.
+- Content rendered in place raises its view event once it has been visible for three seconds,
+  rather than on a fixed thirty second timer, so completion follows what the student has
+  actually seen.
+- Completion markup now sits outside the activity card link, since a button cannot legally be
+  nested inside an anchor.
+- The section progress ring counts explicit completion state attributes rather than reading the
+  shape of the completion markup.
+
+### Removed
+- The bespoke manual completion toggle and its `markcomplete` and `marknotcomplete` strings,
+  both superseded by core's completion component.
+
 ## v0.7.3 (2026-07-29) - Beta
 
 ### Added
