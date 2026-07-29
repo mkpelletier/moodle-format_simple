@@ -186,6 +186,11 @@ class section extends section_base {
             }
             $primary = $data->learningcontent[$primaryindex];
             $primary->isprimary = true;
+            // Only the featured item is displayed in place, so only it gets core's completion
+            // controls; the rest of the zone renders as cards with the compact indicator.
+            if (!empty($primary->hasinlinecontent) || !empty($primary->hasembedurl)) {
+                $this->attach_completion($primary, $modinfo->get_cm((int) $primary->id), $output);
+            }
             $data->learningcontent[$primaryindex] = $primary;
         }
 
@@ -237,9 +242,11 @@ class section extends section_base {
         $cmdata->isprimary = false;
         $cmdata->editing = $PAGE->user_is_editing();
 
-        // Completion. Rendering is delegated to core so that every completion condition is
-        // represented, not just the manual/automatic split this format used to draw itself.
+        // Completion state. Activity cards show a compact indicator of their own; content
+        // rendered in place gets core's fuller treatment, added further down once we know
+        // whether the module is displayed in place.
         $cmdata->completionenabled = ($cm->completion != COMPLETION_TRACKING_NONE);
+        $cmdata->ismanualcompletion = ($cm->completion == COMPLETION_TRACKING_MANUAL);
         $cmdata->iscomplete = false;
         if ($cmdata->completionenabled) {
             $completion = new \completion_info($course);
@@ -250,10 +257,8 @@ class section extends section_base {
             );
         }
         // Machine readable state for the section progress ring, which must not depend on
-        // the shape of core's completion markup.
+        // the shape of any completion markup.
         $cmdata->completionstate = $cmdata->iscomplete ? 'complete' : 'incomplete';
-        $cmdata->completion = $this->get_completion_data($cm, $output);
-        $cmdata->hascompletion = !empty($cmdata->completion);
 
         // Availability restrictions.
         $cmdata->isrestricted = !$cm->uservisible && $cm->visible;
@@ -285,6 +290,17 @@ class section extends section_base {
         // View tracking, after the zone blocks so embedded content is covered too. Applies to
         // every zone because section 0's flat list also renders modules inline.
         $this->add_view_tracking_data($cmdata, $cm);
+
+        // Core's completion block belongs only to content actually displayed in place, which
+        // has no card to hang an indicator on. Cards keep the compact indicator instead.
+        // Section 0 shows every module's content inline; elsewhere only the featured one does,
+        // and that is not known until the featured item has been chosen, so it is attached
+        // later by attach_completion().
+        $cmdata->completion = null;
+        $cmdata->hascompletion = false;
+        if ((int) $this->section->section === 0 && !empty($cmdata->hasinlinecontent)) {
+            $this->attach_completion($cmdata, $cm, $output);
+        }
 
         // Activity editing controls.
         $cmdata->cmcontrolmenu = '';
@@ -362,10 +378,26 @@ class section extends section_base {
     }
 
     /**
-     * Export core's completion information for a course module.
+     * Attach core's completion information to a module rendered in place.
+     *
+     * @param stdClass $cmdata The course module template data, modified in place.
+     * @param \cm_info $cm The course module info.
+     * @param renderer_base $output The renderer.
+     */
+    private function attach_completion(stdClass $cmdata, \cm_info $cm, renderer_base $output): void {
+        $cmdata->completion = $this->get_completion_data($cm, $output);
+        $cmdata->hascompletion = !empty($cmdata->completion);
+    }
+
+    /**
+     * Export core's completion information for a module rendered in place.
      *
      * Delegating to core keeps every completion condition supported, including combinations
      * such as view plus grade, and gives the manual completion button its standard behaviour.
+     *
+     * The view condition is left out. This format marks content viewed as soon as the student
+     * has seen it and reflects that in the section progress ring, so restating it underneath
+     * the content being read adds nothing.
      *
      * @param \cm_info $cm The course module info.
      * @param renderer_base $output The renderer.
@@ -380,6 +412,9 @@ class section extends section_base {
 
         $completionclass = $format->get_output_classname('content\\cm\\completion');
         $completion = new $completionclass($format, $sectioninfo, $cm);
+        if (method_exists($completion, 'set_hideviewcondition')) {
+            $completion->set_hideviewcondition(true);
+        }
 
         return $completion->export_for_template($output);
     }

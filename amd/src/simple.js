@@ -765,29 +765,91 @@ define([
     };
 
     /**
-     * Keep the section progress ring in step with core's manual completion button.
+     * Record a course module's completion state and redraw its section's progress ring.
      *
-     * The button itself belongs to core, which re-renders it and announces the change with a
-     * bubbling event. All this format has to do is record the new state and redraw the ring.
+     * @param {HTMLElement} el An element inside the course module's wrapper.
+     * @param {boolean} complete The new completion state.
+     */
+    const applyCompletionState = function(el, complete) {
+        markCompletionState(el, complete ? 'complete' : 'incomplete');
+
+        var sectionEl = el.closest('.simple-section');
+        var sNum = sectionEl ? parseInt(sectionEl.dataset.section, 10) : -1;
+        if (sNum >= 0) {
+            refreshSectionProgress(sNum);
+        }
+    };
+
+    /**
+     * Wire up manual completion.
+     *
+     * Two sources feed the same state. Activity cards carry this format's compact indicator,
+     * which has to be a span so that it can live inside the card's link, so its clicks are
+     * handled here. Content rendered in place carries core's button, which core re-renders
+     * itself and announces with a bubbling event; there we only follow along.
      */
     const setupManualCompletion = function() {
+        // Core's button, beneath content rendered in place.
         root.addEventListener(CourseEvents.manualCompletionToggled, function(e) {
-            var wrapper = e.target.closest('[data-for="cmitem"]');
-            if (!wrapper) {
-                return;
-            }
+            applyCompletionState(e.target, !!e.detail.completed);
+        });
 
-            var region = wrapper.querySelector('[data-completion-tracked="1"]');
-            if (region) {
-                region.setAttribute('data-completion-state', e.detail.completed ? 'complete' : 'incomplete');
-            }
-
-            var sectionEl = wrapper.closest('.simple-section');
-            var sNum = sectionEl ? parseInt(sectionEl.dataset.section, 10) : -1;
-            if (sNum >= 0) {
-                refreshSectionProgress(sNum);
+        // This format's compact indicator on activity cards.
+        root.addEventListener('click', function(e) {
+            var dot = e.target.closest('[data-action="toggle-completion"]');
+            if (dot) {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleCardCompletion(dot);
             }
         });
+
+        // The indicator is a checkbox, so it must answer to the keyboard as well.
+        root.addEventListener('keydown', function(e) {
+            if (e.key !== ' ' && e.key !== 'Enter') {
+                return;
+            }
+            var dot = e.target.closest('[data-action="toggle-completion"]');
+            if (dot) {
+                e.preventDefault();
+                toggleCardCompletion(dot);
+            }
+        });
+    };
+
+    /**
+     * Toggle an activity card's manual completion indicator.
+     *
+     * @param {HTMLElement} dot The indicator element.
+     */
+    const toggleCardCompletion = function(dot) {
+        if (dot.dataset.busy === '1') {
+            return;
+        }
+        dot.dataset.busy = '1';
+
+        var cmid = parseInt(dot.dataset.cmid, 10);
+        var complete = !dot.classList.contains('is-complete');
+
+        // Show the new state straight away, then put it back if the server disagrees.
+        var paint = function(state) {
+            dot.classList.toggle('is-complete', state);
+            dot.setAttribute('aria-checked', state ? 'true' : 'false');
+            applyCompletionState(dot, state);
+        };
+        paint(complete);
+
+        Ajax.call([{
+            methodname: 'core_completion_update_activity_completion_status_manually',
+            args: {cmid: cmid, completed: complete},
+            done: function() {
+                delete dot.dataset.busy;
+            },
+            fail: function() {
+                paint(!complete);
+                delete dot.dataset.busy;
+            }
+        }]);
     };
 
     /**

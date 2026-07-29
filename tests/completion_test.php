@@ -36,6 +36,7 @@ require_once($CFG->libdir . '/completionlib.php');
  * @copyright  2026 South African Theological Seminary <ict@sats.ac.za>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers     \format_simple\output\courseformat\content\section
+ * @covers     \format_simple\output\courseformat\content\cm\completion
  */
 final class completion_test extends \advanced_testcase {
     /**
@@ -310,9 +311,13 @@ final class completion_test extends \advanced_testcase {
     }
 
     /**
-     * Automatic completion conditions are described, not reduced to a single flag.
+     * The view condition is not restated underneath content the student is already reading.
+     *
+     * This format marks in-place content viewed as soon as it has been seen, and the section
+     * progress ring reflects that, so a "view this activity" condition adds nothing. With
+     * viewing as the only condition there is nothing left to show at all.
      */
-    public function test_automatic_conditions_are_exported(): void {
+    public function test_view_condition_is_not_shown_for_inplace_content(): void {
         $this->resetAfterTest(true);
 
         [$course, $student] = $this->make_course();
@@ -324,12 +329,35 @@ final class completion_test extends \advanced_testcase {
 
         $item = $this->find_item($this->export_section($course, $section, $student), 'Featured');
 
-        $this->assertTrue($item->hascompletion);
-        $this->assertTrue($item->completion->isautomatic);
-        $this->assertNotEmpty(
-            $item->completion->completiondetails,
-            'Automatic completion should describe its conditions.'
+        $this->assertTrue($item->hasinlinecontent);
+        $this->assertTrue($item->completionenabled, 'Completion is still tracked.');
+        $this->assertFalse(
+            $item->hascompletion,
+            'Viewing was the only condition, so nothing should be rendered.'
         );
+    }
+
+    /**
+     * A manual button still appears when viewing is also a condition.
+     */
+    public function test_manual_button_survives_view_condition_removal(): void {
+        $this->resetAfterTest(true);
+
+        [$course, $student] = $this->make_course();
+        $page = $this->make_page($course, 'Featured', ['completion' => COMPLETION_TRACKING_MANUAL]);
+        $section = $this->feature($course, (int) $page->cmid);
+
+        $item = $this->find_item($this->export_section($course, $section, $student), 'Featured');
+
+        $this->assertTrue($item->hascompletion);
+        $this->assertTrue($item->completion->showmanualcompletion);
+        foreach ($item->completion->completiondetails ?? [] as $detail) {
+            $this->assertNotEquals(
+                'completionview',
+                $detail->key ?? '',
+                'The view condition should have been removed.'
+            );
+        }
     }
 
     /**
@@ -350,12 +378,12 @@ final class completion_test extends \advanced_testcase {
     }
 
     /**
-     * Activities shown as cards carry completion information too.
+     * Activity cards carry the compact indicator, not core's completion block.
      *
-     * Completion is not exclusive to featured content; the non-featured items in the learning
-     * zone must keep their controls.
+     * Core's markup contains a button, which cannot sit inside the card's link, and is far too
+     * heavy for a card. Cards therefore expose the state the indicator template needs.
      */
-    public function test_card_activities_also_carry_completion(): void {
+    public function test_card_activities_use_the_compact_indicator(): void {
         $this->resetAfterTest(true);
 
         [$course, $student] = $this->make_course();
@@ -367,8 +395,15 @@ final class completion_test extends \advanced_testcase {
 
         $this->assertNotNull($item);
         $this->assertFalse($item->isprimary);
-        $this->assertTrue($item->hascompletion);
-        $this->assertTrue($item->completion->showmanualcompletion);
+        $this->assertFalse(
+            $item->hascompletion,
+            'Cards must not carry core\'s completion block; a button cannot nest in the link.'
+        );
+
+        // What the indicator template needs instead.
+        $this->assertTrue($item->completionenabled);
+        $this->assertTrue($item->ismanualcompletion);
+        $this->assertEquals('incomplete', $item->completionstate);
     }
 
     /**

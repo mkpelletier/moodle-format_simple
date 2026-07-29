@@ -206,8 +206,8 @@
             <a href="{{url}}" class="aalink simple-cm-card simple-cm-card-activity">
                 <img src="{{iconurl}}" alt="" class="simple-cm-icon" aria-hidden="true">
                 <span class="simple-cm-name">{{name}}</span>
+                {{> format_simple/local/content/cm/indicator }}
             </a>
-            {{> format_simple/local/content/cm/completion }}
             {{/hasinlinecontent}}
             {{#editing}}
             {{#hascmcontrolmenu}}
@@ -276,8 +276,8 @@
                 <a href="{{url}}" class="aalink simple-cm-card simple-cm-card-primary">
                     <img src="{{iconurl}}" alt="" class="simple-cm-icon" aria-hidden="true">
                     <span class="simple-cm-name">{{name}}</span>
+                    {{> format_simple/local/content/cm/indicator }}
                 </a>
-                {{> format_simple/local/content/cm/completion }}
                 {{/hasembedurl}}
                 {{/hasinlinecontent}}
             {{/isprimary}}
@@ -286,8 +286,8 @@
             <a href="{{url}}" class="aalink simple-cm-card simple-cm-card-learning">
                 <img src="{{iconurl}}" alt="" class="simple-cm-icon" aria-hidden="true">
                 <span class="simple-cm-name">{{name}}</span>
+                {{> format_simple/local/content/cm/indicator }}
             </a>
-            {{> format_simple/local/content/cm/completion }}
             {{/isprimary}}
 
             {{#editing}}
@@ -313,8 +313,8 @@
                     <i class="fa {{faicon}}"></i>
                 </span>
                 <span class="simple-cm-name">{{name}}</span>
+                {{> format_simple/local/content/cm/indicator }}
             </a>
-            {{> format_simple/local/content/cm/completion }}
             {{#editing}}
             {{#hascmcontrolmenu}}
             <div class="simple-cm-edit">
@@ -341,8 +341,8 @@
                     <i class="fa fa-lock" aria-hidden="true"></i>
                 </span>
                 {{/isrestricted}}
+                {{> format_simple/local/content/cm/indicator }}
             </a>
-            {{> format_simple/local/content/cm/completion }}
             {{#editing}}
             {{#hascmcontrolmenu}}
             <div class="simple-cm-edit">
