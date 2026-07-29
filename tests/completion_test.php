@@ -407,6 +407,98 @@ final class completion_test extends \advanced_testcase {
     }
 
     /**
+     * A card the student marks themselves is described as such on hover.
+     */
+    public function test_manual_card_tooltip(): void {
+        $this->resetAfterTest(true);
+
+        [$course, $student] = $this->make_course();
+        $featured = $this->make_page($course, 'Featured', ['completion' => COMPLETION_TRACKING_MANUAL]);
+        $this->make_page($course, 'Sibling', ['completion' => COMPLETION_TRACKING_MANUAL]);
+        $section = $this->feature($course, (int) $featured->cmid);
+
+        $item = $this->find_item($this->export_section($course, $section, $student), 'Sibling');
+
+        $this->assertTrue($item->ismanualcompletion);
+        $this->assertEquals(
+            get_string('completion_manual:markdone', 'course'),
+            $item->completiontooltip
+        );
+    }
+
+    /**
+     * A card the course completes on its own names the outstanding conditions.
+     */
+    public function test_conditional_card_tooltip_names_conditions(): void {
+        $this->resetAfterTest(true);
+
+        [$course, $student] = $this->make_course();
+        $featured = $this->make_page($course, 'Featured', ['completion' => COMPLETION_TRACKING_MANUAL]);
+        $this->make_page($course, 'Sibling', [
+            'completion' => COMPLETION_TRACKING_AUTOMATIC,
+            'completionview' => 1,
+        ]);
+        $section = $this->feature($course, (int) $featured->cmid);
+
+        $item = $this->find_item($this->export_section($course, $section, $student), 'Sibling');
+
+        $this->assertFalse($item->ismanualcompletion);
+        $this->assertStringContainsString(
+            get_string('completion_automatic:todo', 'course'),
+            $item->completiontooltip,
+            'An outstanding condition should be labelled as still to do.'
+        );
+        $this->assertStringContainsString(
+            get_string('detail_desc:view', 'completion'),
+            $item->completiontooltip,
+            'The condition itself should be named.'
+        );
+    }
+
+    /**
+     * The tooltip follows the activity's state once a condition has been met.
+     */
+    public function test_conditional_card_tooltip_updates_when_met(): void {
+        $this->resetAfterTest(true);
+
+        [$course, $student] = $this->make_course();
+        $featured = $this->make_page($course, 'Featured', ['completion' => COMPLETION_TRACKING_MANUAL]);
+        $sibling = $this->make_page($course, 'Sibling', [
+            'completion' => COMPLETION_TRACKING_AUTOMATIC,
+            'completionview' => 1,
+        ]);
+        $section = $this->feature($course, (int) $featured->cmid);
+
+        $this->setUser($student);
+        $this->call_view_service('mod_page_view_page', 'pageid', (int) $sibling->id);
+
+        $item = $this->find_item($this->export_section($course, $section, $student), 'Sibling');
+
+        $this->assertStringContainsString(
+            get_string('completion_automatic:done', 'course'),
+            $item->completiontooltip,
+            'A met condition should be labelled as done.'
+        );
+    }
+
+    /**
+     * Untracked activities have nothing to say on hover.
+     */
+    public function test_untracked_card_has_no_tooltip(): void {
+        $this->resetAfterTest(true);
+
+        [$course, $student] = $this->make_course();
+        $featured = $this->make_page($course, 'Featured', ['completion' => COMPLETION_TRACKING_MANUAL]);
+        $this->make_page($course, 'Sibling', ['completion' => COMPLETION_TRACKING_NONE]);
+        $section = $this->feature($course, (int) $featured->cmid);
+
+        $item = $this->find_item($this->export_section($course, $section, $student), 'Sibling');
+
+        $this->assertFalse($item->completionenabled);
+        $this->assertSame('', $item->completiontooltip);
+    }
+
+    /**
      * The completion state attribute follows the activity's real state.
      *
      * The section progress ring counts this attribute, so it must not go stale.

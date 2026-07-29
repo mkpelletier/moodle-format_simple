@@ -24,12 +24,17 @@
     are earned elsewhere. Deliberately built from spans so that it can sit inside the card's
     link, which a button could not.
 
+    The two kinds are told apart by their outline: a solid, heavier edge for something the
+    student can act on, and a dotted edge for something the course awards on its own. The
+    conditions behind either are named in the tooltip and the accessible label.
+
     Context variables required for this template:
     * id int Course module id
     * completionenabled bool Whether completion is tracked for this activity
     * ismanualcompletion bool Whether the student marks this activity complete themselves
     * iscomplete bool Whether the activity is currently complete
     * completionstate string Either complete or incomplete, counted by the progress ring
+    * completiontooltip string The completion conditions, one per line
     * name string The activity name, used for the accessible label
 
     Example context (json):
@@ -39,6 +44,7 @@
         "ismanualcompletion": true,
         "iscomplete": false,
         "completionstate": "incomplete",
+        "completiontooltip": "Mark as done",
         "name": "Reading one"
     }
 }}
@@ -49,15 +55,17 @@
       tabindex="0"
       aria-checked="{{#iscomplete}}true{{/iscomplete}}{{^iscomplete}}false{{/iscomplete}}"
       aria-label="{{#iscomplete}}{{#str}}marknotcompletename, format_simple, {{name}}{{/str}}{{/iscomplete}}{{^iscomplete}}{{#str}}markcompletename, format_simple, {{name}}{{/str}}{{/iscomplete}}"
+      title="{{completiontooltip}}"
       data-action="toggle-completion"
       data-cmid="{{id}}"
       data-completion-tracked="1"
       data-completion-state="{{completionstate}}"></span>
 {{/ismanualcompletion}}
 {{^ismanualcompletion}}
-<span class="simple-cm-dot {{#iscomplete}}is-complete{{/iscomplete}}"
+<span class="simple-cm-dot is-conditional {{#iscomplete}}is-complete{{/iscomplete}}"
       role="img"
-      aria-label="{{#iscomplete}}{{#str}}completedname, format_simple, {{name}}{{/str}}{{/iscomplete}}{{^iscomplete}}{{#str}}notcompletedname, format_simple, {{name}}{{/str}}{{/iscomplete}}"
+      aria-label="{{name}}{{#completiontooltip}} — {{completiontooltip}}{{/completiontooltip}}"
+      title="{{completiontooltip}}"
       data-completion-tracked="1"
       data-completion-state="{{completionstate}}"></span>
 {{/ismanualcompletion}}

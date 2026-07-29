@@ -1322,9 +1322,10 @@ body.format-simple .simple-nav-callout {
     border-radius: 6px;
     border: 1.5px solid var(--simple-border);
     background: transparent;
-    transition: background var(--simple-transition-fast),
-                border-color var(--simple-transition-fast),
-                transform var(--simple-transition-fast);
+    transition:
+        background var(--simple-transition-fast),
+        border-color var(--simple-transition-fast),
+        transform var(--simple-transition-fast);
 }
 
 .format-simple .simple-cm-dot.is-complete {
@@ -1332,15 +1333,16 @@ body.format-simple .simple-nav-callout {
     border-color: var(--simple-success);
 }
 
-/* Manual completion is the only kind the student can act on, so only it invites a click. */
+/* Something the student marks themselves: a solid, heavier edge that invites a click. */
 .format-simple .simple-cm-dot.is-manual {
     cursor: pointer;
+    border-width: 2.5px;
+    border-style: solid;
     border-color: var(--simple-accent);
 }
 
 .format-simple .simple-cm-dot.is-manual:hover {
     transform: scale(1.15);
-    border-color: var(--simple-accent);
 }
 
 .format-simple .simple-cm-dot.is-manual:focus-visible {
@@ -1349,6 +1351,20 @@ body.format-simple .simple-nav-callout {
 }
 
 .format-simple .simple-cm-dot.is-manual.is-complete {
+    border-color: var(--simple-success);
+}
+
+/* Something the course awards on its own: a dotted edge, and no invitation to click. */
+.format-simple .simple-cm-dot.is-conditional {
+    border-width: 1.5px;
+    border-style: dotted;
+    border-color: var(--simple-text-muted);
+    cursor: help;
+}
+
+/* Once earned, the dotted edge would fight the fill, so let the fill speak. */
+.format-simple .simple-cm-dot.is-conditional.is-complete {
+    border-style: solid;
     border-color: var(--simple-success);
 }
 
