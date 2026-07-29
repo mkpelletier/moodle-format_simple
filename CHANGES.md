@@ -2,6 +2,19 @@
 
 All notable changes to the Simple course format plugin are documented in this file.
 
+## v0.7.2 (2026-07-29) - Beta
+
+### Added
+- Backup and restore plugin classes (`backup/moodle2/`) for the format.
+- PHPUnit tests covering backup and restore of the `primarycontent` section option.
+
+### Fixed
+- The `primarycontent` section option holds a course module id, which core restores verbatim.
+  It is now translated through the course_module mapping, so the teacher's chosen primary
+  activity survives a course restore, import or duplicate instead of being silently lost.
+  An unresolvable selection falls back to automatic rather than a stale id, and a merging
+  restore no longer risks disturbing a selection already made in the destination course.
+
 ## v0.7.1 (2026-03-20) - Beta
 
 ### Added
