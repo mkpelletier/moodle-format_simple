@@ -2,6 +2,22 @@
 
 All notable changes to the Simple course format plugin are documented in this file.
 
+## v0.7.5 (2026-07-29) - Beta
+
+### Fixed
+- Activity cards showed only a completion control and lost their name. Core's completion block
+  is a wide flex sibling and the card is set to shrink, so the label was squeezed to nothing.
+  Cards now carry a small squircle indicator inside the card itself.
+
+### Changed
+- Completion on activity cards is a compact squircle: a filled state for tracked activities and
+  a clickable checkbox where the student marks completion themselves. Core's fuller controls are
+  reserved for content rendered in place, which has no card to hang an indicator on.
+- The view condition is no longer shown for content rendered in place. The format marks such
+  content viewed once the student has seen it and the section progress ring already reflects
+  that, so restating it under the content adds nothing. Other conditions, and the manual
+  completion button, are unaffected.
+
 ## v0.7.4 (2026-07-29) - Beta
 
 ### Fixed
