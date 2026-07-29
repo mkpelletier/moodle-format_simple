@@ -10,9 +10,11 @@ All notable changes to the Simple course format plugin are documented in this fi
   Cards now carry a small squircle indicator inside the card itself.
 
 ### Changed
-- Completion on activity cards is a compact squircle: a filled state for tracked activities and
-  a clickable checkbox where the student marks completion themselves. Core's fuller controls are
-  reserved for content rendered in place, which has no card to hang an indicator on.
+- Completion on activity cards is a compact squircle. Activities the student marks themselves
+  have a solid, heavier outline and act as a checkbox; activities the course completes on its own
+  have a dotted outline and are read only. Hovering either names the conditions behind it, using
+  Moodle's own wording. Core's fuller controls are reserved for content rendered in place, which
+  has no card to hang an indicator on.
 - The view condition is no longer shown for content rendered in place. The format marks such
   content viewed once the student has seen it and the section progress ring already reflects
   that, so restating it under the content adds nothing. Other conditions, and the manual

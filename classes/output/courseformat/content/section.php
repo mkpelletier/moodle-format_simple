@@ -259,6 +259,7 @@ class section extends section_base {
         // Machine readable state for the section progress ring, which must not depend on
         // the shape of any completion markup.
         $cmdata->completionstate = $cmdata->iscomplete ? 'complete' : 'incomplete';
+        $cmdata->completiontooltip = $this->get_completion_tooltip($cm, $cmdata);
 
         // Availability restrictions.
         $cmdata->isrestricted = !$cm->uservisible && $cm->visible;
@@ -375,6 +376,49 @@ class section extends section_base {
         $cmdata->viewparam = $param;
         $cmdata->viewinstance = (int) $cm->instance;
         $cmdata->hasviewtracking = true;
+    }
+
+    /**
+     * Describe an activity's completion conditions for the card indicator's tooltip.
+     *
+     * The indicator itself is deliberately just a shape, so the conditions behind it need to be
+     * readable on hover and to assistive technology. Core's own wording is reused so that the
+     * phrasing matches the rest of Moodle and stays translated.
+     *
+     * @param \cm_info $cm The course module info.
+     * @param stdClass $cmdata The course module template data built so far.
+     * @return string Tooltip text, empty when there is nothing useful to say.
+     */
+    private function get_completion_tooltip(\cm_info $cm, stdClass $cmdata): string {
+        global $USER;
+
+        if (empty($cmdata->completionenabled)) {
+            return '';
+        }
+
+        if (!empty($cmdata->ismanualcompletion)) {
+            return get_string(
+                $cmdata->iscomplete ? 'completion_manual:done' : 'completion_manual:markdone',
+                'course'
+            );
+        }
+
+        $details = \core_completion\cm_completion_details::get_instance($cm, $USER->id, true);
+        $lines = [];
+        foreach ($details->get_details() as $detail) {
+            $complete = in_array($detail->status, [COMPLETION_COMPLETE, COMPLETION_COMPLETE_PASS], true);
+            if ($detail->status == COMPLETION_COMPLETE_FAIL) {
+                $prefix = get_string('completion_automatic:failed', 'course');
+            } else {
+                $prefix = get_string(
+                    $complete ? 'completion_automatic:done' : 'completion_automatic:todo',
+                    'course'
+                );
+            }
+            $lines[] = $prefix . ' ' . $detail->description;
+        }
+
+        return implode("\n", $lines);
     }
 
     /**
