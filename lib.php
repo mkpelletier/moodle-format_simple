@@ -52,6 +52,13 @@ class format_simple extends core_courseformat\base {
     private const ZONE_HIDDEN = ['qbank'];
 
     /**
+     * Section currently being edited, so the primary content choices can be built for it.
+     *
+     * @var int|null Course_sections id, null when no section edit form is in play.
+     */
+    protected ?int $editingsectionid = null;
+
+    /**
      * Returns whether this course format uses sections.
      *
      * @return bool
@@ -324,7 +331,10 @@ class format_simple extends core_courseformat\base {
     /**
      * Definitions of the additional options that this course format uses for sections.
      *
-     * Provides a textarea for learning outcomes (one per line).
+     * Provides a textarea for learning outcomes (one per line) and a selector for the
+     * section's primary content. The selector's choices need to know which section is being
+     * edited, which the base API does not supply; {@see editsection_form()} records it, and
+     * {@see validate_format_options()} does the authoritative check when values are saved.
      *
      * @param bool $foreditform Whether the options are for the edit form.
      * @return array Array of options.
@@ -355,33 +365,6 @@ class format_simple extends core_courseformat\base {
                 ]
             );
 
-            // Build choices for the primary content selector.
-            $choices = [0 => get_string('primarycontent_auto', 'format_simple')];
-            $course = $this->get_course();
-            $modinfo = get_fast_modinfo($course);
-            // Determine which section is being edited from the form data.
-            $sectionnum = optional_param('sectionid', 0, PARAM_INT);
-            if ($sectionnum > 0) {
-                $sectioninfo = $modinfo->get_section_info_by_id($sectionnum);
-            } else {
-                $sectionnum = optional_param('id', 0, PARAM_INT);
-                $sectioninfo = $sectionnum > 0 ? $modinfo->get_section_info_by_id($sectionnum) : null;
-            }
-            if ($sectioninfo !== null) {
-                foreach ($modinfo->get_cms() as $cm) {
-                    if ($cm->section != $sectioninfo->id) {
-                        continue;
-                    }
-                    if (!$cm->is_visible_on_course_page()) {
-                        continue;
-                    }
-                    $zone = self::get_activity_zone($cm);
-                    if ($zone === 'learning') {
-                        $choices[$cm->id] = format_string($cm->name);
-                    }
-                }
-            }
-
             $options['primarycontent'] = array_merge(
                 $options['primarycontent'],
                 [
@@ -389,12 +372,159 @@ class format_simple extends core_courseformat\base {
                     'help' => 'primarycontent',
                     'help_component' => 'format_simple',
                     'element_type' => 'select',
-                    'element_attributes' => [$choices],
+                    'element_attributes' => [$this->get_primarycontent_choices($this->editingsectionid)],
                 ]
             );
         }
 
         return $options;
+    }
+
+    /**
+     * Course modules in a section that may serve as its primary content.
+     *
+     * @param int|null $sectionid The course_sections id, or null when no section is in context.
+     * @return \cm_info[] Candidate modules keyed by course module id, empty if there are none.
+     */
+    protected function get_primarycontent_candidates(?int $sectionid): array {
+        if (empty($sectionid)) {
+            return [];
+        }
+
+        $modinfo = get_fast_modinfo($this->get_course());
+        $sectioninfo = $modinfo->get_section_info_by_id($sectionid);
+        if ($sectioninfo === null) {
+            // The section belongs to a different course, or no longer exists.
+            return [];
+        }
+
+        $candidates = [];
+        foreach ($modinfo->get_cms() as $cm) {
+            if ($cm->section != $sectioninfo->id) {
+                continue;
+            }
+            if (!$cm->is_visible_on_course_page()) {
+                continue;
+            }
+            if (self::get_activity_zone($cm) !== 'learning') {
+                continue;
+            }
+            $candidates[$cm->id] = $cm;
+        }
+
+        return $candidates;
+    }
+
+    /**
+     * Select choices for the primary content option.
+     *
+     * @param int|null $sectionid The course_sections id, or null when no section is in context.
+     * @return array Course module id => activity name, always including 0 for automatic.
+     */
+    protected function get_primarycontent_choices(?int $sectionid): array {
+        $choices = [0 => get_string('primarycontent_auto', 'format_simple')];
+        foreach ($this->get_primarycontent_candidates($sectionid) as $cm) {
+            $choices[$cm->id] = format_string($cm->name);
+        }
+        return $choices;
+    }
+
+    /**
+     * Return an instance of moodleform to edit a specified section.
+     *
+     * The base API gives section_format_options() no way to know which section is being
+     * edited, so record it here. This is the documented extension point for formats that
+     * need section context while the edit form is built.
+     *
+     * @param mixed $action The action attribute for the form.
+     * @param array $customdata Custom data, with the section_info in the 'cs' field.
+     * @return \moodleform
+     */
+    public function editsection_form($action, $customdata = []): \moodleform {
+        if (!empty($customdata['cs']->id)) {
+            $this->editingsectionid = (int) $customdata['cs']->id;
+        }
+        return parent::editsection_form($action, $customdata);
+    }
+
+    /**
+     * Prepares values of course or section format options before storing them in DB.
+     *
+     * The parent checks 'primarycontent' against the select's choices, which
+     * section_format_options() can only build when a section happens to be in context. That
+     * makes the stored value depend on how the save was triggered. Validate it here instead,
+     * against the section id the caller actually supplied, so every code path agrees.
+     *
+     * @param array $rawdata Associative array of the proposed format options.
+     * @param int|null $sectionid Null for course format options.
+     * @return array Options that have valid values.
+     */
+    protected function validate_format_options(array $rawdata, ?int $sectionid = null): array {
+        $data = parent::validate_format_options($rawdata, $sectionid);
+
+        if ($sectionid !== null && array_key_exists('primarycontent', $rawdata)) {
+            $cmid = (int) $rawdata['primarycontent'];
+            $candidates = $this->get_primarycontent_candidates($sectionid);
+            // Anything that is not a current candidate falls back to automatic selection.
+            $data['primarycontent'] = array_key_exists($cmid, $candidates) ? $cmid : 0;
+        }
+
+        return $data;
+    }
+
+    /**
+     * Duplicate a section, carrying the primary content selection to the copied activity.
+     *
+     * The parent copies section format options before duplicating the modules, so at that
+     * point the new section is still empty and the selection cannot be resolved. Re-point it
+     * once the copies exist, matching each duplicate to its original by position.
+     *
+     * @param \section_info $originalsection The section to duplicate.
+     * @return \section_info The new section.
+     */
+    public function duplicate_section(\section_info $originalsection): \section_info {
+        $originalprimary = (int) ($this->get_format_options($originalsection)['primarycontent'] ?? 0);
+        $originalcmids = $originalprimary ? $this->get_duplicable_cmids($originalsection) : [];
+
+        $newsection = parent::duplicate_section($originalsection);
+
+        $position = $originalprimary ? array_search($originalprimary, $originalcmids, true) : false;
+        if ($position !== false) {
+            $newcmids = $this->get_duplicable_cmids($newsection);
+            // Only trust the pairing when the copy came out the same shape as the original.
+            if (count($newcmids) === count($originalcmids) && isset($newcmids[$position])) {
+                $this->update_section_format_options([
+                    'id' => $newsection->id,
+                    'primarycontent' => $newcmids[$position],
+                ]);
+            }
+        }
+
+        return get_fast_modinfo($this->get_course())->get_section_info_by_id($newsection->id);
+    }
+
+    /**
+     * Course module ids of a section, in the order the parent duplicates them.
+     *
+     * Mirrors the filtering in core_courseformat\base::duplicate_section() so that originals
+     * and copies line up index for index.
+     *
+     * @param \section_info $section The section to inspect.
+     * @return int[] Ordered course module ids.
+     */
+    protected function get_duplicable_cmids(\section_info $section): array {
+        $modinfo = get_fast_modinfo($this->get_course());
+        $cmids = [];
+
+        foreach ($modinfo->sections[$section->section] ?? [] as $cmid) {
+            $cm = $modinfo->cms[$cmid];
+            if (!$cm->is_of_type_that_can_display() || $cm->deletioninprogress) {
+                continue;
+            }
+            $cmids[] = (int) $cmid;
+        }
+
+        return $cmids;
     }
 
     /**
