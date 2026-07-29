@@ -2,6 +2,25 @@
 
 All notable changes to the Simple course format plugin are documented in this file.
 
+## v0.7.3 (2026-07-29) - Beta
+
+### Added
+- PHPUnit tests for the primary content option covering validation, form choices and section
+  duplication.
+
+### Fixed
+- The primary content selector no longer derives its permitted values from request parameters.
+  Saving a section through anything other than the section settings form silently discarded the
+  teacher's choice, because the choice list collapsed to "automatic" when the expected parameters
+  were absent. Validation now uses the section id the caller supplies, so every code path agrees.
+- Duplicating a section now points the copy at its own duplicated activity. Previously the copy
+  inherited the original section's course module id, which belongs to a different section, so the
+  duplicate silently fell back to featuring its first activity.
+
+### Changed
+- Section edit form choices are now supplied via `editsection_form()`, the documented extension
+  point for formats needing section context, rather than being inferred from the URL.
+
 ## v0.7.2 (2026-07-29) - Beta
 
 ### Added
