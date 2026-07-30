@@ -27,6 +27,7 @@ defined('MOODLE_INTERNAL') || die();
 $string['addsection'] = 'Add unit';
 $string['backtocourse'] = 'Back to course';
 $string['close'] = 'Close';
+$string['completedname'] = '{$a} is complete';
 $string['courseinfo'] = 'Course Info';
 $string['coursetools'] = 'Course tools';
 $string['currentsection'] = 'This unit';
@@ -39,7 +40,6 @@ $string['hiddensections_help'] = 'Whether hidden sections are shown as not avail
 $string['hidefromothers'] = 'Hide unit';
 $string['learningoutcomes'] = 'Learning outcomes';
 $string['learningoutcomes_help'] = 'Enter one learning outcome per line. These will be displayed in a popout panel for students to see the objectives for this unit.';
-$string['completedname'] = '{$a} is complete';
 $string['loading'] = 'Loading...';
 $string['markcompletename'] = 'Mark {$a} as complete';
 $string['marknotcompletename'] = 'Mark {$a} as not complete';
