@@ -386,6 +386,7 @@ class section extends section_base {
      *
      * @param \cm_info $cm The course module info.
      * @param stdClass $cmdata The course module template data built so far.
+     * @param bool $excludeview Whether to leave out the view condition.
      * @return string Label text, empty when completion is not tracked.
      */
     private function get_completion_label(\cm_info $cm, stdClass $cmdata, bool $excludeview = false): string {
