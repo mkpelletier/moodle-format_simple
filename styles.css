@@ -1315,6 +1315,10 @@ body.format-simple .simple-nav-callout {
    than as a control competing with the activity name. */
 
 .format-simple .simple-cm-dot {
+    /* Must not rely on being a flex item: width and height do not apply to inline elements,
+       which would collapse this to a bare border. */
+    display: inline-block;
+    vertical-align: middle;
     flex-shrink: 0;
     width: 16px;
     height: 16px;
@@ -1331,6 +1335,38 @@ body.format-simple .simple-nav-callout {
 .format-simple .simple-cm-dot.is-complete {
     background: var(--simple-success);
     border-color: var(--simple-success);
+}
+
+/* The quiet label beside the indicator, naming what the activity asks for.
+   Collapsed rather than hidden so revealing it slides open instead of shunting the card. */
+.format-simple .simple-cm-dot-label {
+    /* Same reason as the indicator: max-width is ignored on an inline element. */
+    display: inline-block;
+    vertical-align: middle;
+    flex-shrink: 0;
+    max-width: 0;
+    overflow: hidden;
+    opacity: 0;
+    white-space: nowrap;
+    font-size: 0.75rem;
+    color: var(--simple-text-muted);
+    transition:
+        max-width var(--simple-transition-fast),
+        opacity var(--simple-transition-fast),
+        margin-right var(--simple-transition-fast);
+}
+
+.format-simple .simple-cm-card:hover .simple-cm-dot-label,
+.format-simple .simple-cm-card:focus-within .simple-cm-dot-label {
+    max-width: 14rem;
+    opacity: 1;
+    margin-right: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .format-simple .simple-cm-dot-label {
+        transition: none;
+    }
 }
 
 /* Something the student marks themselves: a solid, heavier edge that invites a click. */
@@ -1368,30 +1404,49 @@ body.format-simple .simple-nav-callout {
     border-color: var(--simple-success);
 }
 
-/* ---- Completion controls beneath content rendered in place ----
-   Featured content has no card to carry an indicator, and is substantial enough to warrant
-   core's full controls. These rules only soften core's default chrome. */
+/* ---- Completion indicator inside content rendered in place ----
+   The indicator belongs to the content, so it sits within the same surface rather than
+   below it. The content is given room at its foot so the indicator has somewhere to live
+   without crowding the last line. */
 
-.format-simple .simple-cm-completion-region {
+.format-simple .simple-cm-completion-inline {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 6px;
-    padding: 10px 4px 0;
-    margin-top: 4px;
-    border-top: 1px solid var(--simple-border);
+    /* Clear of the last line without making a feature of itself. */
+    margin-top: 28px;
 }
 
-.format-simple .simple-cm-completion-region .btn {
-    border-radius: var(--simple-radius-sm);
-    font-size: 0.8125rem;
-    padding: 4px 12px;
-    transition: all var(--simple-transition-fast);
+/* An embed fills its own aspect-ratio box, so nothing can sit inside it. Its indicator
+   attaches underneath instead, sharing the surface so the two read as one card. */
+.format-simple .simple-embed-container:has(+ .simple-cm-completion-inline) {
+    margin-bottom: 0;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
 }
 
-.format-simple .simple-cm-completion-region .badge {
-    font-weight: 400;
-    font-size: 0.75rem;
+.format-simple .simple-cm-completion-inline.is-attached {
+    margin-top: 0;
+    margin-bottom: 24px;
+    padding: 12px 16px;
+    background: var(--simple-surface);
+    border-radius: 0 0 var(--simple-radius) var(--simple-radius);
+    box-shadow: var(--simple-shadow-md);
+}
+
+/* A touch larger than on a card, since it stands alone rather than beside a title. */
+.format-simple .simple-cm-completion-inline .simple-cm-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 7px;
+}
+
+/* No card to hover here, so the indicator's own row reveals the label. */
+.format-simple .simple-cm-completion-inline:hover .simple-cm-dot-label,
+.format-simple .simple-cm-completion-inline:focus-within .simple-cm-dot-label {
+    max-width: 14rem;
+    opacity: 1;
+    margin-right: 8px;
 }
 
 /* ---- Restricted Indicator ---- */

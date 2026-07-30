@@ -36,7 +36,6 @@ require_once($CFG->libdir . '/completionlib.php');
  * @copyright  2026 South African Theological Seminary <ict@sats.ac.za>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers     \format_simple\output\courseformat\content\section
- * @covers     \format_simple\output\courseformat\content\cm\completion
  */
 final class completion_test extends \advanced_testcase {
     /**
@@ -185,14 +184,11 @@ final class completion_test extends \advanced_testcase {
         $this->assertNotNull($item);
         $this->assertTrue($item->isprimary, 'The activity should be the featured one.');
         $this->assertTrue($item->hasinlinecontent, 'Featured page content should render in place.');
-        $this->assertTrue($item->hascompletion, 'Featured content must carry completion information.');
-        $this->assertTrue(
-            $item->completion->showmanualcompletion,
-            'A manual completion control must be offered.'
-        );
-        $this->assertTrue(
-            $item->completion->istrackeduser,
-            'The student must be tracked for completion.'
+        $this->assertTrue($item->hasindicator, 'Featured content must carry a completion indicator.');
+        $this->assertTrue($item->ismanualcompletion, 'The student marks this one done themselves.');
+        $this->assertEquals(
+            get_string('completion_manual:markdone', 'course'),
+            $item->completionlabel
         );
     }
 
@@ -332,15 +328,15 @@ final class completion_test extends \advanced_testcase {
         $this->assertTrue($item->hasinlinecontent);
         $this->assertTrue($item->completionenabled, 'Completion is still tracked.');
         $this->assertFalse(
-            $item->hascompletion,
+            $item->hasindicator,
             'Viewing was the only condition, so nothing should be rendered.'
         );
     }
 
     /**
-     * A manual button still appears when viewing is also a condition.
+     * The manual control survives the view condition being removed.
      */
-    public function test_manual_button_survives_view_condition_removal(): void {
+    public function test_manual_control_survives_view_condition_removal(): void {
         $this->resetAfterTest(true);
 
         [$course, $student] = $this->make_course();
@@ -349,15 +345,13 @@ final class completion_test extends \advanced_testcase {
 
         $item = $this->find_item($this->export_section($course, $section, $student), 'Featured');
 
-        $this->assertTrue($item->hascompletion);
-        $this->assertTrue($item->completion->showmanualcompletion);
-        foreach ($item->completion->completiondetails ?? [] as $detail) {
-            $this->assertNotEquals(
-                'completionview',
-                $detail->key ?? '',
-                'The view condition should have been removed.'
-            );
-        }
+        $this->assertTrue($item->hasindicator);
+        $this->assertTrue($item->ismanualcompletion);
+        $this->assertStringNotContainsString(
+            get_string('detail_desc:view', 'completion'),
+            $item->completiontooltip,
+            'The view condition should have been removed.'
+        );
     }
 
     /**
@@ -373,7 +367,7 @@ final class completion_test extends \advanced_testcase {
         $item = $this->find_item($this->export_section($course, $section, $student), 'Featured');
 
         $this->assertFalse($item->completionenabled);
-        $this->assertFalse($item->hascompletion);
+        $this->assertFalse($item->hasindicator);
         $this->assertEquals('incomplete', $item->completionstate);
     }
 
@@ -395,12 +389,7 @@ final class completion_test extends \advanced_testcase {
 
         $this->assertNotNull($item);
         $this->assertFalse($item->isprimary);
-        $this->assertFalse(
-            $item->hascompletion,
-            'Cards must not carry core\'s completion block; a button cannot nest in the link.'
-        );
-
-        // What the indicator template needs instead.
+        $this->assertTrue($item->hasindicator, 'Cards carry the compact indicator.');
         $this->assertTrue($item->completionenabled);
         $this->assertTrue($item->ismanualcompletion);
         $this->assertEquals('incomplete', $item->completionstate);
@@ -478,6 +467,75 @@ final class completion_test extends \advanced_testcase {
             get_string('completion_automatic:done', 'course'),
             $item->completiontooltip,
             'A met condition should be labelled as done.'
+        );
+    }
+
+    /**
+     * The hover label states what the activity requires, without a status prefix.
+     */
+    public function test_hover_label_states_the_requirement(): void {
+        $this->resetAfterTest(true);
+
+        [$course, $student] = $this->make_course();
+        $featured = $this->make_page($course, 'Featured', ['completion' => COMPLETION_TRACKING_MANUAL]);
+        $this->make_page($course, 'Manual card', ['completion' => COMPLETION_TRACKING_MANUAL]);
+        $this->make_page($course, 'Auto card', [
+            'completion' => COMPLETION_TRACKING_AUTOMATIC,
+            'completionview' => 1,
+        ]);
+        $section = $this->feature($course, (int) $featured->cmid);
+
+        $data = $this->export_section($course, $section, $student);
+
+        $manual = $this->find_item($data, 'Manual card');
+        $this->assertEquals(get_string('completion_manual:markdone', 'course'), $manual->completionlabel);
+
+        $auto = $this->find_item($data, 'Auto card');
+        $this->assertEquals(get_string('detail_desc:view', 'completion'), $auto->completionlabel);
+        $this->assertStringNotContainsString(
+            get_string('completion_automatic:todo', 'course'),
+            $auto->completionlabel,
+            'The label states the requirement; status belongs in the tooltip.'
+        );
+    }
+
+    /**
+     * An activity with several conditions lists them all in the hover label.
+     */
+    public function test_hover_label_lists_every_condition(): void {
+        $this->resetAfterTest(true);
+
+        [$course, $student] = $this->make_course();
+        $featured = $this->make_page($course, 'Featured', ['completion' => COMPLETION_TRACKING_MANUAL]);
+        $section = $this->feature($course, (int) $featured->cmid);
+
+        // An assignment can require both a submission and a grade.
+        $this->getDataGenerator()->create_module('assign', [
+            'course' => $course->id,
+            'section' => 1,
+            'name' => 'Essay',
+            'completion' => COMPLETION_TRACKING_AUTOMATIC,
+            'completionview' => 1,
+            'completionusegrade' => 1,
+        ]);
+
+        $data = $this->export_section($course, $section, $student);
+        $item = null;
+        foreach (array_merge($data->learningcontent, $data->resources, $data->activities) as $candidate) {
+            if ($candidate->name === 'Essay') {
+                $item = $candidate;
+            }
+        }
+
+        $this->assertNotNull($item, 'The assignment should appear in one of the zones.');
+        $this->assertStringContainsString(
+            get_string('detail_desc:view', 'completion'),
+            $item->completionlabel
+        );
+        $this->assertStringContainsString(
+            ',',
+            $item->completionlabel,
+            'Several conditions should be listed together.'
         );
     }
 
