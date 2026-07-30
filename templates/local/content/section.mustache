@@ -46,8 +46,9 @@
     * activities - Array of activity module data.
 
     Each activity in the arrays above additionally carries:
-    * hascompletion - Whether there is completion information to render.
-    * completion - Core's completion export, rendered by the cm/completion partial.
+    * hasindicator - Whether a completion indicator should be rendered.
+    * completionlabel - Short statement of what the activity requires.
+    * completiontooltip - The completion conditions and their status.
     * completionstate - Either complete or incomplete, counted by the progress ring.
     * hasviewtracking - Whether the activity's view event can be raised from JavaScript.
     * viewservice - Name of the web service that raises the view event.
@@ -199,8 +200,12 @@
             <div class="simple-inline-content"
                  {{#hasviewtracking}}data-viewservice="{{viewservice}}" data-viewparam="{{viewparam}}" data-viewinstance="{{viewinstance}}"{{/hasviewtracking}}>
                 {{{inlinecontent}}}
+                {{#hasindicator}}
+                <div class="simple-cm-completion-inline">
+                    {{> format_simple/local/content/cm/indicator }}
+                </div>
+                {{/hasindicator}}
             </div>
-            {{> format_simple/local/content/cm/completion }}
             {{/hasinlinecontent}}
             {{^hasinlinecontent}}
             <a href="{{url}}" class="aalink simple-cm-card simple-cm-card-activity">
@@ -249,8 +254,12 @@
                 <div class="simple-inline-content {{#iscomplete}}is-complete{{/iscomplete}}"
                      {{#hasviewtracking}}data-viewservice="{{viewservice}}" data-viewparam="{{viewparam}}" data-viewinstance="{{viewinstance}}"{{/hasviewtracking}}>
                     {{{inlinecontent}}}
+                    {{#hasindicator}}
+                    <div class="simple-cm-completion-inline">
+                        {{> format_simple/local/content/cm/indicator }}
+                    </div>
+                    {{/hasindicator}}
                 </div>
-                {{> format_simple/local/content/cm/completion }}
                 {{/hasinlinecontent}}
 
                 {{#hasembedurl}}
@@ -268,7 +277,12 @@
                         <i class="fa fa-expand" aria-hidden="true"></i>
                     </button>
                 </div>
-                {{> format_simple/local/content/cm/completion }}
+                {{! The embed fills its own box, so its indicator attaches as a strip below. }}
+                {{#hasindicator}}
+                <div class="simple-cm-completion-inline is-attached">
+                    {{> format_simple/local/content/cm/indicator }}
+                </div>
+                {{/hasindicator}}
                 {{/hasembedurl}}
 
                 {{^hasinlinecontent}}

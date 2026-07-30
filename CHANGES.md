@@ -2,50 +2,52 @@
 
 All notable changes to the Simple course format plugin are documented in this file.
 
-## v0.7.5 (2026-07-29) - Beta
+## v0.7.5 (2026-07-30) - Beta
+
+Completion tracking for content the format renders in place. Supersedes the 0.7.4 entry, which
+described an approach that was reworked before release.
+
+### Added
+- Completion indicators on every activity, including content rendered in place, which previously
+  had none at all.
+- PHPUnit tests covering completion export, the view web services, condition labels and the
+  indicator's behaviour across tracking types.
 
 ### Fixed
-- Activity cards showed only a completion control and lost their name. Core's completion block
-  is a wide flex sibling and the card is set to shrink, so the label was squeezed to nothing.
-  Cards now carry a small squircle indicator inside the card itself.
-
-### Changed
-- Completion on activity cards is a compact squircle. Activities the student marks themselves
-  have a solid, heavier outline and act as a checkbox; activities the course completes on its own
-  have a dotted outline and are read only. Hovering either names the conditions behind it, using
-  Moodle's own wording. Core's fuller controls are reserved for content rendered in place, which
-  has no card to hang an indicator on.
-- The view condition is no longer shown for content rendered in place. The format marks such
-  content viewed once the student has seen it and the section progress ring already reflects
-  that, so restating it under the content adds nothing. Other conditions, and the manual
-  completion button, are unaffected.
-
-## v0.7.4 (2026-07-29) - Beta
-
-### Fixed
-- Featured content had no completion control. The template rendered the content only, so a
-  student could not mark an activity done and could not see its completion state. Completion
-  now appears beneath featured and inline content as well as on activity cards.
+- Featured content had no completion control. The template rendered the content and nothing else,
+  so a student could neither mark an activity done nor see its completion state.
 - The view event for content rendered in place did not reliably fire. It waited thirty seconds
-  before doing anything, it was limited to a hardcoded list of module types, and it worked by
-  fetching the activity's view.php, which for URL and SCORM activities redirects away from
-  Moodle. Modules now raise their view event through the dedicated web service instead.
+  before doing anything, covered only a hardcoded list of module types so anything supplying
+  content through the standard `cm_info` hook was ignored, and worked by fetching the activity's
+  `view.php`. For URL and SCORM activities that redirects, in the URL case to an external site,
+  so the response was chased cross-origin and the interface never caught up.
+- Activity cards lost their name when the completion control was placed beside them, because the
+  card is set to shrink and was squeezed to nothing.
+- Completion indicators collapsed to a bare border wherever they were not a flex item, since
+  `width` and `height` do not apply to inline elements.
 
 ### Changed
-- Completion rendering is delegated to core's completion component, so every condition type is
-  represented rather than only the manual and automatic split the format drew itself. Combined
-  conditions such as view plus grade, and states such as passed, now display correctly.
-- Content rendered in place raises its view event once it has been visible for three seconds,
-  rather than on a fixed thirty second timer, so completion follows what the student has
-  actually seen.
-- Completion markup now sits outside the activity card link, since a button cannot legally be
-  nested inside an anchor.
+- Modules raise their view event through the dedicated `mod_<name>_view_<name>` web service, once
+  the content has been visible for three seconds, rather than on a fixed timer. Each module names
+  that service's instance parameter after itself, so the name is carried through from the server.
+- Completion is shown as a compact squircle. Activities the student marks themselves have a solid,
+  heavier outline and act as a checkbox; activities the course completes on its own have a dotted
+  outline and are read only. Hovering either reveals a quiet label naming what is required, and the
+  tooltip adds whether each condition has been met. Both use Moodle's own wording so the phrasing
+  matches the rest of the site and stays translated.
+- Content rendered in place carries its indicator inside the content itself, at the foot, slightly
+  larger than on a card. Embedded content fills its own aspect-ratio box, so its indicator attaches
+  as a strip beneath, sharing the surface so the two read as one card.
+- The view condition is not shown for content rendered in place. The format marks such content
+  viewed as soon as the student has seen it and the section progress ring already reflects that, so
+  restating it under the content adds nothing. Where viewing was the only condition, no indicator
+  is shown; other conditions and the manual control are unaffected.
 - The section progress ring counts explicit completion state attributes rather than reading the
   shape of the completion markup.
 
 ### Removed
-- The bespoke manual completion toggle and its `markcomplete` and `marknotcomplete` strings,
-  both superseded by core's completion component.
+- The previous manual completion toggle and its `markcomplete` and `marknotcomplete` strings,
+  replaced by the indicator and its per-activity accessible labels.
 
 ## v0.7.3 (2026-07-29) - Beta
 

@@ -189,7 +189,7 @@ class section extends section_base {
             // Only the featured item is displayed in place, so only it gets core's completion
             // controls; the rest of the zone renders as cards with the compact indicator.
             if (!empty($primary->hasinlinecontent) || !empty($primary->hasembedurl)) {
-                $this->attach_completion($primary, $modinfo->get_cm((int) $primary->id), $output);
+                $this->apply_inplace_completion($primary, $modinfo->get_cm((int) $primary->id));
             }
             $data->learningcontent[$primaryindex] = $primary;
         }
@@ -260,6 +260,8 @@ class section extends section_base {
         // the shape of any completion markup.
         $cmdata->completionstate = $cmdata->iscomplete ? 'complete' : 'incomplete';
         $cmdata->completiontooltip = $this->get_completion_tooltip($cm, $cmdata);
+        $cmdata->completionlabel = $this->get_completion_label($cm, $cmdata);
+        $cmdata->hasindicator = !empty($cmdata->completionenabled);
 
         // Availability restrictions.
         $cmdata->isrestricted = !$cm->uservisible && $cm->visible;
@@ -292,15 +294,12 @@ class section extends section_base {
         // every zone because section 0's flat list also renders modules inline.
         $this->add_view_tracking_data($cmdata, $cm);
 
-        // Core's completion block belongs only to content actually displayed in place, which
-        // has no card to hang an indicator on. Cards keep the compact indicator instead.
-        // Section 0 shows every module's content inline; elsewhere only the featured one does,
-        // and that is not known until the featured item has been chosen, so it is attached
-        // later by attach_completion().
-        $cmdata->completion = null;
-        $cmdata->hascompletion = false;
+        // Content shown in place carries its indicator inside the content itself and leaves out
+        // the view condition. Section 0 shows every module inline; elsewhere only the featured
+        // one does, and that is not settled until the featured item has been chosen, so it is
+        // applied later by apply_inplace_completion().
         if ((int) $this->section->section === 0 && !empty($cmdata->hasinlinecontent)) {
-            $this->attach_completion($cmdata, $cm, $output);
+            $this->apply_inplace_completion($cmdata, $cm);
         }
 
         // Activity editing controls.
@@ -379,19 +378,47 @@ class section extends section_base {
     }
 
     /**
-     * Describe an activity's completion conditions for the card indicator's tooltip.
+     * A short statement of what the activity asks of the student.
      *
-     * The indicator itself is deliberately just a shape, so the conditions behind it need to be
-     * readable on hover and to assistive technology. Core's own wording is reused so that the
-     * phrasing matches the rest of Moodle and stays translated.
+     * Shown beside the indicator on hover, where waiting for a browser tooltip would be more
+     * friction than the answer is worth. Deliberately says only what is required, leaving the
+     * indicator's fill to say whether it has been done yet.
      *
      * @param \cm_info $cm The course module info.
      * @param stdClass $cmdata The course module template data built so far.
+     * @return string Label text, empty when completion is not tracked.
+     */
+    private function get_completion_label(\cm_info $cm, stdClass $cmdata, bool $excludeview = false): string {
+        if (empty($cmdata->completionenabled)) {
+            return '';
+        }
+
+        if (!empty($cmdata->ismanualcompletion)) {
+            return get_string('completion_manual:markdone', 'course');
+        }
+
+        $descriptions = array_map(
+            fn($detail) => $detail->description,
+            $this->get_completion_conditions($cm, $excludeview)
+        );
+
+        return implode(', ', $descriptions);
+    }
+
+    /**
+     * Describe an activity's completion conditions for the indicator's tooltip.
+     *
+     * The indicator itself is deliberately just a shape, so the conditions behind it need to be
+     * readable on hover and to assistive technology. Core's own wording is reused so that the
+     * phrasing matches the rest of Moodle and stays translated. Unlike the label, this says
+     * whether each condition has been met.
+     *
+     * @param \cm_info $cm The course module info.
+     * @param stdClass $cmdata The course module template data built so far.
+     * @param bool $excludeview Whether to leave out the view condition.
      * @return string Tooltip text, empty when there is nothing useful to say.
      */
-    private function get_completion_tooltip(\cm_info $cm, stdClass $cmdata): string {
-        global $USER;
-
+    private function get_completion_tooltip(\cm_info $cm, stdClass $cmdata, bool $excludeview = false): string {
         if (empty($cmdata->completionenabled)) {
             return '';
         }
@@ -403,9 +430,8 @@ class section extends section_base {
             );
         }
 
-        $details = \core_completion\cm_completion_details::get_instance($cm, $USER->id, true);
         $lines = [];
-        foreach ($details->get_details() as $detail) {
+        foreach ($this->get_completion_conditions($cm, $excludeview) as $detail) {
             $complete = in_array($detail->status, [COMPLETION_COMPLETE, COMPLETION_COMPLETE_PASS], true);
             if ($detail->status == COMPLETION_COMPLETE_FAIL) {
                 $prefix = get_string('completion_automatic:failed', 'course');
@@ -422,45 +448,45 @@ class section extends section_base {
     }
 
     /**
-     * Attach core's completion information to a module rendered in place.
+     * An activity's automatic completion conditions.
      *
-     * @param stdClass $cmdata The course module template data, modified in place.
      * @param \cm_info $cm The course module info.
-     * @param renderer_base $output The renderer.
+     * @param bool $excludeview Whether to leave out the view condition. Content shown in place
+     *      is marked viewed by this format as soon as the student has seen it, and the section
+     *      progress ring already reflects that, so asking them to view what they are reading
+     *      says nothing.
+     * @return \stdClass[] Condition details, each with a status and a description.
      */
-    private function attach_completion(stdClass $cmdata, \cm_info $cm, renderer_base $output): void {
-        $cmdata->completion = $this->get_completion_data($cm, $output);
-        $cmdata->hascompletion = !empty($cmdata->completion);
+    private function get_completion_conditions(\cm_info $cm, bool $excludeview): array {
+        global $USER;
+
+        $details = \core_completion\cm_completion_details::get_instance($cm, $USER->id, true)->get_details();
+
+        if ($excludeview) {
+            unset($details['completionview']);
+        }
+
+        return array_values($details);
     }
 
     /**
-     * Export core's completion information for a module rendered in place.
+     * Adjust an activity's completion indicator for content rendered in place.
      *
-     * Delegating to core keeps every completion condition supported, including combinations
-     * such as view plus grade, and gives the manual completion button its standard behaviour.
+     * The view condition is dropped, because this format marks such content viewed as soon as
+     * the student has seen it and the section progress ring already reflects that. Where
+     * viewing was the only requirement there is nothing left to say, so no indicator is shown.
      *
-     * The view condition is left out. This format marks content viewed as soon as the student
-     * has seen it and reflects that in the section progress ring, so restating it underneath
-     * the content being read adds nothing.
-     *
+     * @param stdClass $cmdata The course module template data, modified in place.
      * @param \cm_info $cm The course module info.
-     * @param renderer_base $output The renderer.
-     * @return stdClass|null Completion template data, or null when there is nothing to show.
      */
-    private function get_completion_data(\cm_info $cm, renderer_base $output): ?stdClass {
-        $format = $this->format;
-        $sectioninfo = $format->get_modinfo()->get_section_info_by_id($cm->section);
-        if ($sectioninfo === null) {
-            return null;
+    private function apply_inplace_completion(stdClass $cmdata, \cm_info $cm): void {
+        if (empty($cmdata->completionenabled)) {
+            return;
         }
 
-        $completionclass = $format->get_output_classname('content\\cm\\completion');
-        $completion = new $completionclass($format, $sectioninfo, $cm);
-        if (method_exists($completion, 'set_hideviewcondition')) {
-            $completion->set_hideviewcondition(true);
-        }
-
-        return $completion->export_for_template($output);
+        $cmdata->completionlabel = $this->get_completion_label($cm, $cmdata, true);
+        $cmdata->completiontooltip = $this->get_completion_tooltip($cm, $cmdata, true);
+        $cmdata->hasindicator = !empty($cmdata->ismanualcompletion) || $cmdata->completionlabel !== '';
     }
 
     /**
