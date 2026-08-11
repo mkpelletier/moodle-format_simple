@@ -119,6 +119,7 @@ define([
             setupZoneGrouping();
             setupManualCompletion();
             setupEmbedFullscreen();
+            setupIndexActivityLinks();
         } else {
             // View mode: single-section display with transitions.
             setupNavigation();
@@ -131,6 +132,7 @@ define([
             setupZoneGrouping();
             setupManualCompletion();
             setupEmbedFullscreen();
+            setupIndexActivityLinks();
             restoreFromHash();
 
             // Trigger view completion for inline pages in the initially active section.
@@ -263,6 +265,7 @@ define([
             item.classList.toggle('is-active', num === sectionNum);
             item.setAttribute('aria-current', num === sectionNum ? 'true' : 'false');
         });
+        showIndexActivitiesFor(sectionNum);
 
         // Transition: fade out current, fade in target.
         if (currentSection && currentSection !== targetSection) {
@@ -697,10 +700,34 @@ define([
             items[zone] = [];
         });
 
+        // A label introduces whatever follows it, so it travels with that item rather than
+        // belonging to a zone. Read the pairing from the DOM as it stands, so that a label the
+        // teacher has just dragged keeps the position they dropped it in.
+        var labelsFor = new Map();
+        var pendingLabels = [];
+        Array.from(cmlist.children).forEach(function(child) {
+            if (child.getAttribute('data-for') !== 'cmitem') {
+                return;
+            }
+            if (child.getAttribute('data-zone') === 'label') {
+                pendingLabels.push(child);
+                return;
+            }
+            if (pendingLabels.length) {
+                labelsFor.set(child, pendingLabels);
+                pendingLabels = [];
+            }
+        });
+        // Labels left at the end have nothing to introduce, so they stay at the end.
+        var trailingLabels = pendingLabels;
+
         // Collect all cmitems and group by zone.
         var allItems = cmlist.querySelectorAll('[data-for="cmitem"]');
         allItems.forEach(function(item) {
             var zone = item.getAttribute('data-zone');
+            if (zone === 'label') {
+                return;
+            }
             if (zone && items[zone]) {
                 items[zone].push(item);
             } else {
@@ -716,8 +743,14 @@ define([
                 desiredOrder.push(headers[zone]);
             }
             items[zone].forEach(function(item) {
+                (labelsFor.get(item) || []).forEach(function(label) {
+                    desiredOrder.push(label);
+                });
                 desiredOrder.push(item);
             });
+        });
+        trailingLabels.forEach(function(label) {
+            desiredOrder.push(label);
         });
 
         // Collect remaining non-cmitem, non-header children (e.g. sectioninfo).
@@ -916,6 +949,62 @@ define([
         if (inline) {
             inline.classList.toggle('is-complete', state === 'complete');
         }
+
+        // The index lists the same activities, so it has to follow along.
+        var cmid = wrapper.getAttribute('data-id');
+        if (cmid) {
+            var entry = root.querySelector('.simple-nav-cmlink[data-cmid="' + cmid + '"]');
+            if (entry) {
+                entry.setAttribute('data-completion-state', state);
+                var dot = entry.querySelector('.simple-cm-dot');
+                if (dot) {
+                    dot.classList.toggle('is-complete', state === 'complete');
+                }
+            }
+        }
+    };
+
+    /**
+     * Reveal the index's activity list for one unit and hide the rest.
+     *
+     * Only the unit being viewed lists its activities, so the panel stays a list of units.
+     *
+     * @param {number} sectionNum The section whose list should be shown.
+     */
+    const showIndexActivitiesFor = function(sectionNum) {
+        var lists = root.querySelectorAll('[data-for="navcmlist"]');
+        lists.forEach(function(list) {
+            var isactive = parseInt(list.dataset.section, 10) === sectionNum;
+            list.classList.toggle('is-active', isactive);
+            list.hidden = !isactive;
+        });
+    };
+
+    /**
+     * Let an index entry take the reader to its activity.
+     *
+     * The unit is already on the page, so this scrolls to the activity rather than following a
+     * link away from it.
+     */
+    const setupIndexActivityLinks = function() {
+        root.addEventListener('click', function(e) {
+            var link = e.target.closest('[data-action="scroll-to-cm"]');
+            if (!link) {
+                return;
+            }
+            e.preventDefault();
+
+            var target = root.querySelector('#module-' + link.dataset.cmid);
+            if (!target) {
+                return;
+            }
+            target.scrollIntoView({behavior: 'smooth', block: 'center'});
+            // A brief highlight, so it is obvious which one was meant.
+            target.classList.add('is-flagged');
+            setTimeout(function() {
+                target.classList.remove('is-flagged');
+            }, 1600);
+        });
     };
 
     /**

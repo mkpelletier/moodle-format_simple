@@ -76,6 +76,7 @@ class content extends content_base {
         // Handle section 0 (Course Info) separately.
         $formatoptions = $format->get_format_options();
         $section0modal = !empty($formatoptions['section0modal']);
+        $showindexactivities = !empty($formatoptions['showindexactivities']);
         $data->hassection0 = false;
         $data->section0nav = null;
         $data->section0modal = $section0modal;
@@ -139,6 +140,10 @@ class content extends content_base {
                 $navitem->name = get_string('courseinfo', 'format_simple');
                 $navitem->isactive = false;
                 $navitem->issection0 = true;
+                $sectionicon = \format_simple::clean_index_icon(
+                    (string) ($format->get_format_options($section0)['indexicon'] ?? '')
+                );
+                $navitem->indexicon = ($sectionicon !== '') ? $sectionicon : 'fa-book';
                 $data->section0nav = $navitem;
 
                 $data->sections[] = $sectiondata;
@@ -161,7 +166,7 @@ class content extends content_base {
             }
 
             // Build navigation item.
-            $navitem = $this->build_nav_item($section, $course, $format, $output);
+            $navitem = $this->build_nav_item($section, $course, $format, $output, $showindexactivities);
             $data->navitems[] = $navitem;
 
             // Build section content using the section output class.
@@ -213,19 +218,66 @@ class content extends content_base {
     }
 
     /**
+     * The completion-tracked activities of a section, for listing under the active unit.
+     *
+     * Deliberately the same set the section's progress ring counts, so the list and the
+     * percentage above it can never disagree.
+     *
+     * @param \section_info $section The section.
+     * @param stdClass $course The course.
+     * @return stdClass[] One entry per tracked activity, in the order they appear in the unit.
+     */
+    private function get_completion_items(\section_info $section, stdClass $course): array {
+        global $USER;
+
+        $completion = new \completion_info($course);
+        if (!$completion->is_enabled()) {
+            return [];
+        }
+
+        $items = [];
+        foreach (get_fast_modinfo($course)->get_cms() as $cm) {
+            if ($cm->section != $section->id) {
+                continue;
+            }
+            if (!$cm->uservisible || $cm->completion == COMPLETION_TRACKING_NONE) {
+                continue;
+            }
+
+            // Cast before comparing: read back from the database the state arrives as a string,
+            // so a strict comparison would call every activity incomplete on every page load.
+            $data = $completion->get_data($cm, true, $USER->id);
+            $state = (int) $data->completionstate;
+            $iscomplete = in_array($state, [COMPLETION_COMPLETE, COMPLETION_COMPLETE_PASS], true);
+
+            $item = new stdClass();
+            $item->id = (int) $cm->id;
+            $item->name = $cm->get_formatted_name();
+            $item->iscomplete = $iscomplete;
+            $item->ismanualcompletion = ($cm->completion == COMPLETION_TRACKING_MANUAL);
+            $item->completionstate = $iscomplete ? 'complete' : 'incomplete';
+            $items[] = $item;
+        }
+
+        return $items;
+    }
+
+    /**
      * Build a navigation item for a section.
      *
      * @param \section_info $section The section info.
      * @param stdClass $course The course object.
      * @param \core_courseformat\base $format The course format.
      * @param renderer_base $output The renderer.
+     * @param bool $showindexactivities Whether the unit should list its tracked activities.
      * @return stdClass Navigation item data.
      */
     private function build_nav_item(
         \section_info $section,
         stdClass $course,
         \core_courseformat\base $format,
-        renderer_base $output
+        renderer_base $output,
+        bool $showindexactivities = false
     ): stdClass {
         $navitem = new stdClass();
         $navitem->num = (int) $section->section;
@@ -252,10 +304,27 @@ class content extends content_base {
         $navitem->isnotstarted = ($progress->status === 'notstarted');
         $navitem->percentage = $progress->percentage;
 
+        // A unit with nothing to complete has no progress to report. Saying "not started" for
+        // ever reads as work outstanding, so it gets a state of its own instead.
+        $navitem->hastracking = ($progress->total > 0);
+
+        // The teacher's chosen icon, shown inside the ring, or on its own where there is no ring.
+        $navitem->indexicon = \format_simple::clean_index_icon(
+            (string) ($format->get_format_options($section)['indexicon'] ?? '')
+        );
+        $navitem->hasindexicon = ($navitem->indexicon !== '');
+
         // SVG progress circle parameters (for a 36px circle, radius 16, circumference ~100.5).
         $circumference = 100.53;
         $navitem->circumference = $circumference;
         $navitem->dashoffset = $circumference - ($circumference * $progress->percentage / 100);
+
+        // The activities behind that percentage, listed under the unit while it is the active
+        // one. Only the active unit shows them, so the panel stays a list of units.
+        $navitem->completionitems = $showindexactivities
+            ? $this->get_completion_items($section, $course)
+            : [];
+        $navitem->hascompletionitems = !empty($navitem->completionitems);
 
         return $navitem;
     }

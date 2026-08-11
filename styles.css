@@ -1219,7 +1219,11 @@ body.format-simple .simple-nav-callout {
    ========================================================================= */
 
 .format-simple .simple-cm-card {
+    /* Anchors the stretched link that makes the whole card clickable. */
+    position: relative;
     display: flex;
+    /* Wraps so a description can take a row of its own beneath the name. */
+    flex-wrap: wrap;
     align-items: center;
     gap: 12px;
     padding: 14px 18px;
@@ -1485,6 +1489,15 @@ body.format-simple .simple-nav-callout {
 .format-simple .simple-nav.is-collapsed .simple-nav-label {
     opacity: 0;
     flex: 0 0 0;
+}
+
+/* The activity list has no room in a 60px strip, so it waits until the panel is open. */
+.format-simple .simple-nav.is-collapsed .simple-nav-cmlist {
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    margin: 0;
+    pointer-events: none;
 }
 
 /* Center progress indicators when collapsed. */
@@ -1925,4 +1938,269 @@ body.format-simple .simple-mobile-header {
     .format-simple .simple-content {
         padding: 16px 12px;
     }
+}
+
+/* ---- Activity name, and renaming it in place ----
+   The card is a div rather than a link, so that the pencil the inplace editable adds is not
+   nested inside an anchor. Students get the whole card back as a click target through a
+   stretched link on the name; while editing, the name carries its own link instead. */
+
+.format-simple .simple-cm-name .inplaceeditable {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* The name's own link must not swallow the pencil beside it. */
+.format-simple .simple-cm-name .inplaceeditable a:not(.quickeditlink) {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* Keep the pencil out of the way until the card is under the pointer, so editing mode stays
+   as quiet as the rest of the format. */
+.format-simple .simple-cm-card .quickeditlink,
+.format-simple .simple-label .quickeditlink {
+    opacity: 0;
+    transition: opacity var(--simple-transition-fast);
+}
+
+.format-simple .simple-cm-card:hover .quickeditlink,
+.format-simple .simple-cm-card:focus-within .quickeditlink,
+.format-simple .simple-label:hover .quickeditlink,
+.format-simple .simple-label:focus-within .quickeditlink {
+    opacity: 1;
+}
+
+/* Always reachable by keyboard, whatever the pointer is doing. */
+.format-simple .quickeditlink:focus-visible {
+    opacity: 1;
+    outline: 2px solid var(--simple-accent);
+    outline-offset: 2px;
+    border-radius: var(--simple-radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .format-simple .simple-cm-card .quickeditlink,
+    .format-simple .simple-label .quickeditlink {
+        transition: none;
+    }
+}
+
+/* The completion indicator sits above the stretched link so it stays clickable. */
+.format-simple .simple-cm-card .simple-cm-dot,
+.format-simple .simple-cm-card .simple-cm-dot-label {
+    position: relative;
+    z-index: 1;
+}
+
+/* ---- Labels ----
+   A label has no page of its own, so it is shown as the text it carries rather than as a card
+   pointing somewhere. It reads as part of the section, not as another thing to click. */
+
+.format-simple .simple-label {
+    position: relative;
+    margin: 0 0 20px;
+    color: var(--simple-text);
+    line-height: 1.7;
+}
+
+.format-simple .simple-label-content > *:first-child {
+    margin-top: 0;
+}
+
+.format-simple .simple-label-content > *:last-child {
+    margin-bottom: 0;
+}
+
+.format-simple .simple-label-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--simple-radius-sm);
+}
+
+/* Editing controls follow the same hover-quiet rule as everything else. */
+.format-simple .simple-label .simple-cm-edit {
+    position: absolute;
+    top: 0;
+    right: 0;
+    opacity: 0;
+    transition: opacity var(--simple-transition-fast);
+}
+
+.format-simple .simple-label:hover .simple-cm-edit,
+.format-simple .simple-label:focus-within .simple-cm-edit {
+    opacity: 1;
+}
+
+/* ---- Activity description ----
+   Shown when the teacher ticks "display description on course page", so they can say something
+   about an activity without adding a label for it. Set in the same quiet grey as the zone
+   headings, but cased normally: this is prose, not a heading. Indented past the icon so it
+   reads as belonging to the activity above it. */
+
+.format-simple .simple-cm-description {
+    /* A row of its own inside the card. */
+    flex-basis: 100%;
+    /* Clears the 24px icon and the 12px gap beside it. */
+    margin: 4px 0 0 36px;
+    padding: 10px 14px;
+    font-size: 0.8125rem;
+    font-weight: 400;
+    line-height: 1.6;
+    color: var(--simple-text-muted);
+    border-left: 2px solid var(--simple-border-light);
+    /* Above the stretched link, so any link in the description is clickable. */
+    position: relative;
+    z-index: 1;
+}
+
+.format-simple .simple-cm-description > *:first-child {
+    margin-top: 0;
+}
+
+.format-simple .simple-cm-description > *:last-child {
+    margin-bottom: 0;
+}
+
+.format-simple .simple-cm-description img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* The card is no longer a single row, so its name should not be pushed off centre. */
+.format-simple .simple-cm-card:has(.simple-cm-description) {
+    align-items: flex-start;
+}
+
+.format-simple .simple-cm-card:has(.simple-cm-description) .simple-cm-icon,
+.format-simple .simple-cm-card:has(.simple-cm-description) .simple-cm-name {
+    align-self: center;
+}
+
+/* ---- Activity list in the unit index ----
+   Only the unit being read lists its activities, so the panel stays a list of units. Optional,
+   and off unless the course asks for it. Indented under its unit and set quietly, so the units
+   themselves remain what the eye lands on. */
+
+.format-simple .simple-nav-cmlist {
+    list-style: none;
+    margin: 2px 0 8px;
+    padding: 0 12px 0 24px;
+    max-height: 40rem;
+    opacity: 1;
+    transition:
+        opacity var(--simple-transition-fast),
+        max-height var(--simple-transition-fast);
+}
+
+.format-simple .simple-nav-cmitem {
+    margin: 0;
+}
+
+.format-simple .simple-nav-cmlink {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 6px 10px;
+    background: none;
+    border: 0;
+    border-radius: var(--simple-radius-sm);
+    text-align: left;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    color: var(--simple-text-secondary);
+    cursor: pointer;
+    transition: background var(--simple-transition-fast), color var(--simple-transition-fast);
+}
+
+.format-simple .simple-nav-cmlink:hover {
+    background: var(--simple-border-light);
+    color: var(--simple-text);
+}
+
+.format-simple .simple-nav-cmlink:focus-visible {
+    outline: 2px solid var(--simple-accent);
+    outline-offset: -2px;
+}
+
+/* Smaller than on a card: this is a list, and the names carry the meaning. */
+.format-simple .simple-nav-cmlist .simple-cm-dot {
+    width: 13px;
+    height: 13px;
+    border-radius: 5px;
+}
+
+.format-simple .simple-nav-cmname {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* A completed activity has said what it needs to, so it recedes. */
+.format-simple .simple-nav-cmlink[data-completion-state="complete"] .simple-nav-cmname {
+    color: var(--simple-text-muted);
+}
+
+/* Briefly mark whatever an index entry sent the reader to. */
+.format-simple .is-flagged {
+    animation: simple-flag 1.6s ease-out;
+}
+
+@keyframes simple-flag {
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 transparent;
+    }
+
+    20% {
+        box-shadow: 0 0 0 3px var(--simple-accent-light);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .format-simple .simple-nav-cmlist {
+        transition: none;
+    }
+
+    .format-simple .is-flagged {
+        animation: none;
+    }
+}
+
+/* ---- Unit indicator: nothing to track, and custom icons ----
+   A unit with no completion-tracked activities has no progress to report. An empty ring there
+   reads as work outstanding, so it gets a filled dot instead: same family as the ring, but
+   plainly not a measure of anything. */
+
+.format-simple .simple-progress-svg.is-untracked {
+    opacity: 0.85;
+}
+
+/* A teacher's chosen icon, sitting in the middle of the ring where the percentage would be. */
+.format-simple .simple-nav-ringicon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.75rem;
+    line-height: 1;
+    color: var(--simple-text-secondary);
+    pointer-events: none;
+}
+
+/* The same icon where there is no ring to sit inside. */
+.format-simple .simple-nav-plainicon {
+    font-size: 1rem;
+    line-height: 1;
+    color: var(--simple-text-secondary);
+}
+
+/* On the unit being read, the icon lifts with the rest of the item. */
+.format-simple .simple-nav-item.is-active .simple-nav-ringicon,
+.format-simple .simple-nav-item.is-active .simple-nav-plainicon {
+    color: var(--simple-accent);
 }

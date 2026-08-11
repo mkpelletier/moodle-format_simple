@@ -133,6 +133,11 @@ class section extends section_base {
         $data->activities = [];
         $data->allcms = [];
 
+        // A label introduces whatever the teacher put after it, so it is carried along by that
+        // activity rather than given a place of its own. Zone grouping reorders activities, and
+        // a label pinned to a fixed spot would end up introducing something else entirely.
+        $pendinglabels = [];
+
         $cms = $modinfo->get_cms();
         foreach ($cms as $cm) {
             if ($cm->section != $section->id) {
@@ -149,22 +154,37 @@ class section extends section_base {
             $cmdata = $this->build_cm_data($cm, $course, $zone, $output);
 
             if ($data->issection0) {
-                // Section 0: flat list, no zone categorization.
+                // Section 0 is a flat list in the teacher's own order, so nothing moves and
+                // labels can simply take their turn.
                 $data->allcms[] = $cmdata;
-            } else {
-                switch ($zone) {
-                    case 'learning':
-                        $data->learningcontent[] = $cmdata;
-                        break;
-                    case 'resources':
-                        $data->resources[] = $cmdata;
-                        break;
-                    default:
-                        $data->activities[] = $cmdata;
-                        break;
-                }
+                continue;
+            }
+
+            if ($zone === 'label') {
+                $pendinglabels[] = $cmdata;
+                continue;
+            }
+
+            $cmdata->precedinglabels = $pendinglabels;
+            $cmdata->hasprecedinglabels = !empty($pendinglabels);
+            $pendinglabels = [];
+
+            switch ($zone) {
+                case 'learning':
+                    $data->learningcontent[] = $cmdata;
+                    break;
+                case 'resources':
+                    $data->resources[] = $cmdata;
+                    break;
+                default:
+                    $data->activities[] = $cmdata;
+                    break;
             }
         }
+
+        // Labels the teacher left at the end have nothing to introduce, so they stay at the end.
+        $data->traillabels = $pendinglabels;
+        $data->hastraillabels = !empty($pendinglabels);
 
         $data->hasallcms = !empty($data->allcms);
         $data->haslearningcontent = !empty($data->learningcontent);
@@ -232,6 +252,15 @@ class section extends section_base {
         $cmdata = new stdClass();
         $cmdata->id = $cm->id;
         $cmdata->zone = $zone;
+        $cmdata->islabel = ($zone === 'label');
+
+        // The teacher's own note about this activity, shown when they asked for it. Labels are
+        // nothing but their text, so they have no separate description to show.
+        $cmdata->description = '';
+        if (!$cmdata->islabel && !empty($cm->showdescription) && !empty($cm->content)) {
+            $cmdata->description = $cm->content;
+        }
+        $cmdata->hasdescription = ($cmdata->description !== '');
         $cmdata->name = $cm->get_formatted_name();
         $cmdata->modname = $cm->modname;
         $cmdata->url = $cm->url ? $cm->url->out(false) : '';
@@ -303,9 +332,14 @@ class section extends section_base {
         }
 
         // Activity editing controls.
+        $cmdata->editablename = '';
+        $cmdata->haseditablename = false;
         $cmdata->cmcontrolmenu = '';
         $cmdata->hascmcontrolmenu = false;
         if ($cmdata->editing) {
+            $cmdata->editablename = $this->get_editable_name($cm, $output);
+            $cmdata->haseditablename = ($cmdata->editablename !== '');
+
             $format = $this->format;
             $sectioninfo = $format->get_modinfo()->get_section_info_by_id($cm->section);
             $controlmenuclass = $format->get_output_classname('content\\cm\\controlmenu');
@@ -471,6 +505,35 @@ class section extends section_base {
     }
 
     /**
+     * Render the activity name as an inplace editable, so it can be renamed without leaving
+     * the course page.
+     *
+     * Core's title output is used rather than its whole cmname block, because this format
+     * supplies its own icon and card layout and only wants the editable name itself. The
+     * markup carries a link to the activity, so the name stays clickable while editing.
+     *
+     * @param \cm_info $cm The course module info.
+     * @param renderer_base $output The renderer.
+     * @return string Rendered markup, empty when the activity has no name to edit.
+     */
+    private function get_editable_name(\cm_info $cm, renderer_base $output): string {
+        $format = $this->format;
+        $sectioninfo = $format->get_modinfo()->get_section_info_by_id($cm->section);
+        if ($sectioninfo === null) {
+            return '';
+        }
+
+        $titleclass = $format->get_output_classname('content\\cm\\title');
+        $title = new $titleclass($format, $sectioninfo, $cm);
+        $titledata = $title->export_for_template($output);
+        if (empty($titledata)) {
+            return '';
+        }
+
+        return $output->render_from_template($title->get_template_name($output), $titledata);
+    }
+
+    /**
      * Adjust an activity's completion indicator for content rendered in place.
      *
      * The view condition is dropped, because this format marks such content viewed as soon as
@@ -511,9 +574,16 @@ class section extends section_base {
             return $this->get_book_inline_content($cm);
         }
 
-        // Fall back to content provided by the module via the standard Moodle
-        // cm_info callback (e.g. mod_courseschedule with showinline enabled).
-        if (!empty($cm->content)) {
+        // A label is nothing but its text, and always carries showdescription, so it is taken
+        // at face value rather than run through the check below.
+        if ($cm->modname === 'label') {
+            return (string) $cm->content;
+        }
+
+        // Fall back to content provided by the module via the standard Moodle cm_info callback
+        // (e.g. mod_courseschedule with showinline enabled). A module that is only showing its
+        // description uses the same callback, and that belongs in the card, not in its place.
+        if (!empty($cm->content) && empty($cm->showdescription)) {
             return $cm->content;
         }
 

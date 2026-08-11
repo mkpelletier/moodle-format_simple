@@ -195,6 +195,10 @@
     <div data-for="cmlist">
         {{#hasallcms}}
         {{#allcms}}
+        {{#islabel}}
+        {{> format_simple/local/content/cm/label }}
+        {{/islabel}}
+        {{^islabel}}
         <div class="simple-cm-wrapper {{#ishidden}}is-dimmed{{/ishidden}} {{#isstealth}}is-dimmed is-stealth{{/isstealth}}" id="module-{{id}}" data-for="cmitem" data-id="{{id}}">
             {{#hasinlinecontent}}
             <div class="simple-inline-content"
@@ -208,11 +212,17 @@
             </div>
             {{/hasinlinecontent}}
             {{^hasinlinecontent}}
-            <a href="{{url}}" class="aalink simple-cm-card simple-cm-card-activity">
+            <div class="simple-cm-card simple-cm-card-activity">
                 <img src="{{iconurl}}" alt="" class="simple-cm-icon" aria-hidden="true">
-                <span class="simple-cm-name">{{name}}</span>
+                <span class="simple-cm-name">
+                    {{#haseditablename}}{{{editablename}}}{{/haseditablename}}
+                    {{^haseditablename}}<a href="{{url}}" class="aalink stretched-link">{{name}}</a>{{/haseditablename}}
+                </span>
                 {{> format_simple/local/content/cm/indicator }}
-            </a>
+                {{#hasdescription}}
+                <div class="simple-cm-description">{{{description}}}</div>
+                {{/hasdescription}}
+            </div>
             {{/hasinlinecontent}}
             {{#editing}}
             {{#hascmcontrolmenu}}
@@ -222,6 +232,7 @@
             {{/hascmcontrolmenu}}
             {{/editing}}
         </div>
+        {{/islabel}}
         {{/allcms}}
         {{/hasallcms}}
         {{^hasallcms}}
@@ -243,6 +254,7 @@
 
         {{! Learning content items }}
         {{#learningcontent}}
+        {{#hasprecedinglabels}}{{#precedinglabels}}{{> format_simple/local/content/cm/label }}{{/precedinglabels}}{{/hasprecedinglabels}}
         <div class="simple-cm simple-cm-learning {{#isprimary}}is-primary{{/isprimary}} {{#ishidden}}is-dimmed{{/ishidden}} {{#isstealth}}is-dimmed is-stealth{{/isstealth}}"
              id="module-{{id}}"
              data-for="cmitem"
@@ -287,21 +299,33 @@
 
                 {{^hasinlinecontent}}
                 {{^hasembedurl}}
-                <a href="{{url}}" class="aalink simple-cm-card simple-cm-card-primary">
+                <div class="simple-cm-card simple-cm-card-primary">
                     <img src="{{iconurl}}" alt="" class="simple-cm-icon" aria-hidden="true">
-                    <span class="simple-cm-name">{{name}}</span>
+                    <span class="simple-cm-name">
+                        {{#haseditablename}}{{{editablename}}}{{/haseditablename}}
+                        {{^haseditablename}}<a href="{{url}}" class="aalink stretched-link">{{name}}</a>{{/haseditablename}}
+                    </span>
                     {{> format_simple/local/content/cm/indicator }}
-                </a>
+                    {{#hasdescription}}
+                    <div class="simple-cm-description">{{{description}}}</div>
+                    {{/hasdescription}}
+                </div>
                 {{/hasembedurl}}
                 {{/hasinlinecontent}}
             {{/isprimary}}
 
             {{^isprimary}}
-            <a href="{{url}}" class="aalink simple-cm-card simple-cm-card-learning">
+            <div class="simple-cm-card simple-cm-card-learning">
                 <img src="{{iconurl}}" alt="" class="simple-cm-icon" aria-hidden="true">
-                <span class="simple-cm-name">{{name}}</span>
+                <span class="simple-cm-name">
+                    {{#haseditablename}}{{{editablename}}}{{/haseditablename}}
+                    {{^haseditablename}}<a href="{{url}}" class="aalink stretched-link">{{name}}</a>{{/haseditablename}}
+                </span>
                 {{> format_simple/local/content/cm/indicator }}
-            </a>
+                {{#hasdescription}}
+                <div class="simple-cm-description">{{{description}}}</div>
+                {{/hasdescription}}
+            </div>
             {{/isprimary}}
 
             {{#editing}}
@@ -321,14 +345,21 @@
 
         {{! Resource items }}
         {{#resources}}
+        {{#hasprecedinglabels}}{{#precedinglabels}}{{> format_simple/local/content/cm/label }}{{/precedinglabels}}{{/hasprecedinglabels}}
         <div class="simple-cm-wrapper {{#ishidden}}is-dimmed{{/ishidden}} {{#isstealth}}is-dimmed is-stealth{{/isstealth}}" id="module-{{id}}" data-for="cmitem" data-id="{{id}}" data-zone="resources">
-            <a href="{{url}}" class="aalink simple-cm-card simple-cm-card-resource">
+            <div class="simple-cm-card simple-cm-card-resource">
                 <span class="simple-resource-icon" aria-hidden="true">
                     <i class="fa {{faicon}}"></i>
                 </span>
-                <span class="simple-cm-name">{{name}}</span>
+                <span class="simple-cm-name">
+                    {{#haseditablename}}{{{editablename}}}{{/haseditablename}}
+                    {{^haseditablename}}<a href="{{url}}" class="aalink stretched-link">{{name}}</a>{{/haseditablename}}
+                </span>
                 {{> format_simple/local/content/cm/indicator }}
-            </a>
+                {{#hasdescription}}
+                <div class="simple-cm-description">{{{description}}}</div>
+                {{/hasdescription}}
+            </div>
             {{#editing}}
             {{#hascmcontrolmenu}}
             <div class="simple-cm-edit">
@@ -346,17 +377,24 @@
 
         {{! Activity items }}
         {{#activities}}
+        {{#hasprecedinglabels}}{{#precedinglabels}}{{> format_simple/local/content/cm/label }}{{/precedinglabels}}{{/hasprecedinglabels}}
         <div class="simple-cm-wrapper {{#ishidden}}is-dimmed{{/ishidden}} {{#isstealth}}is-dimmed is-stealth{{/isstealth}}" id="module-{{id}}" data-for="cmitem" data-id="{{id}}" data-zone="activities">
-            <a href="{{url}}" class="aalink simple-cm-card simple-cm-card-activity">
+            <div class="simple-cm-card simple-cm-card-activity">
                 <img src="{{iconurl}}" alt="" class="simple-cm-icon" aria-hidden="true">
-                <span class="simple-cm-name">{{name}}</span>
+                <span class="simple-cm-name">
+                    {{#haseditablename}}{{{editablename}}}{{/haseditablename}}
+                    {{^haseditablename}}<a href="{{url}}" class="aalink stretched-link">{{name}}</a>{{/haseditablename}}
+                </span>
                 {{#isrestricted}}
                 <span class="simple-cm-restricted" title="{{availabilitytext}}">
                     <i class="fa fa-lock" aria-hidden="true"></i>
                 </span>
                 {{/isrestricted}}
                 {{> format_simple/local/content/cm/indicator }}
-            </a>
+                {{#hasdescription}}
+                <div class="simple-cm-description">{{{description}}}</div>
+                {{/hasdescription}}
+            </div>
             {{#editing}}
             {{#hascmcontrolmenu}}
             <div class="simple-cm-edit">
@@ -366,6 +404,11 @@
             {{/editing}}
         </div>
         {{/activities}}
+
+        {{! Labels the teacher left at the end have nothing to introduce }}
+        {{#traillabels}}
+        {{> format_simple/local/content/cm/label }}
+        {{/traillabels}}
 
         {{^haslearningcontent}}
         {{^hasresources}}

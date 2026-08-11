@@ -63,7 +63,7 @@
                     aria-current="{{#isactive}}true{{/isactive}}{{^isactive}}false{{/isactive}}"
                     aria-label="{{name}}">
                 <span class="simple-nav-indicator simple-nav-indicator-info" aria-hidden="true">
-                    <i class="fa fa-book"></i>
+                    <i class="fa {{indexicon}}"></i>
                     {{#hassection0unread}}
                     <span class="simple-unread-badge" title="{{section0unreadlabel}}">{{section0unread}}</span>
                     {{/hassection0unread}}
@@ -117,17 +117,40 @@
                                     stroke-dasharray="{{circumference}}"
                                     stroke-dashoffset="{{dashoffset}}"
                                     transform="rotate(-90 18 18)"/>
+                            {{^hasindexicon}}
                             <text x="18" y="21" text-anchor="middle"
                                   class="simple-progress-text">{{percentage}}%</text>
+                            {{/hasindexicon}}
                         </svg>
+                        {{#hasindexicon}}
+                        <i class="fa {{indexicon}} simple-nav-ringicon"></i>
+                        {{/hasindexicon}}
                         {{/isinprogress}}
 
                         {{#isnotstarted}}
-                        {{! Empty circle }}
+                        {{#hastracking}}
+                        {{! Nothing done yet, but there is something to do }}
                         <svg class="simple-progress-svg is-notstarted" viewBox="0 0 36 36" width="36" height="36">
                             <circle cx="18" cy="18" r="16"
                                     fill="none" stroke="#d1d5db" stroke-width="2.5"/>
                         </svg>
+                        {{#hasindexicon}}
+                        <i class="fa {{indexicon}} simple-nav-ringicon"></i>
+                        {{/hasindexicon}}
+                        {{/hastracking}}
+
+                        {{^hastracking}}
+                        {{! Nothing here is tracked, so there is no progress to report. A filled
+                            dot says as much without implying work outstanding. }}
+                        {{#hasindexicon}}
+                        <i class="fa {{indexicon}} simple-nav-plainicon"></i>
+                        {{/hasindexicon}}
+                        {{^hasindexicon}}
+                        <svg class="simple-progress-svg is-untracked" viewBox="0 0 36 36" width="36" height="36">
+                            <circle cx="18" cy="18" r="7" fill="#d1d5db" stroke="none"/>
+                        </svg>
+                        {{/hasindexicon}}
+                        {{/hastracking}}
                         {{/isnotstarted}}
                     {{/isrestricted}}
                 </span>
@@ -145,6 +168,34 @@
                 </div>
                 {{/isrestricted}}
             </button>
+
+            {{! The active unit lists the activities its progress ring is counting. A sibling of
+                the button rather than a child, because a button cannot contain buttons. }}
+            {{#hascompletionitems}}
+            <ul class="simple-nav-cmlist {{#isactive}}is-active{{/isactive}}"
+                data-for="navcmlist"
+                data-section="{{num}}"
+                {{^isactive}}hidden{{/isactive}}>
+                {{#completionitems}}
+                <li class="simple-nav-cmitem">
+                    <button class="simple-nav-cmlink"
+                            type="button"
+                            data-action="scroll-to-cm"
+                            data-cmid="{{id}}"
+                            data-completion-tracked="1"
+                            data-completion-state="{{completionstate}}">
+                        <span class="simple-cm-dot {{#ismanualcompletion}}is-manual{{/ismanualcompletion}}{{^ismanualcompletion}}is-conditional{{/ismanualcompletion}} {{#iscomplete}}is-complete{{/iscomplete}}"
+                              aria-hidden="true"></span>
+                        <span class="simple-nav-cmname">{{name}}</span>
+                        <span class="sr-only">
+                            {{#iscomplete}}{{#str}}completedname, format_simple, {{name}}{{/str}}{{/iscomplete}}
+                            {{^iscomplete}}{{#str}}notcompletedname, format_simple, {{name}}{{/str}}{{/iscomplete}}
+                        </span>
+                    </button>
+                </li>
+                {{/completionitems}}
+            </ul>
+            {{/hascompletionitems}}
             {{/navitems}}
         </div>
 

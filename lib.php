@@ -38,7 +38,15 @@ class format_simple extends core_courseformat\base {
     /**
      * Activity types categorised as primary learning content.
      */
-    private const ZONE_LEARNING = ['page', 'h5pactivity', 'scorm', 'lti', 'lesson', 'label'];
+    private const ZONE_LEARNING = ['page', 'h5pactivity', 'scorm', 'lti', 'lesson'];
+
+    /**
+     * Module types that are section copy rather than an activity to be visited.
+     *
+     * These have no page of their own; their whole purpose is the text they carry, so they are
+     * rendered in the section body instead of as a card.
+     */
+    private const ZONE_LABEL = ['label'];
 
     /**
      * Activity types categorised as related resources.
@@ -274,6 +282,10 @@ class format_simple extends core_courseformat\base {
                     'default' => 0,
                     'type' => PARAM_INT,
                 ],
+                'showindexactivities' => [
+                    'default' => 0,
+                    'type' => PARAM_INT,
+                ],
             ];
         }
 
@@ -323,6 +335,21 @@ class format_simple extends core_courseformat\base {
                     ],
                 ]
             );
+            $courseformatoptions['showindexactivities'] = array_merge(
+                $courseformatoptions['showindexactivities'],
+                [
+                    'label' => new \lang_string('showindexactivities', 'format_simple'),
+                    'help' => 'showindexactivities',
+                    'help_component' => 'format_simple',
+                    'element_type' => 'select',
+                    'element_attributes' => [
+                        [
+                            0 => new \lang_string('no'),
+                            1 => new \lang_string('yes'),
+                        ],
+                    ],
+                ]
+            );
         }
 
         return $courseformatoptions;
@@ -349,6 +376,10 @@ class format_simple extends core_courseformat\base {
                 'default' => 0,
                 'type' => PARAM_INT,
             ],
+            'indexicon' => [
+                'default' => '',
+                'type' => PARAM_TEXT,
+            ],
         ];
 
         if ($foreditform) {
@@ -361,6 +392,19 @@ class format_simple extends core_courseformat\base {
                     'element_type' => 'textarea',
                     'element_attributes' => [
                         ['rows' => 5, 'cols' => 60],
+                    ],
+                ]
+            );
+
+            $options['indexicon'] = array_merge(
+                $options['indexicon'],
+                [
+                    'label' => new \lang_string('indexicon', 'format_simple'),
+                    'help' => 'indexicon',
+                    'help_component' => 'format_simple',
+                    'element_type' => 'text',
+                    'element_attributes' => [
+                        ['size' => 24, 'placeholder' => 'fa-book'],
                     ],
                 ]
             );
@@ -537,10 +581,38 @@ class format_simple extends core_courseformat\base {
     }
 
     /**
+     * Reduce a teacher's icon setting to something safe to put in a class attribute.
+     *
+     * Font Awesome names only, so a stray word or stray markup cannot travel into the page.
+     * The "fa-" prefix is added when it has been left off, since that is the easy mistake.
+     *
+     * @param string $icon The raw setting value.
+     * @return string A Font Awesome class name, or an empty string when there is nothing usable.
+     */
+    public static function clean_index_icon(string $icon): string {
+        $icon = \core_text::strtolower(trim($icon));
+        // Keep only what can appear in a Font Awesome name.
+        $icon = preg_replace('/[^a-z0-9\- ]/', '', $icon);
+        $icon = trim(preg_replace('/\s+/', ' ', $icon));
+
+        if ($icon === '') {
+            return '';
+        }
+
+        // A bare name such as "book" is what a teacher is most likely to type.
+        $parts = array_map(
+            fn($part) => str_starts_with($part, 'fa-') ? $part : 'fa-' . $part,
+            explode(' ', $icon)
+        );
+
+        return implode(' ', $parts);
+    }
+
+    /**
      * Determine which content zone an activity belongs to.
      *
      * @param \cm_info $mod The course module info.
-     * @return string One of 'learning', 'resources', 'activities', or 'hidden'.
+     * @return string One of 'learning', 'label', 'resources', 'activities', or 'hidden'.
      */
     public static function get_activity_zone(\cm_info $mod): string {
         $modname = $mod->modname;
@@ -548,6 +620,11 @@ class format_simple extends core_courseformat\base {
         // Administrative modules that should never render as cards.
         if (in_array($modname, self::ZONE_HIDDEN, true)) {
             return 'hidden';
+        }
+
+        // Section copy, shown as itself rather than as something to open.
+        if (in_array($modname, self::ZONE_LABEL, true)) {
+            return 'label';
         }
 
         // URL modules with video links are learning content, not resources.
@@ -563,8 +640,10 @@ class format_simple extends core_courseformat\base {
         }
 
         // Modules that provide inline content via the standard Moodle cm_info hook
-        // (e.g. courseschedule with showinline) belong in the learning zone.
-        if (!empty($mod->content)) {
+        // (e.g. courseschedule with showinline) belong in the learning zone. Modules merely
+        // showing their description use the same hook, so those are excluded: a description is
+        // a note about the activity, not the activity itself.
+        if (!empty($mod->content) && empty($mod->showdescription)) {
             return 'learning';
         }
 

@@ -2,6 +2,50 @@
 
 All notable changes to the Simple course format plugin are documented in this file.
 
+## v0.8.0 (2026-08-11) - Beta
+
+### Added
+- Optional Font Awesome icon per unit, set in the unit settings and shown in the navigation
+  panel. Where the unit has activities with completion tracking the icon sits inside the
+  progress ring, in place of the percentage, and a green tick still replaces the lot once every
+  activity is complete. Course Info takes an icon too, keeping its book by default.
+- Optional list of activities under the unit being viewed in the navigation panel, switched on
+  per course with the new "Show activities in the unit index" setting. It lists exactly the
+  activities the unit's progress ring is counting, each with the same indicator used on the
+  cards, and selecting one scrolls to it rather than leaving the page. Only the unit being
+  viewed lists its activities, so the panel stays a list of units. Off by default.
+- Activity descriptions on the course page, shown when the activity asks for them, so a teacher
+  can say something about an activity without adding a label for it. Set inside the card, in the
+  same quiet grey as the zone headings but cased normally, and indented past the icon.
+- Renaming an activity from the course page. The name becomes an inplace editable while editing,
+  with its pencil kept out of sight until the activity is hovered or focused, so editing mode
+  stays as quiet as the rest of the format.
+- PHPUnit tests for label placement, activity renaming, descriptions and the index list.
+
+### Fixed
+- A unit with no completion-tracked activities showed an empty progress ring for ever, which
+  reads as work still outstanding when there is nothing to do. Such a unit now shows a filled
+  dot: the same family as the ring, but plainly not a measure of anything.
+- Labels rendered as activity cards, which for a label means a card linking nowhere, captioned
+  with its auto-generated name rather than the text it carries. A label is now shown as the text
+  itself, and travels with the activity it introduces so that zone grouping cannot separate the
+  two. Labels the teacher leaves at the end stay at the end, and dragging one keeps where it was
+  dropped.
+- Ticking "display description on course page" moved an activity into the learning zone and
+  rendered its description as though it were the activity itself. Modules offer their
+  description and any content they render in place through the same hook, and the two were not
+  being told apart.
+- Activity cards lost their name when a completion control was placed beside them. Cards now
+  carry the compact indicator inside the card, where the shrinking layout cannot squeeze the
+  name out.
+- Completion indicators collapsed to a bare border wherever they were not a flex item, since
+  width and height do not apply to inline elements.
+
+### Changed
+- Activity cards are containers rather than links, since the rename pencil is itself a link and
+  cannot be nested inside one. Students keep the whole card as a click target through a stretched
+  link on the name; while editing, the name carries its own link instead.
+
 ## v0.7.5 (2026-07-30) - Beta
 
 Completion tracking for content the format renders in place. Supersedes the 0.7.4 entry, which

@@ -1,0 +1,53 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template format_simple/local/content/cm/title
+
+    The activity name, as shown inside the inplace editable.
+
+    The same as core's title except that the link is not stretched. Core stretches it across the
+    whole activity row to make the row clickable; here the card provides its own click target,
+    and a stretched link would cover the rename pencil and the completion indicator beside it.
+
+    Context variables required for this template:
+    * url string The activity's URL
+    * instancename string The formatted activity name
+    * altname string Accessible module type suffix, when the name does not already say it
+    * uservisible bool Whether the user can reach the activity
+    * linkclasses string Extra classes core calculated for the link
+    * onclick string Any onclick behaviour the module asks for
+
+    Example context (json):
+    {
+        "url": "#",
+        "instancename": "Reading one",
+        "altname": "",
+        "uservisible": true,
+        "linkclasses": "",
+        "onclick": ""
+    }
+}}
+{{#uservisible}}
+    <a href="{{url}}" class="{{linkclasses}} aalink" onclick="{{{onclick}}}">
+        <span class="instancename">{{{instancename}}} {{{altname}}}</span>
+    </a>
+{{/uservisible}}
+{{^uservisible}}
+    <span class="instancename">
+        {{{instancename}}} {{{altname}}}
+    </span>
+{{/uservisible}}

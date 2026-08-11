@@ -319,7 +319,7 @@ final class format_simple_test extends \advanced_testcase {
         $this->setAdminUser();
 
         $course = $this->getDataGenerator()->create_course(['format' => 'simple']);
-        $learningmods = ['page', 'h5pactivity', 'scorm', 'lti', 'lesson', 'label'];
+        $learningmods = ['page', 'h5pactivity', 'scorm', 'lti', 'lesson'];
 
         foreach ($learningmods as $modname) {
             // Skip modules that aren't installed.
@@ -337,6 +337,29 @@ final class format_simple_test extends \advanced_testcase {
             // Re-fetch modinfo after each to avoid cache issues.
             rebuild_course_cache($course->id);
         }
+    }
+
+    /**
+     * A label is section copy, not something to open, so it has a zone of its own.
+     *
+     * Treating it as learning content made it render as a card, which for a label means a card
+     * linking nowhere, captioned with the auto-generated name rather than the text it carries.
+     */
+    public function test_get_activity_zone_label(): void {
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course(['format' => 'simple']);
+        $label = $this->getDataGenerator()->create_module('label', [
+            'course' => $course->id,
+            'intro' => '<p>Read this first.</p>',
+            'introformat' => FORMAT_HTML,
+        ]);
+
+        $cm = get_fast_modinfo($course)->get_cm($label->cmid);
+
+        $this->assertEquals('label', \format_simple::get_activity_zone($cm));
+        $this->assertNull($cm->url, 'A label has no page of its own to link to.');
     }
 
     /**
