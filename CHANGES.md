@@ -2,6 +2,13 @@
 
 All notable changes to the Simple course format plugin are documented in this file.
 
+## v1.0.0 (2026-08-19) - Stable
+
+### Changed
+- Screen-reader-only markup now uses Bootstrap 5's `visually-hidden` class instead of the
+  deprecated `sr-only` class (compatibility layer removed in Moodle 6.0).
+- Declared as a stable 1.0.0 release for Moodle 5.0–5.3.
+
 ## v0.8.0 (2026-08-11) - Beta
 
 ### Added

@@ -187,7 +187,7 @@
                         <span class="simple-cm-dot {{#ismanualcompletion}}is-manual{{/ismanualcompletion}}{{^ismanualcompletion}}is-conditional{{/ismanualcompletion}} {{#iscomplete}}is-complete{{/iscomplete}}"
                               aria-hidden="true"></span>
                         <span class="simple-nav-cmname">{{name}}</span>
-                        <span class="sr-only">
+                        <span class="visually-hidden">
                             {{#iscomplete}}{{#str}}completedname, format_simple, {{name}}{{/str}}{{/iscomplete}}
                             {{^iscomplete}}{{#str}}notcompletedname, format_simple, {{name}}{{/str}}{{/iscomplete}}
                         </span>
