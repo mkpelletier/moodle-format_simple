@@ -44,6 +44,29 @@
     }
 }}
 
+<script>
+(function() {
+    try {
+        var theme = "{{darktheme}}";
+        var resolved = theme;
+        if (theme === "auto") {
+            var toMins = function(t) {
+                var p = t.split(":");
+                return (parseInt(p[0], 10) || 0) * 60 + (parseInt(p[1], 10) || 0);
+            };
+            var now = new Date();
+            var mins = now.getHours() * 60 + now.getMinutes();
+            var start = toMins("{{darkstart}}");
+            var end = toMins("{{darkend}}");
+            var isdark = start < end ? (mins >= start && mins < end) : (mins >= start || mins < end);
+            resolved = isdark ? "dark" : "light";
+        }
+        document.body.setAttribute("data-simple-theme", resolved);
+    } catch (e) {
+        // CSS falls back to light on any failure.
+    }
+})();
+</script>
 <div id="format-simple-root"
      class="format-simple-wrapper"
      data-courseid="{{courseid}}"

@@ -114,11 +114,19 @@ class format_simple extends core_courseformat\base {
         // Count unread forum posts in section 0 for the cog nav badge.
         $unreadcount = $this->count_section0_unread($course);
 
+        // Dark mode preferences — per-user, defaulting to light/19:00-07:00.
+        $darktheme = get_user_preferences('format_simple_darktheme', 'light');
+        $darkstart = get_user_preferences('format_simple_darkstart', '19:00');
+        $darkend = get_user_preferences('format_simple_darkend', '07:00');
+
         $page->requires->js_call_amd('format_simple/cognav', 'init', [
             $courseurl->out(false),
             (int) $course->id,
             $section0modal,
             $unreadcount,
+            $darktheme,
+            $darkstart,
+            $darkend,
         ]);
     }
 

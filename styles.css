@@ -2204,3 +2204,1096 @@ body.format-simple .simple-mobile-header {
 .format-simple .simple-nav-item.is-active .simple-nav-plainicon {
     color: var(--simple-accent);
 }
+
+/* =========================================================================
+   Dark Mode
+   ========================================================================= */
+
+/* ---- Light/dark cross-fade ----
+   A per-property CSS transition (background-color, color, ...) cannot give
+   a coordinated fade here: dozens of elements in this file already declare
+   their own transition for their own purposes (nav collapse, popover open,
+   button hover), each at a different duration and covering a different
+   property list, and a shorthand transition declaration does not merge
+   across rules of different specificity — the more specific one simply
+   replaces it. A single flat-colour overlay (an earlier attempt at this)
+   does not really solve that either: fading it in necessarily passes
+   through a moment where it sits fully opaque, wiping every element on the
+   page to one solid colour before the reveal even starts — which reads as
+   a flash to black or white, not a fade.
+   The View Transitions API (triggered from cognav.js) avoids both
+   problems: the browser captures the page before and after the theme
+   attribute changes and cross-dissolves those two real snapshots directly
+   into one another, so there is never a flat, detail-free frame in
+   between — just the old page blending straight into the new one. These
+   pseudo-elements are not part of the normal DOM, so they cannot be
+   scoped with a `.format-simple` ancestor selector the usual way; in
+   practice that is fine, since cognav.js is the only code in this plugin
+   that ever calls document.startViewTransition(). Browsers without
+   support simply keep their default (instant) behaviour.
+   The duration reads from a custom property rather than a literal value
+   so cognav.js can ask for a slower fade for one specific trigger — auto
+   mode crossing its scheduled boundary while the page sits open and
+   unattended — without a second, near-duplicate pseudo-element rule:
+   custom properties inherit into the view-transition pseudo-element tree
+   even though ordinary selectors cannot reach it. A manual toggle click or
+   schedule edit leaves the property unset and gets the 1000ms default. */
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation-duration: var(--simple-theme-transition-duration, 1000ms);
+}
+
+/* ---- Design tokens ----
+   The wrapper's own custom properties are simply redefined here; every rule
+   built on var(--simple-*) — nav, cards, content, focus rings — repaints
+   itself automatically. Every colour below was checked against its
+   background for WCAG AA contrast (>=4.5:1 for text, >=3:1 for large text
+   and icons). */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .format-simple-wrapper {
+    --simple-bg: #0f1420;
+    --simple-surface: #182234;
+    --simple-text: #e8eaf0;
+    --simple-text-secondary: #a8b0c3;
+    --simple-text-muted: #7c8598;
+    --simple-border: #2a3346;
+    --simple-border-light: #232b3d;
+    --simple-accent: #5b9bf5;
+    --simple-accent-light: #142943;
+    --simple-success: #34d399;
+    --simple-success-light: #0f2e22;
+    --simple-warning: #fbbf24;
+    --simple-danger: #f87171;
+}
+
+/* ---- Outer page chrome ----
+   #topofscroll.main-inner and #page.drawers sit outside the format's own
+   wrapper (Boost draws them), so they keep Boost's white page background
+   even once the wrapper itself has gone dark. Painting them dark too — and
+   the body as a catch-all — closes that gap so the whole page reads as one
+   dark surface instead of a dark card floating on white. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] {
+    background: #0f1420;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] #topofscroll.main-inner,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] #page.drawers,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] #page-content,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .course-content {
+    background: #0f1420;
+}
+
+/* Other course pages (settings, and any other Moodle form) sit on that same
+   dark background now, but their headings and field labels are Boost's
+   default near-black text, left over from the light page they were designed
+   for. Repainting them here — sitewide under dark mode, not just inside the
+   format's own wrapper — keeps every page legible once dark mode is on.
+   None of Boost's underlying rules for these carry !important, so the extra
+   body-level selectors here are enough on their own to win. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] h1,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .h1,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] h2,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .h2,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] h3,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .h3,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] h4,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .h4,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] h5,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .h5,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] h6,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .h6,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] label {
+    color: #e8eaf0;
+}
+
+/* Icon-only buttons (e.g. the quick-edit pencil beside an activity title)
+   inherit the same dark, near-invisible text colour as the headings above. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .btn-icon {
+    color: #e8eaf0;
+}
+
+/* Activity icons (.simple-cm-icon) are <img> elements — Moodle's monologo
+   service, requested with filtericon=1, so the colour is a flat dark
+   silhouette that cannot be repainted with the `color` property. Inverting
+   the image is the standard trick for that case: black becomes white/light
+   while the transparent background stays transparent. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-cm-icon {
+    filter: invert(1) brightness(1.4);
+}
+
+/* The single-activity page header (title, completion, dates) is Boost
+   chrome with a hard-coded light grey panel background (#f8f9fa) — the
+   same "light box left behind on a dark page" problem as .main-inner
+   further up, so it gets the same dark surface treatment.
+   .path-mod is a class Moodle puts directly on <body>, the very same
+   element as .format-simple and [data-simple-theme] — not a wrapper
+   around it — so it has to be compounded onto the body selector rather
+   than chained after it with a descendant combinator. Written as a
+   descendant (as in the previous attempt), the selector asks for a
+   .path-mod element nested *inside* that body, which does not exist, so
+   the rule silently never matched anything. */
+body.format-simple.path-mod[data-simple-theme="dark"][data-simple-theme="dark"] .activity-header:not(:empty) {
+    background-color: #182234;
+}
+
+/* The activity dates/availability strip beneath the header title is Boost's
+   muted grey (#495057) — legible on the light panel it was designed for,
+   not on a dark one. Same .path-mod-on-body fix as above. */
+body.format-simple.path-mod[data-simple-theme="dark"][data-simple-theme="dark"] .activity-information .activity-dates,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .activity-dates {
+    color: #a8b0c3;
+    border-bottom-color: #2a3346;
+}
+
+/* .generaltable (participants, grades, and most other Moodle listing
+   tables) paints itself explicitly with Bootstrap's light-theme variables
+   — background-color: var(--bs-body-bg) resolves to #fff, color:
+   var(--bs-emphasis-color) to #000 — rather than inheriting the page
+   background, so our earlier ambient dark-background fixes never reached
+   it. Cells and thead cells set their own border-top/border-bottom colour
+   from var(--bs-border-color) too, which needs the same direct override;
+   .generaltable is a real descendant (not a body-level class like
+   .path-mod), so a plain descendant combinator is correct here. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .generaltable {
+    background-color: #182234;
+    color: #e8eaf0;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .generaltable th,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .generaltable td {
+    border-top-color: #2a3346;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .generaltable thead th,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .generaltable thead td {
+    border-bottom-color: #2a3346;
+    background-color: #1e293d;
+    color: #e8eaf0;
+}
+
+/* An activity's intro/description text (quiz instructions, forum intros,
+   etc.) is teacher-authored rich text rendered inside core's own
+   <div class="activity-description" id="intro"> (lib/templates/
+   activity_header.mustache — shared by every module, not just quiz). It
+   commonly carries inline font-family/style overrides from the editor but
+   essentially never an inline colour, so its text just inherits Boost's
+   near-black default and goes the same illegible way as the plain <p> fix
+   further up. One rule on the wrapper is enough — <ol>/<li>/<span>/<strong>
+   inside it all inherit color normally since nothing here sets its own. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .activity-description {
+    color: #e8eaf0;
+}
+
+/* Bootstrap's .card component (e.g. the quiz attempt summary cards) paints
+   its own explicit background the same way .generaltable did, via
+   var(--bs-body-bg)/var(--bs-card-cap-bg) rather than inheriting the page
+   background, so it needs the same direct treatment — wherever a .card
+   turns up under dark mode, not just on the quiz page. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .card {
+    background-color: #182234;
+    border-color: #2a3346;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .card-header,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .card-footer {
+    background-color: #1e293d;
+    border-color: #2a3346;
+}
+
+/* Bootstrap's .alert-* variants (teacher-authored callouts inside forum
+   posts, page content, etc — as opposed to .card/.generaltable, which are
+   Moodle chrome) each paint their own light pastel background straight from
+   Bootstrap's colour variables, the same way .card/.generaltable do above,
+   so they need the same direct per-variant treatment. Unlike those two,
+   sites in production have been seen shipping their own sitewide "!important"
+   background/border overrides for these exact classes (theme colour
+   customisations, typically), which plain specificity — however many
+   selectors deep — can never beat; matched with !important here for the
+   same reason .text-muted is above. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .alert-primary {
+    background-color: #142943 !important; /* stylelint-disable-line declaration-no-important */
+    border-color: #2a4a7a !important; /* stylelint-disable-line declaration-no-important */
+    color: #5b9bf5 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .alert-secondary {
+    background-color: #1e293d !important; /* stylelint-disable-line declaration-no-important */
+    border-color: #2a3346 !important; /* stylelint-disable-line declaration-no-important */
+    color: #a8b0c3 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .alert-success {
+    background-color: #0f2e22 !important; /* stylelint-disable-line declaration-no-important */
+    border-color: #1a4a37 !important; /* stylelint-disable-line declaration-no-important */
+    color: #34d399 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .alert-danger {
+    background-color: #3a1418 !important; /* stylelint-disable-line declaration-no-important */
+    border-color: #5c2028 !important; /* stylelint-disable-line declaration-no-important */
+    color: #f87171 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .alert-warning {
+    background-color: #3a2e0f !important; /* stylelint-disable-line declaration-no-important */
+    border-color: #5c491a !important; /* stylelint-disable-line declaration-no-important */
+    color: #fbbf24 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .alert-info {
+    background-color: #0f2c3a !important; /* stylelint-disable-line declaration-no-important */
+    border-color: #1a4a5c !important; /* stylelint-disable-line declaration-no-important */
+    color: #5bc0f8 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .alert-light {
+    background-color: #182234 !important; /* stylelint-disable-line declaration-no-important */
+    border-color: #2a3346 !important; /* stylelint-disable-line declaration-no-important */
+    color: #e8eaf0 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .alert-dark {
+    background-color: #0f1420 !important; /* stylelint-disable-line declaration-no-important */
+    border-color: #2a3346 !important; /* stylelint-disable-line declaration-no-important */
+    color: #e8eaf0 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+/* An alert's dismiss button and any .alert-link inherit Bootstrap's
+   near-black default text colour the same way headings/labels did above. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .alert .btn-close {
+    filter: invert(1) brightness(1.4);
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .alert-link {
+    color: inherit !important; /* stylelint-disable-line declaration-no-important */
+    text-decoration: underline;
+}
+
+/* A handful of other Bootstrap components paint the same kind of explicit
+   light background/dark text that .card, .generaltable and .alert-* do
+   above, and turn up often enough across ordinary Moodle pages (forum post
+   actions, the user menu, feedback dialogs, plain text inputs) to need the
+   same direct override. Backgrounds/borders carry !important for the same
+   sitewide-override reason the .alert-* block above does; the text colours
+   are given it too since they sit in the same rule and a partial win would
+   leave dark text on a dark background, which is worse than the original
+   problem. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .dropdown-menu {
+    background-color: #182234 !important; /* stylelint-disable-line declaration-no-important */
+    border-color: #2a3346 !important; /* stylelint-disable-line declaration-no-important */
+    color: #e8eaf0 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .dropdown-item {
+    color: #e8eaf0 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .dropdown-item:hover,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .dropdown-item:focus {
+    background-color: #1e293d !important; /* stylelint-disable-line declaration-no-important */
+    color: #e8eaf0 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .dropdown-divider {
+    border-top-color: #2a3346 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .list-group-item {
+    background-color: #182234 !important; /* stylelint-disable-line declaration-no-important */
+    border-color: #2a3346 !important; /* stylelint-disable-line declaration-no-important */
+    color: #e8eaf0 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .modal-content {
+    background-color: #182234 !important; /* stylelint-disable-line declaration-no-important */
+    color: #e8eaf0 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .modal-header,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .modal-footer {
+    border-color: #2a3346 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .breadcrumb {
+    background-color: transparent !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .breadcrumb-item,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .breadcrumb-item a {
+    color: #a8b0c3 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .form-control,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .form-select,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] textarea,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] select,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] input[type="text"],
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] input[type="email"],
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] input[type="number"],
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] input[type="search"],
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] input[type="password"] {
+    background-color: #182234 !important; /* stylelint-disable-line declaration-no-important */
+    border-color: #2a3346 !important; /* stylelint-disable-line declaration-no-important */
+    color: #e8eaf0 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .form-control:focus,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .form-select:focus {
+    background-color: #182234 !important; /* stylelint-disable-line declaration-no-important */
+    color: #e8eaf0 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+/* Bootstrap's tooltip/popover components render in a portal appended to
+   <body>, outside every wrapper above, but the body-level dark-theme
+   attribute this whole section keys off is still their ancestor, so they
+   are reachable the same way .dropdown-menu is. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .popover {
+    background-color: #182234 !important; /* stylelint-disable-line declaration-no-important */
+    border-color: #2a3346 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .popover-header {
+    background-color: #1e293d !important; /* stylelint-disable-line declaration-no-important */
+    border-color: #2a3346 !important; /* stylelint-disable-line declaration-no-important */
+    color: #e8eaf0 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .popover-body {
+    color: #e8eaf0 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .tooltip .tooltip-inner {
+    background-color: #2a3346 !important; /* stylelint-disable-line declaration-no-important */
+    color: #e8eaf0 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+/* mod_quiz ships its own styles.css (a third stylesheet, separate from
+   Boost/Boost Union) that paints the attempt-summary table's cells with
+   literal greys — table.quizreviewsummary th.cell/td.cell — bypassing the
+   .generaltable fix above entirely, since these more specific selectors
+   (element+class, twice) outrank a single .generaltable class. Matched
+   here at the same specificity so ours wins. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] table.quizreviewsummary th.cell {
+    background: #1e293d;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] table.quizreviewsummary td.cell {
+    background: #182234;
+}
+
+/* A quiz question's .formulation (the question text itself), .outcome and
+   .comment (feedback panels) all paint their own explicit light pastel
+   background plus a matching dark text colour, the same way .generaltable
+   and .card do — so the general p/li text-colour fix elsewhere in this file
+   never reaches them; their own `color` declaration always wins over an
+   inherited one regardless of specificity. Each pairing below is darkened
+   together for exactly that reason: fixing only the background would leave
+   the box's own dark text sitting on top of it. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .que .formulation {
+    background-color: #182234;
+    border-color: #2a3346;
+    color: #e8eaf0;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .que .outcome {
+    background-color: #3a2e0f;
+    border-color: #5c491a;
+    color: #fbe6cf;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .que .comment {
+    background-color: #0f2e22;
+    border-color: #1a4a37;
+    color: #cdf2e2;
+}
+
+/* The question-number/state/grade/flag sidebar (.que .info) is Boost chrome
+   with its own hardcoded light-grey panel — same "light box left behind on
+   a dark page" issue .activity-header had elsewhere in this file — but,
+   unlike .formulation above, it sets no colour of its own on its child
+   divs (.state, .grade), which just inherit Boost's ordinary near-black
+   body text. That text needs its own fix here since .info > div is neither
+   a p/li (covered by the general rich-text rule) nor part of .formulation. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .que .info {
+    background-color: #182234;
+    border-color: #2a3346;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .que .info > div {
+    color: #e8eaf0;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .que .editquestion a {
+    color: #cfe0fb;
+}
+
+/* The draggable word/answer pills in this drag-and-drop question type
+   (.draggable.answers) turned out not to inherit a usable colour from
+   .formulation the way assumed above — confirmed against the live question
+   rather than that type's own stylesheet, which isn't present in this
+   project's codebase to inspect. Given an explicit background here rather
+   than one inferred blind. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .que .draggable.answers {
+    background: #0b4376;
+    color: #e8eaf0;
+}
+
+/* plagiarism_copyleaks's report widget (shown under a submitted assignment
+   or forum post) is a third-party plugin not present in this project's own
+   codebase to inspect directly, unlike the Boost/tiny_c4l/widgethub rules
+   above — its light-card-plus-dark-text pattern is inferred from its class
+   names rather than confirmed against its actual stylesheet, so this is a
+   best-effort dark treatment rather than a verified one. !important is used
+   defensively for that same reason: without sight of the source rules, this
+   assumes they may be at least as specific, the same posture taken for the
+   .alert-* and .twh-callout rules above when a rule turned out to carry
+   !important itself. The small score-level indicator dot is left alone — it
+   is almost certainly a solid semantic colour (green/amber/red for low/medium/high),
+   which stays legible on any background and risks looking wrong if
+   recoloured blind. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .cls-large-report-details {
+    background-color: #182234 !important; /* stylelint-disable-line declaration-no-important */
+    border-color: #2a3346 !important; /* stylelint-disable-line declaration-no-important */
+    color: #e8eaf0 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .cls-text-result,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .cls-score-container {
+    color: #e8eaf0 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+/* Bootstrap's .text-muted resolves to a mid-grey that disappears against
+   the dark page background — matched to the same colour the <p> fix below
+   uses, so muted and regular body text stay a single consistent shade.
+   Boost's own .text-muted rule is the one genuinely unavoidable case in
+   this file: it carries !important itself, so a plain declaration —
+   however specific — can never beat it; matching it here is the only way
+   to win, hence the explicit sniff exemption. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .text-muted {
+    color: #e8eaf0 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+/* The automatic-completion badges' first pill uses mix-blend-mode: multiply
+   (inherited from the general .badge rule), which crushes a light badge
+   toward black on a dark background. Switching just the first pill to
+   soft-light keeps it legible instead. Same .path-mod-on-body compounding
+   as the activity-header fix above — .path-mod lives on <body> itself. */
+body.format-simple.path-mod[data-simple-theme="dark"][data-simple-theme="dark"]
+.automatic-completion-conditions .badge:first-child {
+    mix-blend-mode: soft-light;
+}
+
+/* Body copy inside an activity (mod/page and friends render their own rich
+   text directly, outside the format's own wrapper) is still Boost's
+   near-black default text colour, effectively invisible on the dark page
+   background introduced above. This is reading content, so it gets pushed
+   well past the general AA text minimum: #e8eaf0 against the #0f1420 page
+   background and #182234 card surface both measure comfortably above a
+   6:1 contrast ratio. Covers the plain-text elements a rich-text editor
+   actually produces — not span/div, which carry too much unrelated UI
+   (badges, pills, icons) to recolour wholesale. .text_to_html is the one
+   div-level exception: it is the exact wrapper format_text() puts around
+   FORMAT_HTML content (forum posts, feedback, etc — lib/outputrenderers.php),
+   so it is exactly as narrowly scoped as p/ul/li above, and it needs its own
+   entry because Moodle sometimes fills it with bare text nodes and <br>
+   rather than <p> children, which the element list above never reaches. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] p,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] ul,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] ol,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] li,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] dl,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] dt,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] dd,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] blockquote,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .text_to_html {
+    color: #e8eaf0;
+}
+
+/* Activity/resource card titles (.aalink) inherit Boost's default link
+   colour, which is too dark to read comfortably against the dark card
+   surface. Lightened to rgba(96, 165, 226, 1) — checked at ~6:1 contrast
+   against the dark surface/background tokens above. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .format-simple-wrapper .aalink {
+    color: rgba(96, 165, 226, 1);
+}
+
+/* Two spots build their active-tab gradient from a literal light-mode hex
+   rather than the accent-light token; point them at the token so dark mode
+   repaints them too. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-nav-item.is-active,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-nav.is-collapsed .simple-nav-item.is-active {
+    background: linear-gradient(to right, var(--simple-accent-light), var(--simple-bg));
+}
+
+/* ---- Progress ring SVGs ----
+   These circles are drawn with literal fill/stroke attributes (inline SVG
+   presentation attributes carry the lowest CSS priority), so any rule here
+   wins over them without needing !important. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-progress-bg {
+    stroke: var(--simple-border);
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-progress-bar {
+    stroke: var(--simple-success);
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-progress-svg.is-complete circle {
+    fill: var(--simple-success);
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-progress-svg.is-complete polyline {
+    stroke: var(--simple-surface);
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-progress-svg.is-notstarted circle {
+    stroke: var(--simple-border);
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-progress-svg.is-untracked circle {
+    fill: var(--simple-border);
+}
+
+/* ---- tiny_c4l ("Content for Learning") and Widget Hub callouts ----
+   These TinyMCE-inserted content blocks (lib/editor/tiny/plugins/c4l/
+   styles.css) are teacher-authored rich text, so they turn up anywhere
+   format_text() runs — course content, forum posts, assignment feedback —
+   same as .text_to_html above. Each variant hardcodes its own light pastel
+   background plus, in most cases, no explicit text colour of its own (it
+   inherits the surrounding paragraph colour), which is exactly why the
+   general p/li dark-text rule above was enough to make the text legible but
+   left the light pastel background behind it — light text on a light card.
+   Both halves are overridden together here. The plugin emits two class
+   prefixes for the same components — c4l- (editor/edit-mode markup) and
+   c4lv- (viewer/rendered markup) — so both are targeted throughout.
+   !important matches the .alert-* treatment above: this is another
+   plugin's CSS painting its own explicit colours, external to this
+   stylesheet's own cascade. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4l-keyconcept,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4lv-keyconcept,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4l-allpurposecard,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4lv-allpurposecard,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4l-learningoutcomes,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4lv-learningoutcomes,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4l-tag,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4lv-tag,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4l-estimatedtime,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4lv-estimatedtime,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4l-duedate,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4lv-duedate,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4l-gradingvalue,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4lv-gradingvalue {
+    background-color: #142943 !important; /* stylelint-disable-line declaration-no-important */
+    color: #cfe0fb !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4l-keyconcept,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4lv-keyconcept {
+    border-left-color: #5b9bf5 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4l-tip,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4lv-tip {
+    background-color: #3a1a34 !important; /* stylelint-disable-line declaration-no-important */
+    border-left-color: #d16fc4 !important; /* stylelint-disable-line declaration-no-important */
+    color: #f0d9ec !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4l-reminder,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4lv-reminder {
+    background-color: #0f2c3a !important; /* stylelint-disable-line declaration-no-important */
+    border-left-color: #5bc0f8 !important; /* stylelint-disable-line declaration-no-important */
+    color: #d3edfb !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4l-attention,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4lv-attention {
+    background-color: #3a2a12 !important; /* stylelint-disable-line declaration-no-important */
+    border-left-color: #fbbf24 !important; /* stylelint-disable-line declaration-no-important */
+    color: #fbe6cf !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4l-dodontcards-do,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4lv-dodontcards-do {
+    background: #0f2e22 !important; /* stylelint-disable-line declaration-no-important */
+    color: #cdf2e2 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4l-dodontcards-dont,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4lv-dodontcards-dont {
+    background: #3a1418 !important; /* stylelint-disable-line declaration-no-important */
+    color: #f9d6d9 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4l-readingcontext,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4lv-readingcontext,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4l-example,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4lv-example,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4l-expectedfeedback,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4lv-expectedfeedback,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4l-conceptreview,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4lv-conceptreview,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4l-furtherreading,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4lv-furtherreading {
+    background-color: #182234 !important; /* stylelint-disable-line declaration-no-important */
+    color: #e8eaf0 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4l-example h1,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4lv-example h1 {
+    color: #5b9bf5 !important; /* stylelint-disable-line declaration-no-important */
+    border-bottom-color: #5b9bf5 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4l-conceptreview .c4l-concept-review-title,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4lv-conceptreview .c4l-concept-review-title {
+    color: #d16fc4 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4l-furtherreading .c4l-further-reading-title,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4lv-furtherreading .c4l-further-reading-title {
+    color: #5bc0f8 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4l-aiuseallowed,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4lv-aiuseallowed {
+    background-color: #0f2e22 !important; /* stylelint-disable-line declaration-no-important */
+    color: #34d399 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4l-aiusenotallowed,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4lv-aiusenotallowed {
+    background-color: #3a1418 !important; /* stylelint-disable-line declaration-no-important */
+    color: #f87171 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4l-aiusereported,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4lv-aiusereported {
+    background-color: #3a2a12 !important; /* stylelint-disable-line declaration-no-important */
+    color: #fbbf24 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+/* Text-only variants: no background of their own, just a hardcoded literal
+   colour tuned for a white page, too dark to read against the dark page
+   background/card surfaces introduced above. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4l-proceduralcontext,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4lv-proceduralcontext {
+    color: #93b4f5 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4l-figure figcaption,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .c4lv-figure figcaption {
+    color: #a8b0c3 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+/* .c4l-learningoutcomes-title keeps its own solid blue pill with white text
+   in both themes — already legible against a dark card, so left untouched. */
+
+/* ---- Plain Bootstrap .table (Widget Hub tables, etc.) ----
+   Unlike .generaltable, this is stock Boost/Bootstrap 5 table CSS, which
+   themes itself through custom properties rather than literal colours:
+   .table > :not(caption) > * > * reads background-color from
+   var(--bs-table-bg), which .table itself defines as var(--bs-body-bg) —
+   i.e. always white, regardless of the page's own dark background — and
+   text colour from var(--bs-table-color)/var(--bs-emphasis-color), always
+   near-black. Redeclaring those same custom properties here, on the same
+   .table element the originals are declared on, is the override mechanism
+   Bootstrap's own table theming is built around — it needs no !important
+   and no fight over descendant-selector specificity, since every cell
+   underneath simply reads the new values through the same var() call.
+   table-group-divider's border-top: ... solid currentcolor follows the
+   text-colour fix automatically, for the same reason. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .table {
+    --bs-table-bg: #182234;
+    --bs-table-color: #e8eaf0;
+    --bs-emphasis-color: #e8eaf0;
+    --bs-table-border-color: #2a3346;
+    border-color: #2a3346;
+}
+
+/* ---- Bootstrap utility backgrounds (e.g. a "jumbotron" bg-light panel) ----
+   Every Bootstrap .bg-* utility carries !important itself (it is meant to
+   always win over a component's own background), so overriding it needs
+   the same exemption already used for .text-muted/.alert-* above — no
+   selector, however specific, beats it without matching that !important. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .bg-light {
+    background-color: #182234 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+/* ---- Widget Hub ("tiny_widgethub") callouts ----
+   lib/editor/tiny/plugins/widgethub/styles.css paints .twh-callout and its
+   four contextual variants (important/warning/example/extension) the same
+   light-pastel-background-plus-hardcoded-dark-text way tiny_c4l's callouts
+   do above, so they need the same paired background+text treatment.
+   .twh-callout-body's #374151 text colour is shared by every variant
+   (only the title/icon get a variant colour), so one rule fixes body text
+   everywhere; the base/variant rules below only need to handle each one's
+   distinct background, border-left accent, and title/icon colour. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .twh-callout-body {
+    color: #e8eaf0 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .twh-callout {
+    background-color: #182234 !important; /* stylelint-disable-line declaration-no-important */
+    border-left-color: #7c8598 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .twh-callout-important {
+    background-color: #3a2a12 !important; /* stylelint-disable-line declaration-no-important */
+    border-left-color: #fbbf24 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .twh-callout-important .twh-callout-title,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .twh-callout-important .twh-callout-icon {
+    color: #fbbf24 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .twh-callout-warning {
+    background-color: #3a1418 !important; /* stylelint-disable-line declaration-no-important */
+    border-left-color: #f87171 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .twh-callout-warning .twh-callout-title,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .twh-callout-warning .twh-callout-icon {
+    color: #f87171 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .twh-callout-example {
+    background-color: #0f2e22 !important; /* stylelint-disable-line declaration-no-important */
+    border-left-color: #34d399 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .twh-callout-example .twh-callout-title,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .twh-callout-example .twh-callout-icon {
+    color: #34d399 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .twh-callout-extension {
+    background-color: #142943 !important; /* stylelint-disable-line declaration-no-important */
+    border-left-color: #5b9bf5 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .twh-callout-extension .twh-callout-title,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .twh-callout-extension .twh-callout-icon {
+    color: #5b9bf5 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+/* ---- Widget Hub quote and text-fragment components ----
+   .twh-quote hardcodes both a light lavender background and its own
+   #222222 text colour (rather than inheriting the page's text colour the
+   way the callouts above do), so both need overriding; .twh-quote cite
+   only sets opacity, not its own colour, so fixing .twh-quote's colour
+   fixes the citation too. The decorative oversized quote-mark glyphs
+   (:before/:after) are a low-alpha purple tuned to sit faintly on a white
+   card; brightened here so they stay visible at the same low-key alpha on
+   a dark one instead of disappearing into it. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .twh-quote {
+    background: #182234 !important; /* stylelint-disable-line declaration-no-important */
+    color: #e8eaf0 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .twh-quote::before,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .twh-quote::after {
+    color: rgba(139, 148, 255, 0.35) !important; /* stylelint-disable-line declaration-no-important */
+}
+
+/* .twh-fragment is a "torn paper stack" effect: the visible card is a
+   plain white background, with two ::before/::after layers in a slightly
+   different light grey peeking out from behind at a rotation to look like
+   loose sheets underneath — lighter than the page around it either way, so
+   the stack reads as paper sitting on a surface. #182234/#0f1420 (this
+   file's ordinary card-surface/page tokens) turned out to be the wrong
+   choice here: the surrounding content area is already painted with those
+   same two tones, so the "paper" was exactly the same colour as the table
+   it was sitting on and vanished. This card needs its own lighter tones,
+   one step up from --simple-surface, to actually stand out the way the
+   white card stands out against Boost's off-white light-mode page. Main
+   card lighter than the peeking layers, same relationship as the original
+   #fff-over-#f6f6f6. Text colour is already handled by the general h4/p
+   rules elsewhere in this file — .twh-fragment sets none of its own. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .twh-fragment {
+    background: #2a3a56 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .twh-fragment::before,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .twh-fragment::after {
+    background: #1e2b40 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+/* ---- Dark mode toggle button ----
+   Sits in the same fixed left rail as the cog and course-info buttons, and
+   is appended directly to <body> — outside the wrapper — so it cannot read
+   the wrapper's scoped tokens and gets its own literal colours below,
+   matching the light-mode values already used by its neighbours. */
+.format-simple .simple-darkmode-wrap {
+    position: relative;
+    margin-top: 6px;
+}
+
+.format-simple .simple-darkmode-btn {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: none;
+    border-radius: 0 10px 10px 0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+    font-size: 1.25rem;
+    color: #6b7280;
+    cursor: pointer;
+    transition: color 200ms, background 200ms;
+}
+
+.format-simple .simple-darkmode-btn:hover,
+.format-simple .simple-darkmode-btn[aria-expanded="true"] {
+    color: #2563eb;
+    background: #f0f4ff;
+}
+
+.format-simple .simple-darkmode-popover {
+    position: absolute;
+    top: 0;
+    left: 48px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 4px 10px rgba(0, 0, 0, 0.06);
+    padding: 16px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-12px);
+    transition: opacity 300ms cubic-bezier(0.4, 0, 0.2, 1), transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 220px;
+    z-index: 1041;
+}
+
+.format-simple .simple-darkmode-popover.is-open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0);
+}
+
+.format-simple .simple-darkmode-heading {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 10px 4px;
+}
+
+.format-simple .simple-darkmode-options {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.format-simple .simple-darkmode-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: #374151;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.format-simple .simple-darkmode-option i {
+    width: 18px;
+    text-align: center;
+    color: #6b7280;
+}
+
+.format-simple .simple-darkmode-option:hover {
+    background: #f0f4ff;
+}
+
+.format-simple .simple-darkmode-option.is-active {
+    background: #dbeafe;
+    border-color: #93c5fd;
+    color: #1d4ed8;
+}
+
+.format-simple .simple-darkmode-option.is-active i {
+    color: #1d4ed8;
+}
+
+.format-simple .simple-darkmode-schedule {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.format-simple .simple-darkmode-timelabel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.format-simple .simple-darkmode-timelabel input[type="time"] {
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 4px 6px;
+    font-size: 0.75rem;
+    color: #1a1a1a;
+    background: #fff;
+}
+
+/* The toggle button itself lives outside the wrapper's dark scope, so it
+   needs its own dark palette to match the rest of the fixed rail below.
+   Now that the outer page background goes dark too (see below), these
+   buttons are lifted a shade lighter than that background, with a border
+   and a paler shadow, so they still read as distinct floating tabs rather
+   than blending into the page behind them. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-darkmode-btn,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-cog-btn,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-home-btn,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-s0-modal-btn {
+    background: #1e293d;
+    color: #a8b0c3;
+    border: 1px solid #2f3b54;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-darkmode-btn:hover,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-darkmode-btn[aria-expanded="true"],
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-cog-btn:hover,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-home-btn:hover,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-s0-modal-btn:hover {
+    background: #142943;
+    color: #5b9bf5;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-cog-btn.is-open {
+    background: #142943;
+    color: #5b9bf5;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-darkmode-popover,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-cog-popover {
+    background: #1e293d;
+    border: 1px solid #2f3b54;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35), 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-darkmode-heading,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-cog-heading {
+    color: #7c8598;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-darkmode-option,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-cog-tile {
+    color: #a8b0c3;
+    background: #26324a;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-darkmode-option i {
+    color: #a8b0c3;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-darkmode-option:hover,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-cog-tile:hover {
+    background: #142943;
+    color: #5b9bf5;
+    border-color: #1e3a5f;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-darkmode-option.is-active,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-cog-tile.is-active {
+    background: #16304d;
+    border-color: #2b5484;
+    color: #8fbdfb;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-darkmode-option.is-active i {
+    color: #8fbdfb;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-cog-tile-icon {
+    background: #182234;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-cog-tile.is-active .simple-cog-tile-icon {
+    background: #5b9bf5;
+    color: #0f1420;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-darkmode-schedule {
+    border-top-color: #2a3346;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-darkmode-timelabel {
+    color: #a8b0c3;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-darkmode-timelabel input[type="time"] {
+    background: #0f1420;
+    border-color: #2a3346;
+    color: #e8eaf0;
+    color-scheme: dark;
+}
+
+/* ---- Section 0 modal (also outside the wrapper) ---- */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-s0-modal {
+    background: #182234;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-s0-modal-close {
+    background: rgba(255, 255, 255, 0.08);
+    color: #a8b0c3;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-s0-modal-close:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #e8eaf0;
+}
+
+/* ---- Native form controls, scrollbars ----
+   Tells the browser to draw its own chrome (scrollbars, date/time pickers,
+   and — see the dropdown fix below — a <select>'s native open option list)
+   in dark colours so they do not stand out as a light-mode leftover.
+   Declared body-wide as well as on the wrapper, since plenty of pages with
+   dark mode active (forum discussions, quiz pages, settings forms) render
+   their controls entirely outside the format's own wrapper. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] {
+    color-scheme: dark;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .format-simple-wrapper {
+    color-scheme: dark;
+}
+
+/* Dropdowns (<select class="form-select">, e.g. the forum display-mode
+   picker) paint an explicit light background/border and a dark-stroked
+   arrow icon baked into --bs-form-select-bg-img as an inline SVG — none of
+   that comes from inheritable page colours, so it stays light-themed no
+   matter what the surrounding page does. Background/border/text are
+   overridden directly; the arrow is redrawn with two small gradient
+   triangles rather than another SVG (Moodle's stylesheet lint disallows
+   data: URLs), coloured to match the rest of the dark palette. The closed
+   control is styled here; color-scheme: dark above additionally asks the
+   browser to draw the *open* native option list in dark chrome, which CSS
+   cannot otherwise reach. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .form-select {
+    background-color: #182234;
+    color: #e8eaf0;
+    border-color: #2a3346;
+    background-image:
+        linear-gradient(45deg, transparent 50%, #a8b0c3 50%),
+        linear-gradient(135deg, #a8b0c3 50%, transparent 50%);
+    background-position: calc(100% - 20px) center, calc(100% - 15px) center;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+}

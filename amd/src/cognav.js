@@ -43,6 +43,18 @@ define(['core/ajax', 'core/str', 'core/templates'], function(Ajax, Str, Template
     /** @type {Object} Pre-loaded language strings. */
     var langStrings = {};
 
+    /** @type {string} Current theme preference: light, dark, or auto. */
+    var darkTheme = 'light';
+
+    /** @type {string} Auto mode dark start time, HH:MM. */
+    var darkStart = '19:00';
+
+    /** @type {string} Auto mode dark end time, HH:MM. */
+    var darkEnd = '07:00';
+
+    /** @type {number|null} Interval id for re-checking auto mode. */
+    var autoCheckTimer = null;
+
     /**
      * Icon map for secondary nav items.
      *
@@ -227,6 +239,219 @@ define(['core/ajax', 'core/str', 'core/templates'], function(Ajax, Str, Template
         var viewUrl = new URL(courseUrl, window.location.origin);
         return window.location.pathname === viewUrl.pathname
             && window.location.search === viewUrl.search;
+    };
+
+    // ---------------------------------------------------------------
+    // Dark mode
+    // ---------------------------------------------------------------
+
+    /**
+     * Convert an HH:MM string to minutes since midnight.
+     *
+     * @param {string} time An HH:MM time string.
+     * @return {number} Minutes since midnight.
+     */
+    var timeToMinutes = function(time) {
+        var parts = (time || '0:0').split(':');
+        return (parseInt(parts[0], 10) || 0) * 60 + (parseInt(parts[1], 10) || 0);
+    };
+
+    /**
+     * Resolve the current theme preference (light/dark/auto) to an
+     * effective light/dark value, using the local clock for auto mode.
+     *
+     * @return {string} Either 'light' or 'dark'.
+     */
+    var resolveTheme = function() {
+        if (darkTheme !== 'auto') {
+            return darkTheme;
+        }
+
+        var now = new Date();
+        var mins = now.getHours() * 60 + now.getMinutes();
+        var start = timeToMinutes(darkStart);
+        var end = timeToMinutes(darkEnd);
+
+        // Ranges that cross midnight (e.g. 19:00-07:00) wrap around.
+        var isDark = start < end ? (mins >= start && mins < end) : (mins >= start || mins < end);
+        return isDark ? 'dark' : 'light';
+    };
+
+    /**
+     * Resolve the Font Awesome icon for the current theme preference.
+     *
+     * @return {string} An icon class such as 'fa-adjust'.
+     */
+    var resolveThemeIcon = function() {
+        if (darkTheme === 'auto') {
+            return 'fa-adjust';
+        }
+        return darkTheme === 'dark' ? 'fa-moon-o' : 'fa-sun-o';
+    };
+
+    /**
+     * Refresh the toggle button's icon to match the current theme preference.
+     */
+    var updateToggleIcon = function() {
+        var btn = document.querySelector('.simple-darkmode-btn');
+        var icon = btn ? btn.querySelector('i') : null;
+        if (icon) {
+            icon.className = 'fa ' + resolveThemeIcon();
+        }
+    };
+
+    /**
+     * Apply the resolved theme to the page.
+     *
+     * On page load, or when the resolved theme has not actually changed, this is instant.
+     * Otherwise — a manual toggle, a schedule edit, or auto mode crossing its scheduled
+     * boundary — the switch is handed to the View Transitions API where supported, which
+     * captures the page before and after the attribute change and cross-dissolves those two
+     * real snapshots directly into one another. That gives a genuine fade from the old colours
+     * to the new ones with no flat, detail-free frame in between — unlike a solid overlay,
+     * which necessarily sits at full, single-colour opacity for a moment and reads as a flash
+     * to black or white rather than a fade. Browsers without support just apply the change
+     * immediately, same as an unanimated call.
+     *
+     * @param {boolean} [animate] Whether to crossfade the change. Defaults to false.
+     * @param {number} [durationMs] Crossfade duration in milliseconds. Defaults to the
+     *                              stylesheet's own 1000ms (see styles.css). Used to give the
+     *                              unattended auto-mode switch a slower, easier-to-notice fade
+     *                              than a manual toggle click.
+     */
+    var applyTheme = function(animate, durationMs) {
+        var next = resolveTheme();
+        var current = document.body.getAttribute('data-simple-theme');
+
+        if (next === current) {
+            return;
+        }
+
+        var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        var swap = function() {
+            document.body.setAttribute('data-simple-theme', next);
+            updateToggleIcon();
+        };
+
+        if (!animate || !current || reduceMotion || typeof document.startViewTransition !== 'function') {
+            swap();
+            return;
+        }
+
+        var root = document.documentElement;
+        if (durationMs) {
+            root.style.setProperty('--simple-theme-transition-duration', durationMs + 'ms');
+        }
+        document.startViewTransition(swap).finished.finally(function() {
+            root.style.removeProperty('--simple-theme-transition-duration');
+        }).catch(function() {
+            // The transition can reject if interrupted by another one; nothing further to do.
+        });
+    };
+
+    /**
+     * (Re)start the interval that keeps auto mode in sync with the clock
+     * while the page stays open across the switch time. Given a slower,
+     * three-second fade — rather than the 1000ms manual-toggle default — since
+     * nobody is watching for it the way a person clicking the toggle is; a
+     * slower change is easier to notice and less jarring for whoever is
+     * reading when the scheduled boundary happens to pass.
+     */
+    var startAutoCheckTimer = function() {
+        if (autoCheckTimer) {
+            clearInterval(autoCheckTimer);
+            autoCheckTimer = null;
+        }
+        if (darkTheme === 'auto') {
+            autoCheckTimer = setInterval(function() {
+                applyTheme(true, 3000);
+            }, 60000);
+        }
+    };
+
+    /**
+     * Persist the current theme preference to the user's Moodle profile.
+     */
+    var saveThemePreference = function() {
+        Ajax.call([{
+            methodname: 'format_simple_set_theme_preference',
+            args: {theme: darkTheme, start: darkStart, end: darkEnd}
+        }]);
+    };
+
+    /**
+     * Wire up the dark mode toggle button and its options popover.
+     *
+     * @param {HTMLElement} container The cog container holding the dark mode controls.
+     */
+    var setupDarkModeToggle = function(container) {
+        var btn = container.querySelector('.simple-darkmode-btn');
+        var popover = container.querySelector('.simple-darkmode-popover');
+        if (!btn || !popover) {
+            return;
+        }
+
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var open = popover.classList.toggle('is-open');
+            btn.setAttribute('aria-expanded', open);
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!container.contains(e.target)) {
+                popover.classList.remove('is-open');
+                btn.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && popover.classList.contains('is-open')) {
+                popover.classList.remove('is-open');
+                btn.setAttribute('aria-expanded', 'false');
+                btn.focus();
+            }
+        });
+
+        var schedule = popover.querySelector('.simple-darkmode-schedule');
+        var options = popover.querySelectorAll('.simple-darkmode-option');
+        options.forEach(function(opt) {
+            opt.addEventListener('click', function() {
+                darkTheme = opt.dataset.theme;
+
+                options.forEach(function(other) {
+                    var isActive = (other === opt);
+                    other.classList.toggle('is-active', isActive);
+                    other.setAttribute('aria-checked', isActive);
+                });
+                if (schedule) {
+                    schedule.hidden = (darkTheme !== 'auto');
+                }
+
+                applyTheme(true);
+                startAutoCheckTimer();
+                saveThemePreference();
+            });
+        });
+
+        var startInput = popover.querySelector('.simple-darkmode-start');
+        var endInput = popover.querySelector('.simple-darkmode-end');
+        var onScheduleChange = function() {
+            if (startInput && startInput.value) {
+                darkStart = startInput.value;
+            }
+            if (endInput && endInput.value) {
+                darkEnd = endInput.value;
+            }
+            applyTheme(true);
+            saveThemePreference();
+        };
+        if (startInput) {
+            startInput.addEventListener('change', onScheduleChange);
+        }
+        if (endInput) {
+            endInput.addEventListener('change', onScheduleChange);
+        }
     };
 
     // ---------------------------------------------------------------
@@ -456,10 +681,7 @@ define(['core/ajax', 'core/str', 'core/templates'], function(Ajax, Str, Template
         // Determine whether to show modal button.
         var showmodal = !!(section0Modal && courseId);
 
-        // Nothing to render — bail out.
-        if (!rawItems.length && !showhome && !showmodal) {
-            return;
-        }
+        // The dark mode toggle is always available on every course page.
 
         // Prepare template context with resolved image paths.
         var wwwroot = (window.M && M.cfg && M.cfg.wwwroot) || '';
@@ -485,7 +707,19 @@ define(['core/ajax', 'core/str', 'core/templates'], function(Ajax, Str, Template
             courseinfo: langStrings.courseinfo,
             unreadcount: unreadCount,
             hasunread: unreadCount > 0,
-            unreadlabel: unreadCount + ' ' + langStrings.unreadposts
+            unreadlabel: unreadCount + ' ' + langStrings.unreadposts,
+            darkmodelabel: langStrings.darkmode,
+            darkicon: resolveThemeIcon(),
+            islight: darkTheme === 'light',
+            isdark: darkTheme === 'dark',
+            isauto: darkTheme === 'auto',
+            lightlabel: langStrings.darkmodelight,
+            darklabel: langStrings.darkmodedark,
+            autolabel: langStrings.darkmodeauto,
+            darkfromlabel: langStrings.darkmodefrom,
+            darkuntillabel: langStrings.darkmodeuntil,
+            darkstart: darkStart,
+            darkend: darkEnd
         };
 
         Templates.render('format_simple/local/cog_container', context).then(function(html) {
@@ -537,6 +771,11 @@ define(['core/ajax', 'core/str', 'core/templates'], function(Ajax, Str, Template
                 });
             }
 
+            // Wire up dark mode toggle and apply the resolved theme.
+            setupDarkModeToggle(container);
+            applyTheme();
+            startAutoCheckTimer();
+
             return undefined;
         }).catch(function() {
             // Cog container rendering failed — fall back silently.
@@ -553,12 +792,38 @@ define(['core/ajax', 'core/str', 'core/templates'], function(Ajax, Str, Template
          * @param {number} courseId The course ID.
          * @param {number} section0Modal Whether section 0 modal mode is enabled.
          * @param {number} unreadCount Number of unread forum posts in section 0.
+         * @param {string} darktheme Theme preference: light, dark, or auto.
+         * @param {string} darkstart Auto mode dark start time, HH:MM.
+         * @param {string} darkend Auto mode dark end time, HH:MM.
          */
-        init: function(courseUrl, courseId, section0Modal, unreadCount) {
+        init: function(courseUrl, courseId, section0Modal, unreadCount, darktheme, darkstart, darkend) {
             if (initialised) {
                 return;
             }
             initialised = true;
+
+            darkTheme = darktheme || 'light';
+            darkStart = darkstart || '19:00';
+            darkEnd = darkend || '07:00';
+
+            // Apply the theme immediately so pages without the course-view inline
+            // script (participants, grades, settings, ...) do not flash light.
+            applyTheme();
+            startAutoCheckTimer();
+
+            // Browsers throttle setInterval heavily in a backgrounded tab — Chrome's
+            // "intensive throttling" can stretch a 60-second interval out to once an
+            // hour once a tab has been hidden for a while — so the interval above
+            // alone cannot be relied on to catch auto mode's boundary while the
+            // student is working in another tab, which is exactly the situation a
+            // scheduled theme change is meant for. Re-checking the instant the tab
+            // becomes visible again catches that case immediately, no refresh
+            // needed, regardless of how long the interval itself was starved for.
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden) {
+                    applyTheme(true, 3000);
+                }
+            });
 
             // Load language strings before building the UI.
             Str.get_strings([
@@ -569,6 +834,12 @@ define(['core/ajax', 'core/str', 'core/templates'], function(Ajax, Str, Template
                 {key: 'loading', component: 'format_simple'},
                 {key: 'failedtoload', component: 'format_simple'},
                 {key: 'unreadposts', component: 'format_simple'},
+                {key: 'darkmode', component: 'format_simple'},
+                {key: 'darkmode_light', component: 'format_simple'},
+                {key: 'darkmode_dark', component: 'format_simple'},
+                {key: 'darkmode_auto', component: 'format_simple'},
+                {key: 'darkmode_from', component: 'format_simple'},
+                {key: 'darkmode_until', component: 'format_simple'},
             ]).then(function(strings) {
                 langStrings.backtocourse = strings[0];
                 langStrings.coursetools = strings[1];
@@ -577,6 +848,12 @@ define(['core/ajax', 'core/str', 'core/templates'], function(Ajax, Str, Template
                 langStrings.loading = strings[4];
                 langStrings.failedtoload = strings[5];
                 langStrings.unreadposts = strings[6];
+                langStrings.darkmode = strings[7];
+                langStrings.darkmodelight = strings[8];
+                langStrings.darkmodedark = strings[9];
+                langStrings.darkmodeauto = strings[10];
+                langStrings.darkmodefrom = strings[11];
+                langStrings.darkmodeuntil = strings[12];
 
                 setup(courseUrl, courseId, section0Modal, unreadCount);
                 return;
@@ -589,6 +866,12 @@ define(['core/ajax', 'core/str', 'core/templates'], function(Ajax, Str, Template
                 langStrings.loading = 'Loading...';
                 langStrings.failedtoload = 'Failed to load course info.';
                 langStrings.unreadposts = 'Unread posts';
+                langStrings.darkmode = 'Dark mode';
+                langStrings.darkmodelight = 'Light';
+                langStrings.darkmodedark = 'Dark';
+                langStrings.darkmodeauto = 'Auto';
+                langStrings.darkmodefrom = 'Dark from';
+                langStrings.darkmodeuntil = 'until';
 
                 setup(courseUrl, courseId, section0Modal, unreadCount);
             });

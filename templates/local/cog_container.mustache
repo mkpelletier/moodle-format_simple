@@ -10,6 +10,10 @@
     * .simple-cog-grid - tile grid
     * .simple-home-btn - home button link
     * .simple-s0-modal-btn - section 0 modal trigger
+    * .simple-darkmode-btn - dark mode toggle button
+    * .simple-darkmode-popover - dark mode options popover
+    * .simple-darkmode-option - light/dark/auto option button (data-theme)
+    * .simple-darkmode-schedule - auto mode start/end time inputs
 
     Context variables required:
     * hasitems - Whether there are nav items to display
@@ -23,6 +27,12 @@
     * unreadcount - Number of unread forum posts
     * hasunread - Whether there are unread posts
     * unreadlabel - Tooltip for the unread badge
+    * darkmodelabel - Label/tooltip for the dark mode button
+    * darkicon - Font Awesome icon name for the current theme state
+    * islight/isdark/isauto - Which option is currently selected
+    * lightlabel/darklabel/autolabel - Option labels
+    * darkfromlabel/darkuntillabel - Labels for the auto schedule inputs
+    * darkstart/darkend - Current HH:MM values for the auto schedule
 
     Example context (json):
     {
@@ -36,13 +46,25 @@
         "courseinfo": "Course Info",
         "unreadcount": 0,
         "hasunread": false,
-        "unreadlabel": ""
+        "unreadlabel": "",
+        "darkmodelabel": "Dark mode",
+        "darkicon": "fa-moon",
+        "islight": true,
+        "isdark": false,
+        "isauto": false,
+        "lightlabel": "Light",
+        "darklabel": "Dark",
+        "autolabel": "Auto",
+        "darkfromlabel": "Dark from",
+        "darkuntillabel": "until",
+        "darkstart": "19:00",
+        "darkend": "07:00"
     }
 }}
 <div class="simple-cog-container">
     {{#hasitems}}
     <button class="simple-cog-btn" type="button" aria-label="{{coursetools}}" aria-expanded="false">
-        <i class="fa fa-cog" aria-hidden="true"></i>
+        <i class="fa fa-gears" aria-hidden="true"></i>
     </button>
     <div class="simple-cog-popover" role="menu">
         <div class="simple-cog-heading">{{coursetools}}</div>
@@ -76,4 +98,40 @@
         {{/hasunread}}
     </button>
     {{/showmodal}}
+    <div class="simple-darkmode-wrap">
+        <button class="simple-darkmode-btn" type="button" aria-label="{{darkmodelabel}}" title="{{darkmodelabel}}"
+                aria-haspopup="true" aria-expanded="false">
+            <i class="fa {{darkicon}}" aria-hidden="true"></i>
+        </button>
+        <div class="simple-darkmode-popover" role="menu" aria-label="{{darkmodelabel}}">
+            <div class="simple-darkmode-heading">{{darkmodelabel}}</div>
+            <div class="simple-darkmode-options">
+                <button type="button" class="simple-darkmode-option {{#islight}}is-active{{/islight}}"
+                        data-theme="light" role="menuitemradio" aria-checked="{{#islight}}true{{/islight}}{{^islight}}false{{/islight}}">
+                    <i class="fa fa-sun-o" aria-hidden="true"></i>
+                    <span>{{lightlabel}}</span>
+                </button>
+                <button type="button" class="simple-darkmode-option {{#isdark}}is-active{{/isdark}}"
+                        data-theme="dark" role="menuitemradio" aria-checked="{{#isdark}}true{{/isdark}}{{^isdark}}false{{/isdark}}">
+                    <i class="fa fa-moon-o" aria-hidden="true"></i>
+                    <span>{{darklabel}}</span>
+                </button>
+                <button type="button" class="simple-darkmode-option {{#isauto}}is-active{{/isauto}}"
+                        data-theme="auto" role="menuitemradio" aria-checked="{{#isauto}}true{{/isauto}}{{^isauto}}false{{/isauto}}">
+                    <i class="fa fa-adjust" aria-hidden="true"></i>
+                    <span>{{autolabel}}</span>
+                </button>
+            </div>
+            <div class="simple-darkmode-schedule" {{^isauto}}hidden{{/isauto}}>
+                <label class="simple-darkmode-timelabel">
+                    <span>{{darkfromlabel}}</span>
+                    <input type="time" class="simple-darkmode-start" value="{{darkstart}}">
+                </label>
+                <label class="simple-darkmode-timelabel">
+                    <span>{{darkuntillabel}}</span>
+                    <input type="time" class="simple-darkmode-end" value="{{darkend}}">
+                </label>
+            </div>
+        </div>
+    </div>
 </div>

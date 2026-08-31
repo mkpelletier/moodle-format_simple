@@ -32,4 +32,11 @@ $functions = [
         'ajax'          => true,
         'loginrequired' => true,
     ],
+    'format_simple_set_theme_preference' => [
+        'classname'     => 'format_simple\external\set_theme_preference',
+        'description'   => 'Saves the user\'s dark mode theme preference for the Simple format.',
+        'type'          => 'write',
+        'ajax'          => true,
+        'loginrequired' => true,
+    ],
 ];

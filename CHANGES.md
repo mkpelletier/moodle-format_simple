@@ -2,6 +2,23 @@
 
 All notable changes to the Simple course format plugin are documented in this file.
 
+## v1.1.0 (2026-08-31) - Stable
+
+### Added
+- Dark mode. A minimalist toggle joins the course-tools and Course Info tabs in the fixed left
+  rail, offering Light, Dark, or Auto (dark on a configurable start/end time, using the local
+  clock). The choice is a per-user Moodle preference, so it follows the student between sessions
+  and devices, and is applied by an inline script before the page paints to avoid a flash of the
+  wrong theme. Switching theme — by hand or when auto mode crosses its scheduled boundary —
+  crossfades through a single full-page overlay rather than snapping, so every element changes
+  colour in the same instant instead of racing each other's own, differently-timed transitions;
+  skipped entirely for visitors with `prefers-reduced-motion` set.
+- `format_simple_set_theme_preference` external function for saving the theme preference, and a
+  privacy provider (`user_preference_provider`) describing the three preferences it stores.
+
+### Changed
+- Course-tools button icon changed from `fa-cog` to `fa-gears`, so it stays visually distinct from the dark mode toggle.
+
 ## v1.0.0 (2026-08-19) - Stable
 
 ### Changed

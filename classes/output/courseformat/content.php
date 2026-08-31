@@ -64,6 +64,12 @@ class content extends content_base {
         $data->sectionreturn = $format->get_sectionnum() ?? 'null';
         $data->pagesectionid = $format->get_sectionid() ?? 'null';
 
+        // Dark mode preferences — read early so the inline theme script can run
+        // before the wrapper paints, avoiding a flash of the wrong theme.
+        $data->darktheme = get_user_preferences('format_simple_darktheme', 'light');
+        $data->darkstart = get_user_preferences('format_simple_darkstart', '19:00');
+        $data->darkend = get_user_preferences('format_simple_darkend', '07:00');
+
         // Build navigation items and section content.
         $data->navitems = [];
         $data->sections = [];

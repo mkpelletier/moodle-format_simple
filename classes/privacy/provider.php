@@ -24,21 +24,66 @@
 
 namespace format_simple\privacy;
 
-use core_privacy\local\metadata\null_provider;
+use core_privacy\local\metadata\collection;
+use core_privacy\local\request\approved_contextlist;
+use core_privacy\local\request\contextlist;
+use core_privacy\local\request\writer;
 
 /**
  * Privacy provider for format_simple.
  *
- * This plugin does not store any personal data.
+ * The only personal data this plugin stores is the user's own dark mode
+ * preference, kept as standard Moodle user preferences.
  */
-class provider implements null_provider {
+class provider implements
+    \core_privacy\local\metadata\provider,
+    \core_privacy\local\request\user_preference_provider {
     /**
-     * Get the language string identifier with the component's language
-     * file to explain why this plugin stores no data.
+     * Describe the user preferences stored by this plugin.
      *
-     * @return string
+     * @param collection $collection The initialised collection to add items to.
+     * @return collection The updated collection.
      */
-    public static function get_reason(): string {
-        return 'privacy:metadata';
+    public static function get_metadata(collection $collection): collection {
+        $collection->add_user_preference(
+            'format_simple_darktheme',
+            'privacy:metadata:preference:format_simple_darktheme'
+        );
+        $collection->add_user_preference(
+            'format_simple_darkstart',
+            'privacy:metadata:preference:format_simple_darkstart'
+        );
+        $collection->add_user_preference(
+            'format_simple_darkend',
+            'privacy:metadata:preference:format_simple_darkend'
+        );
+
+        return $collection;
+    }
+
+    /**
+     * Export all user preferences for the given user.
+     *
+     * @param int $userid The user whose preferences should be exported.
+     */
+    public static function export_user_preferences(int $userid): void {
+        $preferences = [
+            'format_simple_darktheme' => 'privacy:metadata:preference:format_simple_darktheme',
+            'format_simple_darkstart' => 'privacy:metadata:preference:format_simple_darkstart',
+            'format_simple_darkend' => 'privacy:metadata:preference:format_simple_darkend',
+        ];
+
+        foreach ($preferences as $name => $reason) {
+            $value = get_user_preferences($name, null, $userid);
+            if ($value === null) {
+                continue;
+            }
+            writer::export_user_preference(
+                'format_simple',
+                $name,
+                $value,
+                get_string($reason, 'format_simple')
+            );
+        }
     }
 }
