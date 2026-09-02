@@ -2,6 +2,28 @@
 
 All notable changes to the Simple course format plugin are documented in this file.
 
+## v1.1.1 (2026-09-02) - Stable
+
+### Added
+- The companion Syllabus activity's own dark mode now follows this format's toggle, in both
+  directions, whether its panel is already open or opened later.
+- TinyMCE's editing canvas and source-code view are darkened too. Both sit behind boundaries CSS
+  cannot cross — an iframe loading Moodle's separate editor stylesheet, and a shadow root — so
+  they are styled from JavaScript instead.
+
+### Changed
+- Dark mode extended to the rest of the interface it had not yet reached: tables and the
+  gradebook grader report, form controls, checkboxes, placeholders and combobox menus, outline
+  buttons, the right-hand blocks drawer, YUI dialogues, TinyMCE's toolbars and dialogs, and the
+  quiz, unified grader and CoIFish reports.
+- YUI dialogues are now rounded in both themes, matching the format's cards and buttons.
+
+### Fixed
+- Focused links drew Boost's pale highlight block, which on a dark page obscured the text it was
+  meant to mark. Recoloured rather than removed, so keyboard focus stays visible.
+- Activity completion badges were left with near-black text on a dark fill, and sat at the same
+  tone as the card behind them.
+
 ## v1.1.0 (2026-08-31) - Stable
 
 ### Added

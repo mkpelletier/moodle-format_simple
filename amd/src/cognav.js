@@ -301,6 +301,239 @@ define(['core/ajax', 'core/str', 'core/templates'], function(Ajax, Str, Template
     };
 
     /**
+     * Keep the mod_syllabus activity's own dark mode toggle in sync with
+     * this format's dark mode. mod_syllabus can load into the course's
+     * left-hand tabs/sidebar and has a completely separate dark mode
+     * preference of its own (mod_syllabus/amd/src/darkmode.js), so without
+     * this it stays on whatever it was last manually set to regardless of
+     * what this format switches to.
+     *
+     * There is no public API to set that state directly. Its toggle button
+     * (.mod-syllabus-darkmode-toggle, possibly several — the inline view,
+     * a modal, and the floating sidebar can each have their own) flips its
+     * own container's dark class, updates its own icon, and writes its own
+     * localStorage key when clicked; simulating a click is the only way to
+     * flip an already-rendered panel without reimplementing that internal
+     * logic ourselves and risking it drifting out of sync with a future
+     * mod_syllabus release. A panel that has not been created yet this page
+     * load (its tab has never been opened) has no button to click, but it
+     * reads that same localStorage key the moment it *is* created, so
+     * writing the key directly covers that case too.
+     *
+     * @param {boolean} wantDark Whether mod_syllabus should be in dark mode.
+     */
+    var syncSyllabusDarkMode = function(wantDark) {
+        var key = 'mod_syllabus_darkmode';
+        try {
+            if ((localStorage.getItem(key) === 'true') === wantDark) {
+                return;
+            }
+            var buttons = document.querySelectorAll('.mod-syllabus-darkmode-toggle');
+            if (buttons.length) {
+                buttons.forEach(function(btn) {
+                    btn.click();
+                });
+            } else {
+                localStorage.setItem(key, wantDark ? 'true' : 'false');
+            }
+        } catch (e) {
+            // localStorage unavailable (private browsing, etc) — nothing more we can do.
+        }
+    };
+
+    // ---------------------------------------------------------------
+    // TinyMCE editing canvas
+    // ---------------------------------------------------------------
+
+    /**
+     * Id given to the stylesheet injected into each editor document, so it
+     * can be found again to avoid duplicating it and to remove it on the way
+     * back to light mode.
+     */
+    var TINY_STYLE_ID = 'format-simple-dark-content';
+
+    /**
+     * Overrides for the editor's own document. The explicit body rule is what
+     * actually paints the canvas — it outranks the editor stylesheet's bare
+     * `body` rule. The custom properties are redefined alongside it so that
+     * content reading them (tables, callouts, whatever the editor plugins
+     * render) follows too, rather than each needing its own entry. The link
+     * colour is set outright because the editor stylesheet hardcodes it.
+     */
+    var TINY_DARK_CSS = ':root{--bs-body-bg:#182234;--bs-body-color:#e8eaf0;}' +
+        'body.mce-content-body{background-color:#182234;color:#e8eaf0;}' +
+        'body.mce-content-body a{color:#5b9bf5;}';
+
+    /**
+     * Observer watching for editors that appear after the first pass.
+     */
+    var tinyObserver = null;
+
+    /**
+     * Paint (or unpaint) one editor iframe.
+     *
+     * @param {HTMLIFrameElement} frame The editor's iframe.
+     * @param {boolean} wantDark Whether the canvas should be dark.
+     */
+    var paintTinyFrame = function(frame, wantDark) {
+        var doc;
+        try {
+            doc = frame.contentDocument;
+        } catch (e) {
+            // Not same-origin, or torn down mid-pass.
+            return;
+        }
+        if (!doc || !doc.head) {
+            // TinyMCE has created the iframe but not finished writing into it.
+            frame.addEventListener('load', function() {
+                paintTinyFrame(frame, resolveTheme() === 'dark');
+            }, {once: true});
+            return;
+        }
+
+        var existing = doc.getElementById(TINY_STYLE_ID);
+        if (!wantDark) {
+            if (existing) {
+                existing.remove();
+            }
+            return;
+        }
+        if (existing) {
+            return;
+        }
+
+        var style = doc.createElement('style');
+        style.id = TINY_STYLE_ID;
+        style.textContent = TINY_DARK_CSS;
+        doc.head.appendChild(style);
+    };
+
+    /**
+     * Overrides for the source-code dialog's CodeMirror instance.
+     *
+     * A filter rather than a palette, which is the opposite of the choice
+     * made for the editing canvas above — and for the opposite reason. There
+     * are no images in a code editor, so inversion has nothing to spoil,
+     * while CodeMirror's syntax colours come from generated class names that
+     * cannot be targeted reliably from outside. Recolouring the surface alone
+     * would leave keywords and strings at their light-theme values, several
+     * of which are far too dark to read once the background flips.
+     * hue-rotate keeps those tokens near their original hues instead of
+     * shifting every colour to its complement.
+     *
+     * The explicit background-color and color underneath the filter are what
+     * make that deterministic, and they are not redundant. `color` inherits
+     * straight through a shadow boundary, so the dialog's own light text
+     * colour reaches CodeMirror's plain text and — over CodeMirror's light
+     * surface — renders it invisible. Restating both here means the pane is
+     * inverted from a known light starting point rather than from whatever
+     * it happened to inherit. It also fails safe: should the filter ever not
+     * apply, what is left is dark text on white, which is legible, rather
+     * than light text on white, which is not.
+     */
+    var TINY_CODE_DARK_CSS = '.modal-codemirror-container{border-color:#2a3346;}' +
+        '.cm-editor{background-color:#ffffff;color:#222f3e;filter:invert(1) hue-rotate(180deg);}';
+
+    /**
+     * Paint (or unpaint) the source-code dialog's CodeMirror instance.
+     *
+     * tiny_html mounts CodeMirror inside a shadow root, explicitly so that
+     * outside styles cannot reach it (see the comment in its plugin.js), so
+     * styles.css cannot touch this no matter how it is written. The root is
+     * mode: "open" though, so JavaScript can still reach in and add a
+     * stylesheet the same way it does for the editor iframe.
+     *
+     * @param {boolean} wantDark Whether the code area should be dark.
+     */
+    var applyTinyCodeTheme = function(wantDark) {
+        var containers = document.querySelectorAll('[id$="_codeMirrorContainer"]');
+        Array.prototype.forEach.call(containers, function(container) {
+            var root = container.shadowRoot;
+            if (!root) {
+                return;
+            }
+
+            var existing = root.getElementById(TINY_STYLE_ID);
+            if (!wantDark) {
+                if (existing) {
+                    existing.remove();
+                }
+                return;
+            }
+            if (existing) {
+                return;
+            }
+
+            var style = document.createElement('style');
+            style.id = TINY_STYLE_ID;
+            style.textContent = TINY_CODE_DARK_CSS;
+            root.appendChild(style);
+        });
+    };
+
+    /**
+     * Paint (or unpaint) every TinyMCE editing canvas on the page.
+     *
+     * The canvas is an iframe, and the stylesheet TinyMCE loads into it is
+     * Moodle's editor bundle — editor plugins' editor_styles.css plus the
+     * theme's editor_sheets — which a course format cannot contribute to.
+     * So styles.css genuinely cannot reach it, and injecting a stylesheet
+     * into the editor's own document is the only route in. That also keeps
+     * the change conditional: the iframe has no dark-mode signal of its own,
+     * so anything delivered statically would apply in light mode too.
+     *
+     * Driven off the DOM rather than TinyMCE's own API on purpose. Moodle
+     * loads TinyMCE as a module and resolves it as window.tinyMCE, so keying
+     * on the conventional window.tinymce finds nothing and fails silently —
+     * which is exactly how the first attempt at this went wrong. The iframes
+     * are same-origin (TinyMCE builds them from srcdoc), so reaching their
+     * documents directly sidesteps the question of what the global is called
+     * and works whichever way an editor was created.
+     *
+     * Deliberately not a filter: inverting the iframe would flip pasted
+     * images and diagrams into negatives, which matters in an editor.
+     *
+     * @param {boolean} wantDark Whether the canvas should be dark.
+     */
+    var applyTinyContentTheme = function(wantDark) {
+        var frames = document.querySelectorAll('iframe.tox-edit-area__iframe');
+        Array.prototype.forEach.call(frames, function(frame) {
+            paintTinyFrame(frame, wantDark);
+        });
+
+        applyTinyCodeTheme(wantDark);
+    };
+
+    /**
+     * Catch editors created after the theme was last applied.
+     *
+     * This module runs well before the editor does, so the single
+     * applyTheme() call on page load usually finds no iframes at all, and
+     * nothing would call back later: the auto-mode interval is the only
+     * repeat caller of applyTheme, and it only runs when the preference is
+     * literally 'auto'. On a plain dark-mode page load the canvas would
+     * otherwise stay light indefinitely.
+     */
+    var watchTinyEditors = function() {
+        if (tinyObserver || typeof MutationObserver !== 'function') {
+            return;
+        }
+
+        var pending = null;
+        tinyObserver = new MutationObserver(function() {
+            // Editors arrive in bursts as TinyMCE builds them; coalesce.
+            if (pending) {
+                return;
+            }
+            pending = setTimeout(function() {
+                pending = null;
+                applyTinyContentTheme(resolveTheme() === 'dark');
+            }, 150);
+        });
+
+        tinyObserver.observe(document.body, {childList: true, subtree: true});
+    };
+    /**
      * Apply the resolved theme to the page.
      *
      * On page load, or when the resolved theme has not actually changed, this is instant.
@@ -322,6 +555,10 @@ define(['core/ajax', 'core/str', 'core/templates'], function(Ajax, Str, Template
     var applyTheme = function(animate, durationMs) {
         var next = resolveTheme();
         var current = document.body.getAttribute('data-simple-theme');
+
+        syncSyllabusDarkMode(next === 'dark');
+        applyTinyContentTheme(next === 'dark');
+        watchTinyEditors();
 
         if (next === current) {
             return;

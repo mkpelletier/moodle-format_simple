@@ -2205,6 +2205,21 @@ body.format-simple .simple-mobile-header {
     color: var(--simple-accent);
 }
 
+/* YUI dialogues (the quiz preflight check, the activity chooser) ship with
+   square corners, which sit oddly against the rounded cards and buttons the
+   rest of this format uses. Rounding them applies in both themes, so it is
+   scoped to .format-simple rather than to the dark attribute — the matching
+   dark-mode rule adds only the glow that lifts the dialogue off the page.
+   10px matches the radius Boost already gives the activity chooser's own
+   body, so the two agree rather than the body squaring off inside a rounded
+   frame. No overflow: hidden to go with it: it would crop the menus and
+   autocomplete popups these dialogues open, and it is not needed here, since
+   the only child that paints to the edge is that chooser body and it already
+   carries matching bottom corners. */
+body.format-simple .moodle-dialogue-base .moodle-dialogue-wrap {
+    border-radius: 10px;
+}
+
 /* =========================================================================
    Dark Mode
    ========================================================================= */
@@ -2305,6 +2320,65 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] label {
     color: #e8eaf0;
 }
 
+/* Links keep the site's own link colour (Bootstrap's --bs-link-color, which
+   admins can customise per theme) rather than a colour we hardcode — but
+   whatever that colour is, it was tuned for a white page and reads too dark
+   on our dark surfaces, most noticeably in tables where several columns are
+   entirely links (student name, review-attempt, grade). A brightness filter
+   scales that colour up towards white without touching its hue, so this
+   tracks whatever --bs-link-color actually resolves to instead of a colour
+   we chose that would drift out of sync with a customised site — color-mix()
+   would do the same job more directly, but Moodle's theme CSS combiner
+   silently drops any rule using it, so this file avoids the function
+   entirely. Hover brightens further, matching Boost's own convention of a
+   stronger hover colour. Both win the same way the rest of this file does —
+   a plain `a`/`a:hover` type selector carries no !important to fight.
+   filter applies to the whole element, not just its text colour, so an icon
+   glyph sitting inside a link (e.g. the quiz report's correct/incorrect
+   markers) brightens slightly too — a minor, acceptable side effect, since
+   those icons already carry their own green/red hue that survives a mild
+   brightness boost. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] a {
+    filter: brightness(1.65);
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] a:hover {
+    filter: brightness(1.95);
+}
+
+/* Boost gives focused links a filled highlight block rather than a ring —
+   background-color: #d2e8fb with color: #1d2125, plus box-shadow bands that
+   extend it above and underline it below. On a white page that reads as a
+   pale blue marker pen; on a dark one it is a glaring light slab, and the
+   brightness filter above compounds it by lifting the fill toward white
+   while leaving the near-black text where it is.
+   The indicator itself has to stay — it is the visible-focus affordance
+   keyboard users navigate by (WCAG 2.4.7), so this recolours it rather than
+   switching it off. The block is kept, inverted for a dark page: a deep blue
+   fill with white text (~15:1) and the lower band in the accent so the
+   marker still reads as a distinct indicator against the page (~6:1, over
+   the 3:1 that WCAG 1.4.11 asks of a focus indicator).
+   filter: none stops the brightness rule above from compounding — with the
+   focused state setting its own colours outright, the lift is not just
+   redundant but actively works against the contrast chosen here.
+   The selector mirrors Boost's own list rather than simplifying it: the
+   #page-footer member carries an id, so an override that skipped it would
+   lose there while winning everywhere else. outline is deliberately not
+   restated — Boost's transparent 0.25rem outline still applies through the
+   original rule, and it is what surfaces focus in forced-colours mode. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
+    .aalink,
+    a.autolink,
+    .arrow_link,
+    a:not([class]),
+    .activityinstance > a,
+    #page-footer a:not([class])):is(:focus, .focus) {
+    background-color: #1e3a5f;
+    color: #ffffff;
+    box-shadow: 0 -0.25rem #1e3a5f, 0 0.25rem #5b9bf5;
+    filter: none;
+}
+
 /* Icon-only buttons (e.g. the quick-edit pencil beside an activity title)
    inherit the same dark, near-invisible text colour as the headings above. */
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .btn-icon {
@@ -2368,6 +2442,37 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .generalt
     border-bottom-color: #2a3346;
     background-color: #1e293d;
     color: #e8eaf0;
+}
+
+/* Boost's own .generaltable tbody td, .generaltable tbody th rule
+   (background-color: inherit; two type selectors plus the .generaltable
+   class, specificity 0,1,2) outranks Bootstrap's var(--bs-table-bg) cell
+   rule, and "inherit" here pulls from the *row's* computed background —
+   never set by anything, so it resolves to transparent — not from the
+   table's own background-color two levels up, "inherit" only reaches the
+   immediate parent. That leaves tbody cells transparent regardless of the
+   .generaltable background-color fix above, which is exactly why only the
+   thead cells (styled directly, above) were turning dark while the body
+   stayed light. Setting background-color directly on the cells themselves,
+   at higher specificity than Boost's rule, is the only way to reach them. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .generaltable tbody td,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .generaltable tbody th {
+    background-color: #182234;
+    color: #e8eaf0;
+}
+
+/* Bootstrap's .table-striped (e.g. the quiz results/overview report,
+   id="attempts") bands its rows with an inset box-shadow driven by the
+   --bs-table-striped-bg custom property, painted on top of the cell
+   background-color above rather than replacing it. The theme's own value —
+   rgba(var(--bs-emphasis-color-rgb), 0.03), a near-black tint meant for a
+   white row — is invisible against our dark background, so odd/even rows
+   look identical. Redefining the variable here on the striped table itself
+   wins the cascade (custom properties resolve by specificity same as any
+   other declaration) and gives the inset shadow a light tint instead, which
+   lightens alternating rows enough to read as a stripe on the dark surface. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .table-striped {
+    --bs-table-striped-bg: rgba(255, 255, 255, 0.06);
 }
 
 /* An activity's intro/description text (quiz instructions, forum intros,
@@ -2513,8 +2618,87 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .modal-fo
     border-color: #2a3346 !important; /* stylelint-disable-line declaration-no-important */
 }
 
+/* Moodle still raises some dialogues through the older YUI widget stack
+   rather than Bootstrap — the quiz preflight "Start attempt" check and the
+   activity chooser are the two common ones — and those never carry
+   .modal-content, so none of the modal rules above reach them. Same
+   treatment, applied to the YUI wrapper instead.
+   `color` on the wrapper is what fixes the body copy: .form-control-static
+   (the preflight message) is not styled by Boost at all, so like the CoIFish
+   diagnostics it simply inherits from <body>. Setting it on the container
+   rather than the individual elements means anything else these dialogues
+   render inherits it too, and any descendant that does declare its own
+   colour still wins.
+   The header needs its own entry despite that: Boost sets `color: initial`
+   on .moodle-dialogue-hd, which resolves to black and blocks inheritance.
+   Its <h5> title escapes that via the heading rule earlier in this file —
+   which is why the titles already looked right — but the close button is an
+   `×` glyph drawn with ::after content, so it takes the header's colour and
+   was being painted black on a dark bar. Recolouring the header catches it
+   without needing a separate rule, and no filter trick: unlike .btn-close's
+   background image, this one is text. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .moodle-dialogue-base .moodle-dialogue-wrap {
+    background-color: #182234;
+    border-color: #2a3346;
+    color: #e8eaf0;
+    box-shadow: 0 0 10px #b6bdff;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .moodle-dialogue-base .moodle-dialogue-wrap .moodle-dialogue-hd.yui3-widget-hd {
+    color: #e8eaf0;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .chooserdialogue .moodle-dialogue-wrap .moodle-dialogue-bd,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .moodle-dialogue .moodle-dialogue-bd .content-lightbox {
+    background: #182234;
+}
+
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .breadcrumb {
     background-color: transparent !important; /* stylelint-disable-line declaration-no-important */
+}
+
+/* The right-hand blocks drawer (#page.drawers is its outer scroll container,
+   already darkened above; .drawer is the sliding panel itself, drawn by
+   Boost with its own literal #f8f9fa background — a plain single-class
+   selector, so no !important needed here to win. Blocks inside it render as
+   .card, already covered elsewhere in this file, so this only needs to
+   handle the drawer chrome: the panel background, the scrollbar (both the
+   standard scrollbar-color property and its Webkit ::-webkit-scrollbar-*
+   equivalent), and the header's scrolled-state shadow, which is tuned for a
+   light panel and all but disappears against a dark one. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .drawer {
+    background-color: #182234;
+}
+
+/* boost_union's own sticky-header feature paints .drawerheader with its own
+   translucent white — rgb(255 255 255 / .7) — layered on top of whatever
+   .drawer sits behind it, so even with the drawer panel itself now dark the
+   header band reads as a washed-out light strip. Our usual compound
+   selector outranks that bare .drawerheader class the same way it wins
+   everywhere else in this file. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .drawerheader {
+    background-color: rgb(24 34 52 / 0.85);
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .drawer.scrolled .drawerheader {
+    box-shadow: 0 8px 11px -7px rgba(0, 0, 0, 0.6);
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .drawercontent {
+    scrollbar-color: #4a5568 #182234;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .drawercontent::-webkit-scrollbar-track {
+    background: #182234;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .drawercontent::-webkit-scrollbar-thumb {
+    background-color: #4a5568;
+    border-color: #182234;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .drawercontent::-webkit-scrollbar-thumb:hover {
+    background-color: #5b6578;
 }
 
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .breadcrumb-item,
@@ -2542,6 +2726,128 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .form-sel
     color: #e8eaf0 !important; /* stylelint-disable-line declaration-no-important */
 }
 
+/* Placeholder text (e.g. "Search users" in the gradebook's user search) is a
+   pseudo-element with its own colour rule, so the field's own `color` fix
+   above never reaches it no matter how much !important it carries. Boost
+   gives it var(--bs-secondary-color) — rgba(29, 33, 37, 0.75), a near-black
+   tuned for a white field and effectively invisible on a dark one. Given the
+   file's established muted tone rather than full-strength body text, since a
+   placeholder is a hint and should stay subordinate to real input. No
+   !important needed: Bootstrap's own rule carries none. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .form-control::placeholder {
+    color: #a8b0c3;
+}
+
+/* An unchecked checkbox/radio paints its box from --bs-form-check-bg, which
+   Bootstrap defines as var(--bs-body-bg) — white, regardless of the page's
+   own dark background — with a mid-grey border. Redeclaring the custom
+   property here is the same override mechanism used for the plain .table
+   fix earlier in this file; the checked state already paints a solid
+   accent-blue box regardless of page background, so it needs no separate
+   fix. No !important: Boost's own .form-check-input rule doesn't carry one
+   either, so our extra specificity is already enough. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .form-check-input {
+    --bs-form-check-bg: #182234;
+    border-color: #4a5568;
+}
+
+/* The section/preferences collapse-expand toggle (.icons-collapse-expand) is
+   a second, more specific .btn-icon rule — two classes rather than one —
+   that paints its own light pill (a pale blue background behind a blue
+   chevron) rather than inheriting the plain .btn-icon colour fix above, so
+   it needs its own override at matching specificity. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .btn-icon.icons-collapse-expand {
+    background-color: #1e293d;
+    color: #5b9bf5;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .btn-icon.icons-collapse-expand:hover {
+    outline-color: #5b9bf5;
+}
+
+/* Moodle's combobox widgets (the gradebook's "Grader report" report picker,
+   its "Filter by name" initials widget, the single view grade search) render
+   as a bare .btn with no colour variant, so Bootstrap gives them
+   --bs-btn-color: var(--bs-body-color) — near-black, and var(--bs-body-color)
+   is left alone here for the same reason var(--bs-body-bg) is.
+   role="combobox" on a .btn.dropdown-toggle is core Moodle's own convention
+   for these (lib/templates/select_menu.mustache and comboboxsearch.mustache
+   both emit exactly that pairing), which makes it a far steadier hook than
+   the incidental utility classes around it, and narrow enough not to touch
+   the variant buttons (.btn-primary and friends) that set their own
+   --bs-btn-color and would be broken by a blanket .btn rule.
+   --bs-btn-hover-color is set alongside because bare .btn never defines it:
+   the var() reference is invalid, `color` falls back to the inherited value,
+   and the hover colour would otherwise depend on whatever happens to wrap
+   the widget. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .btn.dropdown-toggle[role="combobox"] {
+    --bs-btn-color: #e8eaf0;
+    --bs-btn-hover-color: #ffffff;
+}
+
+/* Outline buttons (e.g. CoIFish's "Log intervention") draw their resting
+   state as coloured text on a transparent fill, and Boost deliberately
+   darkens Bootstrap's stock values — #0f6cbf, #357a32, #ca3120, #a6670e,
+   #1f7e9a — to hit AA against a white page, which leaves them barely
+   separable from a dark one. Only the resting and disabled states need
+   lifting: hover, focus and active all fill with that same colour and put
+   white text on top, so they already read correctly whatever the page
+   behind them (which matches the reported behaviour — these buttons look
+   fine on hover and only fail at rest). Disabled reuses the lifted colour
+   and keeps Bootstrap's own --bs-btn-disabled-opacity: 0.65 to stay
+   visibly subordinate, rather than being dimmed twice into invisibility.
+   Hues come from the palette the .alert-* and CoIFish blocks already use.
+   .btn-outline-light is left alone: it is light by definition and is the
+   one variant that was already legible here. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .btn-outline-primary {
+    --bs-btn-color: #5b9bf5;
+    --bs-btn-border-color: #5b9bf5;
+    --bs-btn-disabled-color: #5b9bf5;
+    --bs-btn-disabled-border-color: #5b9bf5;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .btn-outline-secondary {
+    --bs-btn-color: #a8b0c3;
+    --bs-btn-border-color: #a8b0c3;
+    --bs-btn-disabled-color: #a8b0c3;
+    --bs-btn-disabled-border-color: #a8b0c3;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .btn-outline-success {
+    --bs-btn-color: #34d399;
+    --bs-btn-border-color: #34d399;
+    --bs-btn-disabled-color: #34d399;
+    --bs-btn-disabled-border-color: #34d399;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .btn-outline-danger {
+    --bs-btn-color: #f87171;
+    --bs-btn-border-color: #f87171;
+    --bs-btn-disabled-color: #f87171;
+    --bs-btn-disabled-border-color: #f87171;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .btn-outline-warning {
+    --bs-btn-color: #fbbf24;
+    --bs-btn-border-color: #fbbf24;
+    --bs-btn-disabled-color: #fbbf24;
+    --bs-btn-disabled-border-color: #fbbf24;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .btn-outline-info {
+    --bs-btn-color: #5bc0f8;
+    --bs-btn-border-color: #5bc0f8;
+    --bs-btn-disabled-color: #5bc0f8;
+    --bs-btn-disabled-border-color: #5bc0f8;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .btn-outline-dark {
+    --bs-btn-color: #e8eaf0;
+    --bs-btn-border-color: #7c8598;
+    --bs-btn-disabled-color: #e8eaf0;
+    --bs-btn-disabled-border-color: #7c8598;
+}
+
 /* Bootstrap's tooltip/popover components render in a portal appended to
    <body>, outside every wrapper above, but the body-level dark-theme
    attribute this whole section keys off is still their ancestor, so they
@@ -2566,6 +2872,47 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .tooltip 
     color: #e8eaf0 !important; /* stylelint-disable-line declaration-no-important */
 }
 
+/* The quiz overview report's "Highest grade" indicator (and any other
+   #page-mod-quiz-report .highlight) gets a light blue pill from mod_quiz's
+   own styles.css (border: 1px solid #bce8f1; background-color: #d9edf7),
+   layered under Boost's separate .highlight { color: #008196 } text-colour
+   rule. Neither was designed against a dark page, so the pill reads as an
+   odd light patch. Scoped to the quiz report specifically, rather than the
+   bare .highlight class Boost also uses for e.g. search-term highlighting
+   elsewhere, which should keep its own light styling untouched.
+   #page-mod-quiz-report is Moodle's own body id for this page — the same
+   element the .format-simple class and [data-simple-theme] attribute live
+   on — so this has to be one compound selector (no space before the id)
+   rather than body-then-descendant like the rest of this file; written as
+   a descendant combinator it would look for a *nested* element with that
+   id, which doesn't exist, and silently match nothing. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"]#page-mod-quiz-report .highlight {
+    background-color: #007dbb;
+    border-color: #007dbb;
+    color: #fff;
+}
+
+/* The A-Z name-filter bar (.initialbargroups, e.g. the quiz overview
+   report's "First name"/"Last name" jump links) is Bootstrap's .pagination
+   component, themed entirely through --bs-pagination-* custom properties —
+   --bs-pagination-bg defaults to var(--bs-body-bg), i.e. always white — the
+   same override mechanism already used for .table earlier in this file.
+   The active/current-letter state (--bs-pagination-active-bg, solid blue
+   with white text) already reads fine against a dark page as-is, so it is
+   left untouched. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .pagination {
+    --bs-pagination-bg: #182234;
+    --bs-pagination-border-color: #2a3346;
+    --bs-pagination-hover-bg: #1e293d;
+    --bs-pagination-hover-border-color: #2a3346;
+    --bs-pagination-focus-bg: #1e293d;
+    --bs-pagination-disabled-bg: #182234;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .initialbarlabel {
+    color: #e8eaf0;
+}
+
 /* mod_quiz ships its own styles.css (a third stylesheet, separate from
    Boost/Boost Union) that paints the attempt-summary table's cells with
    literal greys — table.quizreviewsummary th.cell/td.cell — bypassing the
@@ -2578,6 +2925,27 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] table.qui
 
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] table.quizreviewsummary td.cell {
     background: #182234;
+}
+
+/* Same problem again: mod_quiz/styles.css marks a fully-graded attempt's
+   row (tr.gradedattempt, in the overview report table) with the same light
+   blue used for the "highest grade" pill — border-color: #bce8f1;
+   background-color: #d9edf7 — via body.path-mod-quiz .gradedattempt and two
+   more selectors for the cells themselves (a plain <td> and the sticky
+   name column need separate rules since the sticky column is repositioned
+   and would otherwise poke out from under a row-level background). .path-
+   mod-quiz is a second class Moodle puts directly on <body>, alongside
+   .format-simple, so it chains onto our usual selector as one more compound
+   class rather than a descendant — the same fix as the #page-mod-quiz-report
+   id lesson, just via a class instead of an id. Setting the border-color
+   shorthand (not just border-top-color, which the general .generaltable
+   fix already covers) matters here — it's what was still leaving a light
+   sliver on the other three edges of each row after that top-only fix. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"].path-mod-quiz .gradedattempt,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"].path-mod-quiz table tbody tr.gradedattempt > td,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"].path-mod-quiz table tbody tr.gradedattempt > td.sticky-column {
+    border-color: #1e5a7d;
+    background-color: #0f3a52;
 }
 
 /* A quiz question's .formulation (the question text itself), .outcome and
@@ -2672,15 +3040,14 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .text-mut
     color: #e8eaf0 !important; /* stylelint-disable-line declaration-no-important */
 }
 
-/* The automatic-completion badges' first pill uses mix-blend-mode: multiply
-   (inherited from the general .badge rule), which crushes a light badge
-   toward black on a dark background. Switching just the first pill to
-   soft-light keeps it legible instead. Same .path-mod-on-body compounding
-   as the activity-header fix above — .path-mod lives on <body> itself. */
-body.format-simple.path-mod[data-simple-theme="dark"][data-simple-theme="dark"]
-.automatic-completion-conditions .badge:first-child {
-    mix-blend-mode: soft-light;
-}
+/* The automatic-completion badges' mix-blend-mode fix now lives with the
+   other .badge rules further down, keyed to the background utility rather
+   than to :first-child. core_course/completion_automatic.mustache only ever
+   emits three variants — .bg-success and .bg-danger for met/failed
+   conditions, and .bg-light.text-dark for pending ones — so :first-child was
+   wrong in both directions: it caught whichever pill happened to come first,
+   including a coloured one that needs no help, and missed the second pending
+   pill entirely. */
 
 /* Body copy inside an activity (mod/page and friends render their own rich
    text directly, outside the format's own wrapper) is still Boost's
@@ -2705,6 +3072,19 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] dt,
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] dd,
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] blockquote,
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .text_to_html {
+    color: #e8eaf0;
+}
+
+/* A checkbox/advcheckbox form element's inline description — the text
+   passed as its second label, rendered as a bare <span id="{elementid}_
+   description"> right next to the input (lib/form/templates/element-
+   checkbox.mustache, element-advcheckbox.mustache) — carries no class at
+   all, so neither a class-based fix nor the p/li list above (span is
+   deliberately excluded there, as it carries too much unrelated UI) can
+   reach it. Moodle only ever uses this "_description" id suffix for this
+   one purpose, so the attribute selector is safe to match sitewide rather
+   than needing to be re-scoped per form. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] span[id$="_description"] {
     color: #e8eaf0;
 }
 
@@ -2916,6 +3296,123 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .table {
    selector, however specific, beats it without matching that !important. */
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .bg-light {
     background-color: #182234 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+/* .bg-white and .bg-body-tertiary turn up in the unified grading panel's
+   own header (mod_assign/mod_quiz's marking interface) — same story as
+   .bg-light above, and the same !important is required for the same
+   reason. .bg-white reads rgba(var(--bs-white-rgb), var(--bs-bg-opacity))
+   rather than a plain background-color, but that only affects how Bootstrap
+   computes ITS value; ours still overrides the resulting background-color
+   property outright. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .bg-white {
+    background-color: #182234 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .bg-body-tertiary {
+    background-color: #1e293d !important; /* stylelint-disable-line declaration-no-important */
+}
+
+/* Darkening those .bg-* utilities above leaves anything pairing them with a
+   .text-dark/.text-black utility (activity completion badges are the common
+   case: .badge.rounded-pill.bg-light.text-dark) with near-black text on a
+   now-dark fill. Those text utilities carry their own !important, so this
+   needs one too. Deliberately keyed to the three surfaces this file actually
+   darkens rather than to .text-dark on its own: on a fill that is still
+   genuinely light in dark mode — .bg-warning, .bg-info and friends, which
+   are untouched — near-black is the *correct* pairing, and a blanket
+   .text-dark override would wreck exactly those, the same trap the CoIFish
+   black-on-cyan badge posed. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(.bg-light, .bg-white, .bg-body-tertiary):is(.text-dark, .text-black) {
+    color: #e8eaf0 !important; /* stylelint-disable-line declaration-no-important */
+}
+
+/* A badge is a chip that has to separate from whatever it sits on, and these
+   sit on cards this file already paints #182234 — so the plain .bg-light
+   mapping above would render them the same tone as their own background and
+   make them all but disappear, which is the second half of the reported
+   problem. Badges therefore get the elevated surface tone used elsewhere for
+   tracks and tooltips instead. Higher specificity than the .bg-* rules above
+   (two classes rather than one), so this wins for badges while panels keep
+   the flatter tone that suits them against the page.
+   plus-lighter then adds the chip to whatever is behind it rather than
+   covering it, which lifts it clear of the card without having to hardcode a
+   brighter tone: over the #182234 card the #2a3346 fill lands around #42557a.
+   Being backdrop-relative is the point — it keeps its separation over the
+   page, a card or a modal alike — but it is also the caveat: on a genuinely
+   light surface the chip and its text would both blow out towards white.
+   These badges only ever sit on dark surfaces in this theme, so that case
+   does not arise today; if it ever does, a flat background-color: #42557a
+   reproduces the same look here without the blend.
+   invert(1) then flips the chip to a bright, near-white pill so it actually
+   registers as a chip rather than a slightly lighter patch of card. Filters
+   apply before blending, so the two compose predictably: the #2a3346 fill
+   inverts to a light tan and the blend lifts it to roughly #ededed, while
+   the text inverts from #e8eaf0 down to a dark slate that lands near
+   #2f3743 over it — around 11:1, comfortably legible.
+   That text path is deliberately roundabout and worth knowing before
+   editing: the .text-dark override above lightens the text precisely so
+   this inversion can bring it back down. Change one without the other and
+   the pill loses its contrast.
+   This also carries the mix-blend-mode fix these badges used to get from a
+   separate :first-child rule (removed above): Boost sets multiply on
+   .path-mod .automatic-completion-conditions .badge, which crushes a light
+   pill toward black on a dark page. That selector is (0,3,0) against this
+   one's (0,5,1), so this wins without needing !important, and it applies to
+   both pending pills while leaving the .bg-success/.bg-danger ones alone —
+   inverting those would send green to magenta. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .badge:is(.bg-light, .bg-white, .bg-body-tertiary) {
+    background-color: #2a3346 !important; /* stylelint-disable-line declaration-no-important */
+    mix-blend-mode: plus-lighter;
+    filter: invert(1);
+}
+
+/* The unified grader's own nav dropdown (local_unifiedgrader) paints a
+   literal white background — no !important, so our usual extra specificity
+   is enough on its own, unlike the Bootstrap .bg-* utilities above. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .local-unifiedgrader-nav-dropdown {
+    background-color: #182234;
+    border-color: #2a3346;
+}
+
+/* The grade-entry input group's addon spans (e.g. the unified grader's
+   "/ 40" max-grade and "(73%)" percentage badges either side of the grade
+   input) read background-color from var(--bs-tertiary-bg) — Boost's light
+   grey, not the page's own dark background. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .input-group-text {
+    background-color: #1e293d;
+    border-color: #2a3346;
+    color: #e8eaf0;
+}
+
+/* The unified grader's student-profile popout (local_unifiedgrader) is
+   another literal #fff background/light border, same story as the nav
+   dropdown and grade addons above. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .local-unifiedgrader-profile-popout {
+    background: #182234;
+    border-color: #2a3346;
+}
+
+/* The gradebook grader report (#user-grades / .gradereport-grader-table)
+   doesn't get its cell backgrounds from Bootstrap's own .table machinery at
+   all — Boost's compiled CSS carries a grader-specific rule that paints
+   every .cell with background-color: var(--bs-body-bg) directly, bypassing
+   the --bs-table-bg override on .table used everywhere else in this file
+   (var(--bs-body-bg) is never touched by that fix, deliberately, since
+   redefining it sitewide would be much harder to audit for side effects
+   than overriding --bs-table-bg per component).
+   .path-grade-report-grader is one of the path-* classes Moodle builds from
+   the script path and puts on <body> itself (lib/pagelib.php), so it chains
+   onto our selector as another compound class — with a space it would be
+   asking for a nested element that does not exist and would match nothing
+   at all, which is exactly the trap the #page-mod-quiz-report highlight fix
+   further up this file already documents. Painting the cells is also the
+   only thing that works: a background on <tbody> sits *behind* the cells,
+   and these cells set their own opaque background, so it would never be
+   visible no matter how much !important it carried. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"].path-grade-report-grader .gradeparent tr .cell,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"].path-grade-report-grader .gradeparent .floater .cell {
+    background-color: #182234;
 }
 
 /* ---- Widget Hub ("tiny_widgethub") callouts ----
@@ -3296,4 +3793,504 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .form-sel
     background-position: calc(100% - 20px) center, calc(100% - 15px) center;
     background-size: 5px 5px, 5px 5px;
     background-repeat: no-repeat;
+}
+
+/* =========================================================================
+   CoIFish (gradereport_coifish) — dark mode
+   =========================================================================
+   This plugin ships ~2100 lines of its own CSS built entirely on literal
+   light-theme colours: white/grey panel fills, and dark body, muted and
+   severity-emphasis text tuned to sit on them. Its outermost cards happen to
+   carry Bootstrap's .card class, so the .card fix earlier in this file turns
+   those dark — which is precisely what made the plugin unreadable rather
+   than merely light: dark text stranded on a now-dark surface.
+   Backgrounds and text are therefore fixed together here, the same pairing
+   rule the .card/.generaltable/.alert-* blocks above follow. Fixing only the
+   text would have broken the sub-panels that still paint their own white
+   (.gradetracker-stat-chip, .gradereport-coifish-pulse-hero-inner, and the
+   rest of the surface list below), which are perfectly legible as they are.
+   :is() keeps this readable at ~100 selectors; it is well within Moodle 5.0's
+   browser baseline and was verified to survive the theme CSS combiner, which
+   silently drops some newer CSS (color-mix(), as noted further up).
+   Note :is() takes the specificity of its most specific argument, which
+   flattens the relative ordering the plugin's own stylesheet relies on, so
+   the groups below run neutral -> muted -> success -> info -> warning ->
+   danger: every contextual override (.gradetracker-stat-risk
+   .gradetracker-stat-value over .gradetracker-stat-value, .gradetracker-
+   widget-risk .gradetracker-widget-header over .gradetracker-widget-header)
+   sits in a later group so it still wins on a specificity tie.
+   Deliberately left alone: .gradeoverview-extension-badge (#000 on a bright
+   #0dcaf0 fill) and .gradeoverview-late-badge (#fff on #dc3545) — both are
+   coloured chips that read correctly in either theme, and "fixing" their
+   text would break them. Severity hues reuse the palette the .alert-*
+   overrides above established, so CoIFish matches the rest of dark mode
+   rather than introducing a second set of reds, ambers and greens.
+   Longer term this belongs in CoIFish itself; it lives here because dark
+   mode is this format's feature and reaches sitewide. */
+
+/* ---- Base text ----
+   Much of CoIFish's copy sets no colour of its own at all and simply
+   inherits from <body> — Boost's near-black --bs-body-color, which this file
+   deliberately leaves alone. The insight cards' diagnostic paragraphs are
+   the clearest example: neither .gradetracker-insight-diagnostic nor
+   .gradetracker-insight-label nor their .gradetracker-insight-card-body
+   parent declares a colour, so none of the per-selector groups below could
+   ever have reached them (those were derived by scanning the plugin's own
+   `color:` declarations, which by definition cannot see inherited text).
+   Setting the colour on the plugin's own root containers instead fixes that
+   whole class of problem at once, including any markup added later.
+   It has to be the containers rather than a blanket match on every
+   CoIFish-classed element: inheritance always yields to an explicit
+   declaration on a descendant, so the plugin's own deliberate colours still
+   win — .gradeoverview-extension-badge keeps its black-on-cyan, the coloured
+   chips keep their white, and every group below keeps its severity hue. A
+   blanket element match would out-specify all of those and break them.
+   Container list is every root emitted by grade/report/coifish/templates. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
+    .gradereport-coifish,
+    .gradereport-coifish-actionbar,
+    .gradereport-coifish-coordinator,
+    .gradereport-coifish-summary,
+    .gradereport-coifish-pulse,
+    .gradetracker-insights,
+    .gradetracker-cohort-insights,
+    .gradetracker-coi-section,
+    .gradetracker-goal-planner,
+    .gradetracker-intervention-history,
+    .gradetracker-longitudinal-profile,
+    .gradetracker-presence-card,
+    .gradetracker-progress-container,
+    .gradetracker-progress-bar-group,
+    .gradetracker-levels-wrap,
+    .gradetracker-optslider-wrap,
+    .gradetracker-slider-wrap,
+    .gradeoverview-category) {
+    color: #e8eaf0;
+}
+
+/* ---- Surfaces ---- */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
+    .gradetracker-goal-card,
+    .gradetracker-widget,
+    .gradetracker-profile-rec,
+    .gradetracker-presence-card,
+    .gradereport-coifish-pulse-hero-inner,
+    .gradereport-coifish-pulse-card,
+    .gradereport-coifish-pulse-ring-inner) {
+    background: #182234;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
+    .gradetracker-feedback-details,
+    .gradetracker-longitudinal-profile,
+    .gradetracker-stat-chip,
+    .gradetracker-presence-bars,
+    .gradetracker-detail-metric-chip,
+    .gradereport-coifish-pulse-access,
+    .gradereport-coifish-coordinator .card-header) {
+    background: #1e293d;
+}
+
+/* Neutral tracks and "empty/locked" states — mid greys in the original. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
+    .gradetracker-stacked-bar,
+    .gradetracker-badge-locked,
+    .gradetracker-presence-dot-none,
+    .gradetracker-zone-none) {
+    background: #2a3346;
+}
+
+/* Tinted recommendation/header panels: the original pastel washes are far
+   too light to survive here, so each becomes the dark tint of the same hue
+   already used by the .que .outcome and .alert-* blocks above. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .gradetracker-profile-rec-danger {
+    background: #2c1618;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
+    .gradetracker-profile-rec-warning,
+    .gradetracker-detail-header-warning) {
+    background: #3a2e0f;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .gradetracker-insight-card {
+    border-color: #2a3346;
+}
+
+/* ---- Text: neutral body copy ---- */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
+    .gradereport-coifish .text-muted td,
+    .gradereport-coifish tr.text-muted td,
+    .gradetracker-goal-planner-title,
+    .gradetracker-coi-title,
+    .gradetracker-coi-breakdown-count,
+    .gradetracker-cohort-section-title,
+    .gradetracker-presence-count,
+    .gradetracker-presence-bar-label,
+    .gradetracker-detail-section-title,
+    .gradetracker-detail-text,
+    .gradetracker-detail-threshold-label,
+    .gradetracker-selfreg-explain,
+    .gradetracker-selfreg-indicator-label,
+    .gradetracker-stat-value,
+    .gradetracker-detail-metric-value,
+    .gradereport-coifish-pulse-help-inner,
+    .gradereport-coifish-pulse-drill-text,
+    .gradereport-coifish-pulse-access,
+    .gradereport-coifish-pulse-hero-band,
+    .gradereport-coifish-pulse-badge-name,
+    .gradereport-coifish-pulse-card-label) {
+    color: #e8eaf0;
+}
+
+/* ---- Text: muted/secondary ---- */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
+    .gradetracker-legend-item,
+    .gradetracker-goal-card-label,
+    .gradetracker-goal-card-message,
+    .gradetracker-goal-missed .gradetracker-goal-card-value,
+    .gradetracker-widget-header,
+    .gradetracker-widget-sub,
+    .gradetracker-trend-steady,
+    .gradetracker-feedback-viewed .gradetracker-feedback-link,
+    .gradetracker-coi-breakdown,
+    .gradetracker-stat-label,
+    .gradetracker-cohort-subsection-title,
+    .gradetracker-detail-link,
+    .gradetracker-logdata-table thead th,
+    .gradetracker-detail-metric-label,
+    .gradetracker-selfreg-explain-btn,
+    .gradetracker-selfreg-explain dd,
+    .gradetracker-levels-label-text,
+    .gradereport-coifish-pulse-sub,
+    .gradereport-coifish-pulse-hero-caption,
+    .gradereport-coifish-pulse-badge-sub,
+    .gradereport-coifish-pulse-drill-heading,
+    .gradereport-coifish-pulse-duedates-nudge,
+    .gradereport-coifish-pulse-help-btn) {
+    color: #a8b0c3;
+}
+
+/* ---- Text: success ---- */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
+    .gradereport-coifish .gradeoverview-category td a,
+    .gradetracker-threshold-pass::before,
+    .gradetracker-goal-achieved .gradetracker-goal-card-value,
+    .gradetracker-widget-improvement .gradetracker-widget-hero.text-success,
+    .gradetracker-trend-up,
+    .gradetracker-selfregulation-strong,
+    .gradetracker-consistency-excellent,
+    .gradetracker-earlybird-ahead,
+    .gradetracker-risk-healthy .gradetracker-insights-risk-icon,
+    .gradereport-coifish-pulse-help-inner strong,
+    .gradereport-coifish-pulse-suggestions-title,
+    .gradereport-coifish-pulse-access-ok) {
+    color: #34d399;
+}
+
+/* ---- Text: info / primary accent ---- */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
+    .gradetracker-widget-guidance,
+    .gradetracker-insight-info .gradetracker-insight-card-header,
+    .gradetracker-insight-info .gradetracker-insight-action,
+    .gradetracker-detail-header-info) {
+    color: #5bc0f8;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
+    .gradereport-coifish .gradetracker-running-percentage,
+    .gradetracker-running-percentage.text-primary,
+    .gradetracker-threshold-merit::before,
+    .gradetracker-widget-overall .gradetracker-widget-hero,
+    .gradetracker-selfregulation-moderate,
+    .gradetracker-consistency-good,
+    .gradetracker-earlybird-ontrack,
+    .gradetracker-detail-link:hover) {
+    color: #5b9bf5;
+}
+
+/* ---- Text: warning ---- */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
+    .gradetracker-widget-action,
+    .gradetracker-insight-warning .gradetracker-insight-card-header,
+    .gradetracker-insight-warning .gradetracker-insight-action,
+    .gradetracker-detail-header-warning,
+    .gradetracker-widget-risk .gradetracker-widget-header) {
+    color: #fbbf24;
+}
+
+/* ---- Text: danger ---- */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
+    .gradetracker-insight-danger .gradetracker-insight-card-header,
+    .gradetracker-insight-danger .gradetracker-insight-action,
+    .gradetracker-detail-header-danger,
+    .gradetracker-widget-improvement .gradetracker-widget-hero.text-danger,
+    .gradetracker-trend-down,
+    .gradetracker-earlybird-behind,
+    .gradetracker-risk-high .gradetracker-insights-risk-icon,
+    .gradetracker-stat-risk .gradetracker-stat-value) {
+    color: #f87171;
+}
+
+/* ---- Student pulse widget tokens ----
+   The plugin already funnels this widget's colours through five custom
+   properties, so redefining them on the same element they are declared on
+   repaints every var() reference at once — the mechanism the .table and
+   .format-simple-wrapper token blocks above use. The track is a light grey
+   fill rather than text, hence the surface tone rather than a text one. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .gradereport-coifish-pulse {
+    --coifish-pulse-accent: #34d399;
+    --coifish-pulse-track: #2a3346;
+    --coifish-pulse-up: #34d399;
+    --coifish-pulse-down: #fb923c;
+    --coifish-pulse-same: #a8b0c3;
+}
+
+/* =========================================================================
+   TinyMCE (editor_tiny / TinyMCE 7 "oxide" skin) — dark mode
+   =========================================================================
+   The oxide skin hardcodes every colour — it exposes no custom properties at
+   all, so there is no token layer to redirect and each surface has to be
+   named. What follows repaints the editor *chrome*: menubar, toolbars,
+   status bar, and the icon/label colours that sit on them.
+   The editing canvas is not reachable from this file at all. It is an
+   <iframe>, and TinyMCE loads theme_config::editor_css_url() into it — a
+   separate, much smaller bundle built by editor_css_files(), which collects
+   only editor plugins' own editor_styles.css plus the theme's editor_sheets.
+   A course format's styles.css is not among them, so nothing written here
+   reaches inside; a body.mce-content-body rule added to this file has no
+   effect whatsoever, however it is scoped. (It would also have no dark-mode
+   signal to key on if it did arrive: the iframe's <body> carries neither the
+   .format-simple class nor the [data-simple-theme] attribute, so an unscoped
+   rule would repaint the canvas in light mode too.)
+   The canvas is therefore handled from JavaScript instead — see
+   applyTinyContentTheme() in amd/src/cognav.js, which injects a small
+   stylesheet into each editor's own document and removes it again on the way
+   back to light. Everything below is the surrounding chrome only. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
+    .tox .tox-menubar,
+    .tox .tox-toolbar-overlord,
+    .tox .tox-toolbar,
+    .tox .tox-toolbar__primary,
+    .tox .tox-toolbar__overflow,
+    .tox .tox-sidebar,
+    .tox:not(.tox-tinymce-inline) .tox-editor-header,
+    .tox.tox-tinymce-inline .tox-editor-header,
+    .tox:not(.tox-tinymce-inline).tox-tinymce--toolbar-sticky-on .tox-editor-header,
+    .tox.tox-tinymce-aux .tox-toolbar__overflow) {
+    background-color: #1e293d;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .tox .tox-statusbar {
+    background-color: #1e293d;
+    border-top-color: #2a3346;
+    color: #a8b0c3;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
+    .tox .tox-statusbar a,
+    .tox .tox-statusbar__path-item,
+    .tox .tox-statusbar__wordcount,
+    .tox .tox-label,
+    .tox .tox-toolbar-label) {
+    color: #a8b0c3;
+}
+
+/* Toolbar and menubar buttons.
+   These are not transparent chips sitting on the toolbar, as their flat
+   appearance suggests — the skin paints every one of them background: #fff
+   outright, and only looks flat because the toolbar behind them is white
+   too. Recolouring their text without that made things worse rather than
+   better: near-white labels stranded on white blocks.
+   So each state needs its own pairing. Resting matches the toolbar so the
+   buttons stay visually flat exactly as they do in the light skin, and
+   hover/pressed step up from there to keep the same relative ordering the
+   original design uses (a light-grey hover and a blue pressed state over a
+   white base become a lighter-slate hover and a blue-slate pressed state
+   over a dark one). */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
+    .tox .tox-mbtn,
+    .tox .tox-tbtn,
+    .tox .tox-mbtn[disabled],
+    .tox .tox-mbtn:focus:not(:disabled),
+    .tox .tox-tbtn:focus,
+    .tox .tox-tbtn--disabled,
+    .tox .tox-tbtn--disabled:hover,
+    .tox .tox-tbtn:disabled,
+    .tox .tox-tbtn:disabled:hover,
+    .tox .tox-split-button:focus) {
+    background: #1e293d;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
+    .tox .tox-mbtn:hover:not(:disabled):not(.tox-mbtn--active),
+    .tox .tox-tbtn:hover,
+    .tox .tox-tbtn--bespoke,
+    .tox .tox-tbtn--bespoke:focus) {
+    background: #2a3346;
+}
+
+/* Pressed/enabled state (Bold while the cursor sits in bold text, and the
+   open menubar item) — the skin's #a6ccf7 is a pale blue that would glare
+   here, so it becomes the same deep blue the link focus indicator uses. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
+    .tox .tox-mbtn--active,
+    .tox .tox-mbtn:not(:disabled).tox-mbtn--active:focus,
+    .tox .tox-tbtn:active,
+    .tox .tox-tbtn--active,
+    .tox .tox-tbtn--enabled,
+    .tox .tox-tbtn--enabled:hover,
+    .tox .tox-tbtn--enabled:focus) {
+    background: #1e3a5f;
+}
+
+/* Labels and icons across every state. TinyMCE's own icons are inline <path>
+   SVGs painted from a hardcoded fill rather than currentColor, and the skin
+   re-asserts that dark fill separately for :hover, :active and :focus — so
+   recolouring the resting state alone would leave the glyphs flipping back
+   to near-black the moment a button is used. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
+    .tox .tox-mbtn,
+    .tox .tox-mbtn--active,
+    .tox .tox-mbtn:hover:not(:disabled):not(.tox-mbtn--active),
+    .tox .tox-tbtn,
+    .tox .tox-tbtn:hover,
+    .tox .tox-tbtn:active,
+    .tox .tox-tbtn--active,
+    .tox .tox-tbtn--enabled,
+    .tox .tox-tbtn:focus:not(.tox-tbtn--disabled)) {
+    color: #fefeff;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
+    .tox .tox-mbtn svg,
+    .tox .tox-tbtn svg,
+    .tox .tox-tbtn:hover svg,
+    .tox .tox-tbtn:active svg,
+    .tox .tox-tbtn:focus:not(.tox-tbtn--disabled) svg) {
+    fill: #fefeff;
+}
+
+/* Disabled buttons keep the skin's "dimmed" relationship rather than the
+   full-strength label above, which would make them look available. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
+    .tox .tox-mbtn[disabled],
+    .tox .tox-tbtn--disabled,
+    .tox .tox-tbtn--disabled:hover,
+    .tox .tox-tbtn:disabled,
+    .tox .tox-tbtn:disabled:hover) {
+    color: #7c8598;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
+    .tox .tox-tbtn--disabled svg,
+    .tox .tox-tbtn:disabled svg,
+    .tox .tox-tbtn--disabled .tox-tbtn--enabled svg) {
+    fill: #7c8598;
+}
+
+/* Buttons contributed by Moodle's own tiny_* subplugins (WidgetHub, C4L,
+   H5P, the recorder) are not path SVGs at all — they are <image> elements
+   pointing at theme/image.php monologos, i.e. flat dark silhouettes that
+   `fill` cannot touch. Inverting is the same trick .simple-cm-icon and the
+   .alert dismiss button already use for exactly this problem. The
+   data-buttonsource attribute is Moodle's own marker for these, so it
+   separates them cleanly from TinyMCE's built-in icons above, which must
+   keep their fill treatment instead. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .tox svg[data-buttonsource="moodle"] {
+    filter: invert(1) brightness(1.4);
+}
+
+/* ---- TinyMCE dialogs (source code view, link editor, image properties) ----
+   These render in the parent document rather than the editor iframe, so
+   ordinary CSS reaches them. Note the backdrop is a *white* 75% veil in the
+   light skin, which on a dark page washes the whole thing out — it needs
+   flipping as much as the panel does.
+   The primary .tox-button is left alone throughout: it is white on #006ce7,
+   which reads correctly against any background. Only the secondary and naked
+   variants, which assume a light panel behind them, are repainted. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .tox .tox-dialog-wrap__backdrop {
+    background-color: rgba(6, 10, 20, 0.75);
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .tox .tox-dialog-wrap__backdrop--opaque {
+    background-color: #0f1420;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .tox .tox-dialog {
+    background-color: #182234;
+    border-color: #2a3346;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
+    .tox .tox-dialog__header,
+    .tox .tox-dialog__footer) {
+    background-color: #182234;
+    color: #e8eaf0;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
+    .tox .tox-dialog__title,
+    .tox .tox-dialog__body,
+    .tox .tox-dialog__body-content .tox-form__group h1,
+    .tox .tox-dialog__body-content .tox-form__group h2) {
+    color: #e8eaf0;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .tox .tox-dialog__body-content svg {
+    fill: #e8eaf0;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
+    .tox .tox-dialog__body-nav-item,
+    .tox .tox-label,
+    .tox .tox-dialog__body-content .tox-form__group--error) {
+    color: #a8b0c3;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
+    .tox .tox-dialog__body-content a,
+    .tox .tox-dialog__body-nav-item--active) {
+    color: #5b9bf5;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
+    .tox .tox-dialog__body-content a:hover,
+    .tox .tox-dialog__body-content a:focus,
+    .tox .tox-dialog__body-content a:active) {
+    color: #8fc0ff;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .tox .tox-dialog__body-nav-item--active {
+    border-bottom-color: #5b9bf5;
+}
+
+/* Secondary ("Cancel") and naked (the header's close X) buttons. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .tox .tox-button--secondary {
+    background-color: #2a3346;
+    border-color: #2a3346;
+    color: #e8eaf0;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
+    .tox .tox-button--secondary:hover:not(:disabled),
+    .tox .tox-button--secondary:focus:not(:disabled)) {
+    background-color: #354063;
+    border-color: #354063;
+    color: #e8eaf0;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .tox .tox-button--naked {
+    color: #e8eaf0;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
+    .tox .tox-button--naked:hover:not(:disabled),
+    .tox .tox-button--naked:focus:not(:disabled)) {
+    background-color: rgba(232, 234, 240, 0.12);
+    color: #e8eaf0;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .tox .tox-dialog__table tbody tr {
+    border-bottom-color: #2a3346;
 }
