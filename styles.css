@@ -2367,14 +2367,14 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] a:hover {
    restated — Boost's transparent 0.25rem outline still applies through the
    original rule, and it is what surfaces focus in forced-colours mode. */
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
-    .aalink,
-    a.autolink,
-    .arrow_link,
-    a:not([class]),
-    .activityinstance > a,
-    #page-footer a:not([class])):is(:focus, .focus) {
+.aalink,
+a.autolink,
+.arrow_link,
+a:not([class]),
+.activityinstance > a,
+#page-footer a:not([class])):is(:focus, .focus) {
     background-color: #1e3a5f;
-    color: #ffffff;
+    color: #fff;
     box-shadow: 0 -0.25rem #1e3a5f, 0 0.25rem #5b9bf5;
     filter: none;
 }
@@ -2644,7 +2644,8 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .moodle-d
     box-shadow: 0 0 10px #b6bdff;
 }
 
-body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .moodle-dialogue-base .moodle-dialogue-wrap .moodle-dialogue-hd.yui3-widget-hd {
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"]
+.moodle-dialogue-base .moodle-dialogue-wrap .moodle-dialogue-hd.yui3-widget-hd {
     color: #e8eaf0;
 }
 
@@ -2782,7 +2783,7 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .btn-icon
    the widget. */
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .btn.dropdown-toggle[role="combobox"] {
     --bs-btn-color: #e8eaf0;
-    --bs-btn-hover-color: #ffffff;
+    --bs-btn-hover-color: #fff;
 }
 
 /* Outline buttons (e.g. CoIFish's "Log intervention") draw their resting
@@ -2943,7 +2944,8 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] table.qui
    sliver on the other three edges of each row after that top-only fix. */
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"].path-mod-quiz .gradedattempt,
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"].path-mod-quiz table tbody tr.gradedattempt > td,
-body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"].path-mod-quiz table tbody tr.gradedattempt > td.sticky-column {
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"].path-mod-quiz
+table tbody tr.gradedattempt > td.sticky-column {
     border-color: #1e5a7d;
     background-color: #0f3a52;
 }
@@ -3323,7 +3325,8 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .bg-body-
    are untouched — near-black is the *correct* pairing, and a blanket
    .text-dark override would wreck exactly those, the same trap the CoIFish
    black-on-cyan badge posed. */
-body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(.bg-light, .bg-white, .bg-body-tertiary):is(.text-dark, .text-black) {
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"]
+:is(.bg-light, .bg-white, .bg-body-tertiary):is(.text-dark, .text-black) {
     color: #e8eaf0 !important; /* stylelint-disable-line declaration-no-important */
 }
 
@@ -3847,56 +3850,56 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .form-sel
    blanket element match would out-specify all of those and break them.
    Container list is every root emitted by grade/report/coifish/templates. */
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
-    .gradereport-coifish,
-    .gradereport-coifish-actionbar,
-    .gradereport-coifish-coordinator,
-    .gradereport-coifish-summary,
-    .gradereport-coifish-pulse,
-    .gradetracker-insights,
-    .gradetracker-cohort-insights,
-    .gradetracker-coi-section,
-    .gradetracker-goal-planner,
-    .gradetracker-intervention-history,
-    .gradetracker-longitudinal-profile,
-    .gradetracker-presence-card,
-    .gradetracker-progress-container,
-    .gradetracker-progress-bar-group,
-    .gradetracker-levels-wrap,
-    .gradetracker-optslider-wrap,
-    .gradetracker-slider-wrap,
-    .gradeoverview-category) {
+.gradereport-coifish,
+.gradereport-coifish-actionbar,
+.gradereport-coifish-coordinator,
+.gradereport-coifish-summary,
+.gradereport-coifish-pulse,
+.gradetracker-insights,
+.gradetracker-cohort-insights,
+.gradetracker-coi-section,
+.gradetracker-goal-planner,
+.gradetracker-intervention-history,
+.gradetracker-longitudinal-profile,
+.gradetracker-presence-card,
+.gradetracker-progress-container,
+.gradetracker-progress-bar-group,
+.gradetracker-levels-wrap,
+.gradetracker-optslider-wrap,
+.gradetracker-slider-wrap,
+.gradeoverview-category) {
     color: #e8eaf0;
 }
 
 /* ---- Surfaces ---- */
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
-    .gradetracker-goal-card,
-    .gradetracker-widget,
-    .gradetracker-profile-rec,
-    .gradetracker-presence-card,
-    .gradereport-coifish-pulse-hero-inner,
-    .gradereport-coifish-pulse-card,
-    .gradereport-coifish-pulse-ring-inner) {
+.gradetracker-goal-card,
+.gradetracker-widget,
+.gradetracker-profile-rec,
+.gradetracker-presence-card,
+.gradereport-coifish-pulse-hero-inner,
+.gradereport-coifish-pulse-card,
+.gradereport-coifish-pulse-ring-inner) {
     background: #182234;
 }
 
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
-    .gradetracker-feedback-details,
-    .gradetracker-longitudinal-profile,
-    .gradetracker-stat-chip,
-    .gradetracker-presence-bars,
-    .gradetracker-detail-metric-chip,
-    .gradereport-coifish-pulse-access,
-    .gradereport-coifish-coordinator .card-header) {
+.gradetracker-feedback-details,
+.gradetracker-longitudinal-profile,
+.gradetracker-stat-chip,
+.gradetracker-presence-bars,
+.gradetracker-detail-metric-chip,
+.gradereport-coifish-pulse-access,
+.gradereport-coifish-coordinator .card-header) {
     background: #1e293d;
 }
 
 /* Neutral tracks and "empty/locked" states — mid greys in the original. */
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
-    .gradetracker-stacked-bar,
-    .gradetracker-badge-locked,
-    .gradetracker-presence-dot-none,
-    .gradetracker-zone-none) {
+.gradetracker-stacked-bar,
+.gradetracker-badge-locked,
+.gradetracker-presence-dot-none,
+.gradetracker-zone-none) {
     background: #2a3346;
 }
 
@@ -3908,8 +3911,8 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .gradetra
 }
 
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
-    .gradetracker-profile-rec-warning,
-    .gradetracker-detail-header-warning) {
+.gradetracker-profile-rec-warning,
+.gradetracker-detail-header-warning) {
     background: #3a2e0f;
 }
 
@@ -3919,116 +3922,116 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .gradetra
 
 /* ---- Text: neutral body copy ---- */
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
-    .gradereport-coifish .text-muted td,
-    .gradereport-coifish tr.text-muted td,
-    .gradetracker-goal-planner-title,
-    .gradetracker-coi-title,
-    .gradetracker-coi-breakdown-count,
-    .gradetracker-cohort-section-title,
-    .gradetracker-presence-count,
-    .gradetracker-presence-bar-label,
-    .gradetracker-detail-section-title,
-    .gradetracker-detail-text,
-    .gradetracker-detail-threshold-label,
-    .gradetracker-selfreg-explain,
-    .gradetracker-selfreg-indicator-label,
-    .gradetracker-stat-value,
-    .gradetracker-detail-metric-value,
-    .gradereport-coifish-pulse-help-inner,
-    .gradereport-coifish-pulse-drill-text,
-    .gradereport-coifish-pulse-access,
-    .gradereport-coifish-pulse-hero-band,
-    .gradereport-coifish-pulse-badge-name,
-    .gradereport-coifish-pulse-card-label) {
+.gradereport-coifish .text-muted td,
+.gradereport-coifish tr.text-muted td,
+.gradetracker-goal-planner-title,
+.gradetracker-coi-title,
+.gradetracker-coi-breakdown-count,
+.gradetracker-cohort-section-title,
+.gradetracker-presence-count,
+.gradetracker-presence-bar-label,
+.gradetracker-detail-section-title,
+.gradetracker-detail-text,
+.gradetracker-detail-threshold-label,
+.gradetracker-selfreg-explain,
+.gradetracker-selfreg-indicator-label,
+.gradetracker-stat-value,
+.gradetracker-detail-metric-value,
+.gradereport-coifish-pulse-help-inner,
+.gradereport-coifish-pulse-drill-text,
+.gradereport-coifish-pulse-access,
+.gradereport-coifish-pulse-hero-band,
+.gradereport-coifish-pulse-badge-name,
+.gradereport-coifish-pulse-card-label) {
     color: #e8eaf0;
 }
 
 /* ---- Text: muted/secondary ---- */
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
-    .gradetracker-legend-item,
-    .gradetracker-goal-card-label,
-    .gradetracker-goal-card-message,
-    .gradetracker-goal-missed .gradetracker-goal-card-value,
-    .gradetracker-widget-header,
-    .gradetracker-widget-sub,
-    .gradetracker-trend-steady,
-    .gradetracker-feedback-viewed .gradetracker-feedback-link,
-    .gradetracker-coi-breakdown,
-    .gradetracker-stat-label,
-    .gradetracker-cohort-subsection-title,
-    .gradetracker-detail-link,
-    .gradetracker-logdata-table thead th,
-    .gradetracker-detail-metric-label,
-    .gradetracker-selfreg-explain-btn,
-    .gradetracker-selfreg-explain dd,
-    .gradetracker-levels-label-text,
-    .gradereport-coifish-pulse-sub,
-    .gradereport-coifish-pulse-hero-caption,
-    .gradereport-coifish-pulse-badge-sub,
-    .gradereport-coifish-pulse-drill-heading,
-    .gradereport-coifish-pulse-duedates-nudge,
-    .gradereport-coifish-pulse-help-btn) {
+.gradetracker-legend-item,
+.gradetracker-goal-card-label,
+.gradetracker-goal-card-message,
+.gradetracker-goal-missed .gradetracker-goal-card-value,
+.gradetracker-widget-header,
+.gradetracker-widget-sub,
+.gradetracker-trend-steady,
+.gradetracker-feedback-viewed .gradetracker-feedback-link,
+.gradetracker-coi-breakdown,
+.gradetracker-stat-label,
+.gradetracker-cohort-subsection-title,
+.gradetracker-detail-link,
+.gradetracker-logdata-table thead th,
+.gradetracker-detail-metric-label,
+.gradetracker-selfreg-explain-btn,
+.gradetracker-selfreg-explain dd,
+.gradetracker-levels-label-text,
+.gradereport-coifish-pulse-sub,
+.gradereport-coifish-pulse-hero-caption,
+.gradereport-coifish-pulse-badge-sub,
+.gradereport-coifish-pulse-drill-heading,
+.gradereport-coifish-pulse-duedates-nudge,
+.gradereport-coifish-pulse-help-btn) {
     color: #a8b0c3;
 }
 
 /* ---- Text: success ---- */
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
-    .gradereport-coifish .gradeoverview-category td a,
-    .gradetracker-threshold-pass::before,
-    .gradetracker-goal-achieved .gradetracker-goal-card-value,
-    .gradetracker-widget-improvement .gradetracker-widget-hero.text-success,
-    .gradetracker-trend-up,
-    .gradetracker-selfregulation-strong,
-    .gradetracker-consistency-excellent,
-    .gradetracker-earlybird-ahead,
-    .gradetracker-risk-healthy .gradetracker-insights-risk-icon,
-    .gradereport-coifish-pulse-help-inner strong,
-    .gradereport-coifish-pulse-suggestions-title,
-    .gradereport-coifish-pulse-access-ok) {
+.gradereport-coifish .gradeoverview-category td a,
+.gradetracker-threshold-pass::before,
+.gradetracker-goal-achieved .gradetracker-goal-card-value,
+.gradetracker-widget-improvement .gradetracker-widget-hero.text-success,
+.gradetracker-trend-up,
+.gradetracker-selfregulation-strong,
+.gradetracker-consistency-excellent,
+.gradetracker-earlybird-ahead,
+.gradetracker-risk-healthy .gradetracker-insights-risk-icon,
+.gradereport-coifish-pulse-help-inner strong,
+.gradereport-coifish-pulse-suggestions-title,
+.gradereport-coifish-pulse-access-ok) {
     color: #34d399;
 }
 
 /* ---- Text: info / primary accent ---- */
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
-    .gradetracker-widget-guidance,
-    .gradetracker-insight-info .gradetracker-insight-card-header,
-    .gradetracker-insight-info .gradetracker-insight-action,
-    .gradetracker-detail-header-info) {
+.gradetracker-widget-guidance,
+.gradetracker-insight-info .gradetracker-insight-card-header,
+.gradetracker-insight-info .gradetracker-insight-action,
+.gradetracker-detail-header-info) {
     color: #5bc0f8;
 }
 
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
-    .gradereport-coifish .gradetracker-running-percentage,
-    .gradetracker-running-percentage.text-primary,
-    .gradetracker-threshold-merit::before,
-    .gradetracker-widget-overall .gradetracker-widget-hero,
-    .gradetracker-selfregulation-moderate,
-    .gradetracker-consistency-good,
-    .gradetracker-earlybird-ontrack,
-    .gradetracker-detail-link:hover) {
+.gradereport-coifish .gradetracker-running-percentage,
+.gradetracker-running-percentage.text-primary,
+.gradetracker-threshold-merit::before,
+.gradetracker-widget-overall .gradetracker-widget-hero,
+.gradetracker-selfregulation-moderate,
+.gradetracker-consistency-good,
+.gradetracker-earlybird-ontrack,
+.gradetracker-detail-link:hover) {
     color: #5b9bf5;
 }
 
 /* ---- Text: warning ---- */
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
-    .gradetracker-widget-action,
-    .gradetracker-insight-warning .gradetracker-insight-card-header,
-    .gradetracker-insight-warning .gradetracker-insight-action,
-    .gradetracker-detail-header-warning,
-    .gradetracker-widget-risk .gradetracker-widget-header) {
+.gradetracker-widget-action,
+.gradetracker-insight-warning .gradetracker-insight-card-header,
+.gradetracker-insight-warning .gradetracker-insight-action,
+.gradetracker-detail-header-warning,
+.gradetracker-widget-risk .gradetracker-widget-header) {
     color: #fbbf24;
 }
 
 /* ---- Text: danger ---- */
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
-    .gradetracker-insight-danger .gradetracker-insight-card-header,
-    .gradetracker-insight-danger .gradetracker-insight-action,
-    .gradetracker-detail-header-danger,
-    .gradetracker-widget-improvement .gradetracker-widget-hero.text-danger,
-    .gradetracker-trend-down,
-    .gradetracker-earlybird-behind,
-    .gradetracker-risk-high .gradetracker-insights-risk-icon,
-    .gradetracker-stat-risk .gradetracker-stat-value) {
+.gradetracker-insight-danger .gradetracker-insight-card-header,
+.gradetracker-insight-danger .gradetracker-insight-action,
+.gradetracker-detail-header-danger,
+.gradetracker-widget-improvement .gradetracker-widget-hero.text-danger,
+.gradetracker-trend-down,
+.gradetracker-earlybird-behind,
+.gradetracker-risk-high .gradetracker-insights-risk-icon,
+.gradetracker-stat-risk .gradetracker-stat-value) {
     color: #f87171;
 }
 
@@ -4068,16 +4071,16 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .graderep
    stylesheet into each editor's own document and removes it again on the way
    back to light. Everything below is the surrounding chrome only. */
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
-    .tox .tox-menubar,
-    .tox .tox-toolbar-overlord,
-    .tox .tox-toolbar,
-    .tox .tox-toolbar__primary,
-    .tox .tox-toolbar__overflow,
-    .tox .tox-sidebar,
-    .tox:not(.tox-tinymce-inline) .tox-editor-header,
-    .tox.tox-tinymce-inline .tox-editor-header,
-    .tox:not(.tox-tinymce-inline).tox-tinymce--toolbar-sticky-on .tox-editor-header,
-    .tox.tox-tinymce-aux .tox-toolbar__overflow) {
+.tox .tox-menubar,
+.tox .tox-toolbar-overlord,
+.tox .tox-toolbar,
+.tox .tox-toolbar__primary,
+.tox .tox-toolbar__overflow,
+.tox .tox-sidebar,
+.tox:not(.tox-tinymce-inline) .tox-editor-header,
+.tox.tox-tinymce-inline .tox-editor-header,
+.tox:not(.tox-tinymce-inline).tox-tinymce--toolbar-sticky-on .tox-editor-header,
+.tox.tox-tinymce-aux .tox-toolbar__overflow) {
     background-color: #1e293d;
 }
 
@@ -4088,11 +4091,11 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .tox .tox
 }
 
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
-    .tox .tox-statusbar a,
-    .tox .tox-statusbar__path-item,
-    .tox .tox-statusbar__wordcount,
-    .tox .tox-label,
-    .tox .tox-toolbar-label) {
+.tox .tox-statusbar a,
+.tox .tox-statusbar__path-item,
+.tox .tox-statusbar__wordcount,
+.tox .tox-label,
+.tox .tox-toolbar-label) {
     color: #a8b0c3;
 }
 
@@ -4109,24 +4112,24 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
    white base become a lighter-slate hover and a blue-slate pressed state
    over a dark one). */
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
-    .tox .tox-mbtn,
-    .tox .tox-tbtn,
-    .tox .tox-mbtn[disabled],
-    .tox .tox-mbtn:focus:not(:disabled),
-    .tox .tox-tbtn:focus,
-    .tox .tox-tbtn--disabled,
-    .tox .tox-tbtn--disabled:hover,
-    .tox .tox-tbtn:disabled,
-    .tox .tox-tbtn:disabled:hover,
-    .tox .tox-split-button:focus) {
+.tox .tox-mbtn,
+.tox .tox-tbtn,
+.tox .tox-mbtn[disabled],
+.tox .tox-mbtn:focus:not(:disabled),
+.tox .tox-tbtn:focus,
+.tox .tox-tbtn--disabled,
+.tox .tox-tbtn--disabled:hover,
+.tox .tox-tbtn:disabled,
+.tox .tox-tbtn:disabled:hover,
+.tox .tox-split-button:focus) {
     background: #1e293d;
 }
 
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
-    .tox .tox-mbtn:hover:not(:disabled):not(.tox-mbtn--active),
-    .tox .tox-tbtn:hover,
-    .tox .tox-tbtn--bespoke,
-    .tox .tox-tbtn--bespoke:focus) {
+.tox .tox-mbtn:hover:not(:disabled):not(.tox-mbtn--active),
+.tox .tox-tbtn:hover,
+.tox .tox-tbtn--bespoke,
+.tox .tox-tbtn--bespoke:focus) {
     background: #2a3346;
 }
 
@@ -4134,13 +4137,13 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
    open menubar item) — the skin's #a6ccf7 is a pale blue that would glare
    here, so it becomes the same deep blue the link focus indicator uses. */
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
-    .tox .tox-mbtn--active,
-    .tox .tox-mbtn:not(:disabled).tox-mbtn--active:focus,
-    .tox .tox-tbtn:active,
-    .tox .tox-tbtn--active,
-    .tox .tox-tbtn--enabled,
-    .tox .tox-tbtn--enabled:hover,
-    .tox .tox-tbtn--enabled:focus) {
+.tox .tox-mbtn--active,
+.tox .tox-mbtn:not(:disabled).tox-mbtn--active:focus,
+.tox .tox-tbtn:active,
+.tox .tox-tbtn--active,
+.tox .tox-tbtn--enabled,
+.tox .tox-tbtn--enabled:hover,
+.tox .tox-tbtn--enabled:focus) {
     background: #1e3a5f;
 }
 
@@ -4150,42 +4153,42 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
    recolouring the resting state alone would leave the glyphs flipping back
    to near-black the moment a button is used. */
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
-    .tox .tox-mbtn,
-    .tox .tox-mbtn--active,
-    .tox .tox-mbtn:hover:not(:disabled):not(.tox-mbtn--active),
-    .tox .tox-tbtn,
-    .tox .tox-tbtn:hover,
-    .tox .tox-tbtn:active,
-    .tox .tox-tbtn--active,
-    .tox .tox-tbtn--enabled,
-    .tox .tox-tbtn:focus:not(.tox-tbtn--disabled)) {
+.tox .tox-mbtn,
+.tox .tox-mbtn--active,
+.tox .tox-mbtn:hover:not(:disabled):not(.tox-mbtn--active),
+.tox .tox-tbtn,
+.tox .tox-tbtn:hover,
+.tox .tox-tbtn:active,
+.tox .tox-tbtn--active,
+.tox .tox-tbtn--enabled,
+.tox .tox-tbtn:focus:not(.tox-tbtn--disabled)) {
     color: #fefeff;
 }
 
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
-    .tox .tox-mbtn svg,
-    .tox .tox-tbtn svg,
-    .tox .tox-tbtn:hover svg,
-    .tox .tox-tbtn:active svg,
-    .tox .tox-tbtn:focus:not(.tox-tbtn--disabled) svg) {
+.tox .tox-mbtn svg,
+.tox .tox-tbtn svg,
+.tox .tox-tbtn:hover svg,
+.tox .tox-tbtn:active svg,
+.tox .tox-tbtn:focus:not(.tox-tbtn--disabled) svg) {
     fill: #fefeff;
 }
 
 /* Disabled buttons keep the skin's "dimmed" relationship rather than the
    full-strength label above, which would make them look available. */
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
-    .tox .tox-mbtn[disabled],
-    .tox .tox-tbtn--disabled,
-    .tox .tox-tbtn--disabled:hover,
-    .tox .tox-tbtn:disabled,
-    .tox .tox-tbtn:disabled:hover) {
+.tox .tox-mbtn[disabled],
+.tox .tox-tbtn--disabled,
+.tox .tox-tbtn--disabled:hover,
+.tox .tox-tbtn:disabled,
+.tox .tox-tbtn:disabled:hover) {
     color: #7c8598;
 }
 
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
-    .tox .tox-tbtn--disabled svg,
-    .tox .tox-tbtn:disabled svg,
-    .tox .tox-tbtn--disabled .tox-tbtn--enabled svg) {
+.tox .tox-tbtn--disabled svg,
+.tox .tox-tbtn:disabled svg,
+.tox .tox-tbtn--disabled .tox-tbtn--enabled svg) {
     fill: #7c8598;
 }
 
@@ -4223,17 +4226,17 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .tox .tox
 }
 
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
-    .tox .tox-dialog__header,
-    .tox .tox-dialog__footer) {
+.tox .tox-dialog__header,
+.tox .tox-dialog__footer) {
     background-color: #182234;
     color: #e8eaf0;
 }
 
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
-    .tox .tox-dialog__title,
-    .tox .tox-dialog__body,
-    .tox .tox-dialog__body-content .tox-form__group h1,
-    .tox .tox-dialog__body-content .tox-form__group h2) {
+.tox .tox-dialog__title,
+.tox .tox-dialog__body,
+.tox .tox-dialog__body-content .tox-form__group h1,
+.tox .tox-dialog__body-content .tox-form__group h2) {
     color: #e8eaf0;
 }
 
@@ -4242,22 +4245,22 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .tox .tox
 }
 
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
-    .tox .tox-dialog__body-nav-item,
-    .tox .tox-label,
-    .tox .tox-dialog__body-content .tox-form__group--error) {
+.tox .tox-dialog__body-nav-item,
+.tox .tox-label,
+.tox .tox-dialog__body-content .tox-form__group--error) {
     color: #a8b0c3;
 }
 
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
-    .tox .tox-dialog__body-content a,
-    .tox .tox-dialog__body-nav-item--active) {
+.tox .tox-dialog__body-content a,
+.tox .tox-dialog__body-nav-item--active) {
     color: #5b9bf5;
 }
 
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
-    .tox .tox-dialog__body-content a:hover,
-    .tox .tox-dialog__body-content a:focus,
-    .tox .tox-dialog__body-content a:active) {
+.tox .tox-dialog__body-content a:hover,
+.tox .tox-dialog__body-content a:focus,
+.tox .tox-dialog__body-content a:active) {
     color: #8fc0ff;
 }
 
@@ -4273,8 +4276,8 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .tox .tox
 }
 
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
-    .tox .tox-button--secondary:hover:not(:disabled),
-    .tox .tox-button--secondary:focus:not(:disabled)) {
+.tox .tox-button--secondary:hover:not(:disabled),
+.tox .tox-button--secondary:focus:not(:disabled)) {
     background-color: #354063;
     border-color: #354063;
     color: #e8eaf0;
@@ -4285,8 +4288,8 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .tox .tox
 }
 
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] :is(
-    .tox .tox-button--naked:hover:not(:disabled),
-    .tox .tox-button--naked:focus:not(:disabled)) {
+.tox .tox-button--naked:hover:not(:disabled),
+.tox .tox-button--naked:focus:not(:disabled)) {
     background-color: rgba(232, 234, 240, 0.12);
     color: #e8eaf0;
 }

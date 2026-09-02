@@ -337,7 +337,7 @@ define(['core/ajax', 'core/str', 'core/templates'], function(Ajax, Str, Template
                 localStorage.setItem(key, wantDark ? 'true' : 'false');
             }
         } catch (e) {
-            // localStorage unavailable (private browsing, etc) — nothing more we can do.
+            // Storage unavailable (private browsing, etc) — nothing more we can do.
         }
     };
 
