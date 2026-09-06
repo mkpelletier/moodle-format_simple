@@ -2,6 +2,16 @@
 
 All notable changes to the Simple course format plugin are documented in this file.
 
+## v1.1.2 (2026-09-06) - Stable
+
+### Added
+- Forum activities with unread posts now show a small red count badge next to their name,
+  matching the one already used for the course-tools and Course Info nav items (#11).
+
+### Fixed
+- A heading inside one activity was left with Boost's default near-black text, hidden against
+  the dark mode page background.
+
 ## v1.1.1 (2026-09-02) - Stable
 
 ### Added

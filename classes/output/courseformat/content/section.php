@@ -292,6 +292,12 @@ class section extends section_base {
         $cmdata->completionlabel = $this->get_completion_label($cm, $cmdata);
         $cmdata->hasindicator = !empty($cmdata->completionenabled);
 
+        // Unread forum post count, shown as a badge next to the activity name.
+        $cmdata->unreadcount = ($cm->modname === 'forum') ? $this->get_forum_unread_count($cm, $course) : 0;
+        $cmdata->hasunread = ($cmdata->unreadcount > 0);
+        $cmdata->unreadlabel = $cmdata->hasunread
+            ? get_string('unreadcount', 'format_simple', $cmdata->unreadcount) : '';
+
         // Availability restrictions.
         $cmdata->isrestricted = !$cm->uservisible && $cm->visible;
         $cmdata->availabilityinfo = '';
@@ -355,6 +361,25 @@ class section extends section_base {
         }
 
         return $cmdata;
+    }
+
+    /**
+     * Count unread posts for a single forum, for the current user.
+     *
+     * @param \cm_info $cm The forum course module.
+     * @param stdClass $course The course object.
+     * @return int Unread post count.
+     */
+    private function get_forum_unread_count(\cm_info $cm, stdClass $course): int {
+        global $CFG;
+
+        if (empty($CFG->forum_trackreadposts) || !$cm->uservisible) {
+            return 0;
+        }
+
+        require_once($CFG->dirroot . '/mod/forum/lib.php');
+
+        return forum_tp_count_forum_unread_posts($cm, $course);
     }
 
     /**

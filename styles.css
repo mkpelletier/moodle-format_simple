@@ -642,6 +642,24 @@ body.format-simple .simple-nav-callout {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
+.format-simple .simple-cm-unread-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    margin-left: 6px;
+    border-radius: 9px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+    vertical-align: middle;
+}
+
 .format-simple .simple-nav-separator {
     height: 1px;
     background: var(--simple-border);
@@ -2910,7 +2928,8 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .paginati
     --bs-pagination-disabled-bg: #182234;
 }
 
-body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .initialbarlabel {
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .initialbarlabel,
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .mb-2 {
     color: #e8eaf0;
 }
 

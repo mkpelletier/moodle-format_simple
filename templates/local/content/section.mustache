@@ -54,6 +54,9 @@
     * viewservice - Name of the web service that raises the view event.
     * viewparam - Name of that service's instance id parameter.
     * viewinstance - The activity instance id to pass to the service.
+    * hasunread - Whether this activity (a forum) has unread posts.
+    * unreadcount - Number of unread posts.
+    * unreadlabel - Tooltip for the unread badge.
 
     @package    format_simple
     @copyright  2025 South African Theological Seminary <ict@sats.ac.za>
@@ -217,6 +220,9 @@
                 <span class="simple-cm-name">
                     {{#haseditablename}}{{{editablename}}}{{/haseditablename}}
                     {{^haseditablename}}<a href="{{url}}" class="aalink stretched-link">{{name}}</a>{{/haseditablename}}
+                    {{#hasunread}}
+                    <span class="simple-cm-unread-badge" title="{{unreadlabel}}">{{unreadcount}}</span>
+                    {{/hasunread}}
                 </span>
                 {{> format_simple/local/content/cm/indicator }}
                 {{#hasdescription}}
@@ -304,6 +310,9 @@
                     <span class="simple-cm-name">
                         {{#haseditablename}}{{{editablename}}}{{/haseditablename}}
                         {{^haseditablename}}<a href="{{url}}" class="aalink stretched-link">{{name}}</a>{{/haseditablename}}
+                        {{#hasunread}}
+                        <span class="simple-cm-unread-badge" title="{{unreadlabel}}">{{unreadcount}}</span>
+                        {{/hasunread}}
                     </span>
                     {{> format_simple/local/content/cm/indicator }}
                     {{#hasdescription}}
@@ -320,6 +329,9 @@
                 <span class="simple-cm-name">
                     {{#haseditablename}}{{{editablename}}}{{/haseditablename}}
                     {{^haseditablename}}<a href="{{url}}" class="aalink stretched-link">{{name}}</a>{{/haseditablename}}
+                    {{#hasunread}}
+                    <span class="simple-cm-unread-badge" title="{{unreadlabel}}">{{unreadcount}}</span>
+                    {{/hasunread}}
                 </span>
                 {{> format_simple/local/content/cm/indicator }}
                 {{#hasdescription}}
@@ -384,6 +396,9 @@
                 <span class="simple-cm-name">
                     {{#haseditablename}}{{{editablename}}}{{/haseditablename}}
                     {{^haseditablename}}<a href="{{url}}" class="aalink stretched-link">{{name}}</a>{{/haseditablename}}
+                    {{#hasunread}}
+                    <span class="simple-cm-unread-badge" title="{{unreadlabel}}">{{unreadcount}}</span>
+                    {{/hasunread}}
                 </span>
                 {{#isrestricted}}
                 <span class="simple-cm-restricted" title="{{availabilitytext}}">
