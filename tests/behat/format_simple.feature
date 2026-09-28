@@ -50,3 +50,23 @@ Feature: Simple format course display and navigation
     Then I should see "Unit 1"
     And I should see "Unit 2"
     And I should see "Unit 3"
+
+  @javascript
+  Scenario: A blocks drawer button's tooltip does not stay up over the other button
+    Given the following "blocks" exist:
+      | blockname    | contextlevel | reference | pagetypepattern | defaultregion |
+      | online_users | Course       | C1        | course-view-*   | side-pre      |
+    And the following "user preferences" exist:
+      | user     | preference               | value |
+      | teacher1 | behat_keep_drawer_closed | 1     |
+    And I log in as "teacher1"
+    And I am on "Course 1" course homepage
+    # The drawer's open and close buttons share a corner, so a tooltip left up on one covers
+    # the other.
+    And I hover ".drawer-right-toggle [data-toggler='drawers']" "css_element"
+    And "//div[contains(@class, 'tooltip') and contains(@class, 'show')][contains(., 'Open block drawer')]" "xpath_element" should exist
+    When I click on ".drawer-right-toggle [data-toggler='drawers']" "css_element"
+    Then "//div[contains(@class, 'tooltip') and contains(@class, 'show')][contains(., 'Open block drawer')]" "xpath_element" should not exist
+    And I hover ".drawer-right [data-action='closedrawer']" "css_element"
+    And I click on ".drawer-right [data-action='closedrawer']" "css_element"
+    And "//div[contains(@class, 'tooltip') and contains(@class, 'show')][contains(., 'Close block drawer')]" "xpath_element" should not exist

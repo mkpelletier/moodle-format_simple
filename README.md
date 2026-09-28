@@ -15,6 +15,8 @@ A modern, minimalist course format for Moodle 5.0+ that presents one unit at a t
 - **Cog navigation** — a compact tile-grid popover replacing the secondary navigation bar, providing quick access to Participants, Grades, Settings, and 40+ other course tools with Font Awesome icons
 - **Persistent home button** for navigating back to the course from any activity page
 - **Unread forum badge** — displays a count of unread forum posts on the section 0 navigation button
+- **Forum back-link** — on a discussion page the forum's title links back to its list of discussions, revealed by an arrow on hover
+- **Direct Q&A discussions** — a Q&A forum with a single discussion for the student (one copy per group counts) opens straight into it; teachers still see the list
 
 ### Course info
 - **Course banner** (optional) — hero image with course name on section 0
@@ -57,6 +59,7 @@ Course-level settings (under **Course settings > Course format**):
 | Hidden sections | Whether hidden sections are collapsed or invisible | Invisible |
 | Show course banner | Display a hero banner on the Course Info section | Yes |
 | Show Course Info as overlay | Display section 0 in a floating overlay instead of inline | No |
+| Open single Q&A discussions directly | A Q&A forum with one discussion visible to a student opens that discussion from the course page | Yes |
 
 Section-level settings (under **Edit section**):
 

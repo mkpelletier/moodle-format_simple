@@ -294,6 +294,10 @@ class format_simple extends core_courseformat\base {
                     'default' => 0,
                     'type' => PARAM_INT,
                 ],
+                'skipsingleforumindex' => [
+                    'default' => 1,
+                    'type' => PARAM_INT,
+                ],
             ];
         }
 
@@ -348,6 +352,21 @@ class format_simple extends core_courseformat\base {
                 [
                     'label' => new \lang_string('showindexactivities', 'format_simple'),
                     'help' => 'showindexactivities',
+                    'help_component' => 'format_simple',
+                    'element_type' => 'select',
+                    'element_attributes' => [
+                        [
+                            0 => new \lang_string('no'),
+                            1 => new \lang_string('yes'),
+                        ],
+                    ],
+                ]
+            );
+            $courseformatoptions['skipsingleforumindex'] = array_merge(
+                $courseformatoptions['skipsingleforumindex'],
+                [
+                    'label' => new \lang_string('skipsingleforumindex', 'format_simple'),
+                    'help' => 'skipsingleforumindex',
                     'help_component' => 'format_simple',
                     'element_type' => 'select',
                     'element_attributes' => [
@@ -742,6 +761,69 @@ class format_simple extends core_courseformat\base {
         }
 
         return $progress;
+    }
+
+    /**
+     * Find the one discussion a Q&A forum holds for the current user, if it holds only one.
+     *
+     * A Q&A forum usually carries a single question, often posted as one copy per group, and
+     * its list of discussions is then a page with one row on it. When this returns an id the
+     * course page links straight to that discussion instead. Anyone who can see every group
+     * still gets the list, since for them it is where the groups' copies are compared.
+     *
+     * Visibility follows forum_get_discussions_count(): in separate groups mode only the
+     * user's own groups (within the activity's grouping) and posts to all participants count,
+     * and timed discussions count only while they are showing, unless they are the user's own.
+     * A student in two groups sees two copies and so keeps the list, where core lets them
+     * switch between groups.
+     *
+     * @param \cm_info $cm The forum's course module.
+     * @return int|null The discussion id, or null when the forum's own page should open.
+     */
+    public static function get_single_forum_discussion(\cm_info $cm): ?int {
+        global $CFG, $DB, $USER;
+
+        if ($cm->modname !== 'forum' || !$cm->uservisible || !isloggedin() || isguestuser()) {
+            return null;
+        }
+
+        $options = course_get_format($cm->get_course())->get_format_options();
+        if (empty($options['skipsingleforumindex'])) {
+            return null;
+        }
+
+        $context = $cm->context;
+        if (has_capability('moodle/site:accessallgroups', $context)) {
+            return null;
+        }
+
+        if ($DB->get_field('forum', 'type', ['id' => $cm->instance]) !== 'qanda') {
+            return null;
+        }
+
+        $where = 'forum = :forum';
+        $params = ['forum' => $cm->instance];
+
+        if (groups_get_activity_groupmode($cm) == SEPARATEGROUPS) {
+            $groupids = array_keys(groups_get_all_groups($cm->course, $USER->id, $cm->groupingid, 'g.id'));
+            $groupids[] = -1;
+            [$insql, $inparams] = $DB->get_in_or_equal($groupids, SQL_PARAMS_NAMED, 'grp');
+            $where .= " AND groupid $insql";
+            $params += $inparams;
+        }
+
+        if (!empty($CFG->forum_enabletimedposts) && !has_capability('mod/forum:viewhiddentimedposts', $context)) {
+            $now = floor(time() / 60) * 60;
+            $where .= ' AND ((timestart <= :now1 AND (timeend = 0 OR timeend > :now2)) OR userid = :userid)';
+            $params += ['now1' => $now, 'now2' => $now, 'userid' => $USER->id];
+        }
+
+        $discussions = $DB->get_records_select('forum_discussions', $where, $params, 'id', 'id', 0, 2);
+        if (count($discussions) !== 1) {
+            return null;
+        }
+
+        return (int) reset($discussions)->id;
     }
 
     /**

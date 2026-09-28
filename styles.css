@@ -660,6 +660,61 @@ body.format-simple .simple-nav-callout {
     vertical-align: middle;
 }
 
+/* The forum's name on a discussion page leads back to its list of discussions. It reads as a
+   heading until pointed at; then an arrow fades in after the name. The arrow sits after rather
+   than before, where the forum icon would cover it, and holds its space while hidden so the
+   heading never moves. Touch screens have no hover, so there it stays faintly in view.
+   Discussion pages sit outside .format-simple-wrapper, where the design tokens are defined, so
+   the colours and timing here are literal values. */
+.format-simple .simple-forum-backlink {
+    color: inherit;
+    text-decoration: none;
+}
+
+.format-simple .simple-forum-backlink:hover,
+.format-simple .simple-forum-backlink:focus-visible {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* The arrow is drawn as a mask rather than a text character, so its size and stroke weight do
+   not depend on the theme's font. The grey keeps about 3.3:1 against white, over the 3:1 WCAG
+   asks of an icon. */
+.format-simple .simple-forum-backlink::after {
+    content: "";
+    display: inline-block;
+    width: 1.4em;
+    height: 1.4em;
+    margin-left: 0.3em;
+    vertical-align: -0.3em;
+    background-color: #8a919c;
+    -webkit-mask: url([[pix:format_simple|backarrow]]) center / contain no-repeat;
+    mask: url([[pix:format_simple|backarrow]]) center / contain no-repeat;
+    opacity: 0;
+    transform: translateX(-0.3em);
+    transition: opacity 400ms cubic-bezier(0.4, 0, 0.2, 1), transform 400ms cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+}
+
+.format-simple .simple-forum-backlink:hover::after,
+.format-simple .simple-forum-backlink:focus-visible::after {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+@media (hover: none) {
+    .format-simple .simple-forum-backlink::after {
+        opacity: 0.5;
+        transform: translateX(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .format-simple .simple-forum-backlink::after {
+        transition: none;
+    }
+}
+
 .format-simple .simple-nav-separator {
     height: 1px;
     background: var(--simple-border);
@@ -2362,6 +2417,16 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] a {
 
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] a:hover {
     filter: brightness(1.95);
+}
+
+/* The forum back-link is a heading in the heading's own colour; brightening it would make it
+   stand out from the headings around it. Its arrow takes the dark page's secondary grey. */
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] a.simple-forum-backlink {
+    filter: none;
+}
+
+body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] a.simple-forum-backlink::after {
+    background-color: #8b94a8;
 }
 
 /* Boost gives focused links a filled highlight block rather than a ring —

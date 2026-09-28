@@ -264,6 +264,10 @@ class section extends section_base {
         $cmdata->name = $cm->get_formatted_name();
         $cmdata->modname = $cm->modname;
         $cmdata->url = $cm->url ? $cm->url->out(false) : '';
+        // A Q&A forum holding one discussion for this student opens that discussion directly.
+        if ($cm->modname === 'forum' && \format_simple::get_single_forum_discussion($cm) !== null) {
+            $cmdata->url = (new \moodle_url('/course/format/simple/forumview.php', ['id' => $cm->id]))->out(false);
+        }
         $cmdata->iconurl = $cm->get_icon_url()->out(false);
         $cmdata->uservisible = $cm->uservisible;
         $cmdata->ishidden = !$cm->visible;

@@ -25,7 +25,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define(['core/ajax', 'core/str', 'core/templates'], function(Ajax, Str, Templates) {
+define(['core/ajax', 'core/str', 'core/templates', 'core_filters/events'], function(Ajax, Str, Templates, FilterEvents) {
     'use strict';
 
     /** @type {boolean} Whether the cog has already been initialised. */
@@ -886,6 +886,121 @@ define(['core/ajax', 'core/str', 'core/templates'], function(Ajax, Str, Template
     };
 
     // ---------------------------------------------------------------
+    // Forum back-link
+    // ---------------------------------------------------------------
+
+    /**
+     * Make the forum's name on a discussion page a link back to its list of discussions.
+     *
+     * Inside a discussion the only way back to the list is the breadcrumb, which this format
+     * hides. The breadcrumb still names the forum and links to its list, so it is used to find
+     * the heading that shows the same name, whichever theme placed it. Nothing changes when no
+     * heading matches.
+     */
+    var linkForumTitle = function() {
+        var bodyid = document.body.id;
+        if (bodyid !== 'page-mod-forum-discuss' && bodyid !== 'page-mod-forum-post') {
+            return;
+        }
+        var cmid = document.body.className.match(/\bcmid-(\d+)\b/);
+        if (!cmid) {
+            return;
+        }
+
+        var crumb = document.querySelector('#page-navbar a[href$="/mod/forum/view.php?id=' + cmid[1] + '"]');
+        if (!crumb) {
+            return;
+        }
+        var forumname = crumb.textContent.trim();
+
+        var heading = Array.prototype.find.call(document.querySelectorAll('h1, h2'), function(h) {
+            return h.textContent.trim() === forumname && !h.querySelector('a') && !h.closest('nav');
+        });
+        if (!heading) {
+            return;
+        }
+
+        var link = document.createElement('a');
+        link.className = 'simple-forum-backlink';
+        link.href = crumb.href;
+        while (heading.firstChild) {
+            link.appendChild(heading.firstChild);
+        }
+        heading.appendChild(link);
+
+        Str.get_strings([
+            {key: 'backtoforumindex', component: 'format_simple', param: forumname},
+            {key: 'returntoforumindex', component: 'format_simple'},
+        ]).then(function(strings) {
+            link.setAttribute('aria-label', strings[0]);
+            link.setAttribute('title', strings[1]);
+            link.setAttribute('data-bs-toggle', 'tooltip');
+            // Beside the arrow, where it covers nothing; below, it would cover the discussion title.
+            link.setAttribute('data-bs-placement', 'right');
+            // Boost turns tooltip markup into a styled tooltip when told the content changed.
+            FilterEvents.notifyFilterContentUpdated([heading]);
+            return;
+        }).catch(function() {
+            // The heading text remains the link's name.
+        });
+    };
+
+    // ---------------------------------------------------------------
+    // Drawer tooltips
+    // ---------------------------------------------------------------
+
+    /**
+     * Keep drawer button tooltips from covering the drawer's own buttons.
+     *
+     * The blocks drawer's open button and its close button sit in the same corner, so a tooltip
+     * left up on one hides the other. Boost means to prevent this: it marks a button with
+     * data-restore-tooltip-on-blur while its tooltip should stay away. But it disables the
+     * tooltip by checking the Bootstrap 4 attribute data-original-title, which Bootstrap 5 no
+     * longer sets, so the tooltip still shows. This does both jobs through Bootstrap's own
+     * events, without depending on where each Moodle version keeps Bootstrap:
+     * - a clicked button's tooltip, already up from the hover, is sent the events it hides on;
+     * - a tooltip Boost has marked to stay away, which shows when Boost moves focus to the
+     *   other button once the drawer opens or closes, is kept invisible and put away as soon as
+     *   it has shown. Refusing it outright would leave Boost's pending-JS check waiting for a
+     *   "shown" event that never comes.
+     */
+    var dismissDrawerTooltips = function() {
+        // Bootstrap 5 listens on the button itself, and for mouseout rather than mouseleave. The
+        // events must not bubble: Boost listens for focusout on the document, and would take
+        // this one for the button losing focus and let its tooltip back.
+        var hideTooltip = function(button) {
+            button.dispatchEvent(new MouseEvent('mouseout', {bubbles: false}));
+            button.dispatchEvent(new FocusEvent('focusout', {bubbles: false}));
+        };
+        var markedButton = function(e) {
+            var button = e.target.closest ? e.target.closest('[data-toggler="drawers"]') : null;
+            return (button && button.dataset.restoreTooltipOnBlur !== undefined) ? button : null;
+        };
+
+        document.addEventListener('click', function(e) {
+            var button = e.target.closest('[data-toggler="drawers"]');
+            if (button) {
+                hideTooltip(button);
+            }
+        });
+
+        document.addEventListener('inserted.bs.tooltip', function(e) {
+            var button = markedButton(e);
+            var tip = button ? document.getElementById(button.getAttribute('aria-describedby')) : null;
+            if (tip) {
+                tip.style.visibility = 'hidden';
+            }
+        });
+
+        document.addEventListener('shown.bs.tooltip', function(e) {
+            var button = markedButton(e);
+            if (button) {
+                hideTooltip(button);
+            }
+        });
+    };
+
+    // ---------------------------------------------------------------
     // Main setup
     // ---------------------------------------------------------------
 
@@ -1047,6 +1162,11 @@ define(['core/ajax', 'core/str', 'core/templates'], function(Ajax, Str, Template
             // script (participants, grades, settings, ...) do not flash light.
             applyTheme();
             startAutoCheckTimer();
+
+            if (document.body.classList.contains('format-simple')) {
+                linkForumTitle();
+                dismissDrawerTooltips();
+            }
 
             // Browsers throttle setInterval heavily in a backgrounded tab — Chrome's
             // "intensive throttling" can stretch a 60-second interval out to once an

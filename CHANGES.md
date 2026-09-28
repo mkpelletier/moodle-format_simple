@@ -2,6 +2,26 @@
 
 All notable changes to the Simple course format plugin are documented in this file.
 
+## v1.1.3 (2026-09-28) - Stable
+
+### Added
+- On a discussion page, the forum's title now leads back to its list of discussions, in every
+  forum type. A bold grey arrow (`pix/backarrow.svg`) fades in after the title on hover or
+  keyboard focus, and is always faintly shown on touch screens. A "Return to Forum Index"
+  tooltip appears beside the arrow, clear of the discussion title below. No breadcrumb or
+  button is added (#10).
+- A Q&A forum holding only one discussion a student can see now opens straight into that
+  discussion from the course page, including a question posted as one copy per group. Anyone who
+  can see all groups still gets the list. The visit still counts as viewing the forum for
+  completion. Controlled by the new course setting "Open single Q&A discussions directly", on by
+  default (#10).
+
+### Fixed
+- The blocks drawer button's tooltip stayed up after the drawer opened, covering the drawer's
+  close button until clicked away. Boost means to put it away, but checks an attribute
+  Bootstrap 5 no longer sets. The format now hides it, and keeps away the tooltip Boost shows
+  when it moves focus between the drawer's open and close buttons.
+
 ## v1.1.2 (2026-09-06) - Stable
 
 ### Added
