@@ -676,8 +676,11 @@ require(['format_simple/simple'], function(mod) { mod.init('#format-simple-root'
 --simple-text-muted: #9ca3af;              /* Tertiary text */
 --simple-border: #e5e7eb;                   /* Standard border */
 --simple-border-light: #f3f4f6;            /* Light hover background */
---simple-accent: #2563eb;                   /* Blue primary CTA */
---simple-accent-light: #dbeafe;            /* Light blue background */
+--simple-accent: #2563eb;                   /* Blue primary CTA (brand-driven, see below) */
+--simple-accent-light: #dbeafe;            /* Light blue background (brand-driven) */
+--simple-accent-deep: #1e40af;             /* Banner gradient end (brand-driven) */
+--simple-accent-edge: rgba(37,99,235,.06); /* Content panel hairline (brand-driven) */
+--simple-on-accent: #fff;                   /* Icons on an accent fill; #0f1420 in dark mode */
 --simple-success: #10b981;                  /* Green (completion) */
 --simple-success-light: #d1fae5;           /* Light green */
 --simple-warning: #f59e0b;                 /* Amber */
@@ -706,6 +709,28 @@ require(['format_simple/simple'], function(mod) { mod.init('#format-simple-root'
 /* Typography */
 --simple-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, ...;
 ```
+
+#### Brand colour layer
+
+The accent tokens (`--simple-bg`, `--simple-accent`, `--simple-accent-light`, `--simple-accent-deep`,
+`--simple-accent-edge`, `--simple-on-accent`) are not literal colours. Each reads a `--simple-brand-*`
+property, with the stock blue as its `var()` fallback. Those properties exist only when a brand colour
+is configured (see [Site-level settings](#site-level-settings)). They are declared on `body.format-simple`,
+and again under `[data-simple-theme="dark"]`, so the fixed rail and popovers outside the wrapper can
+read them directly too.
+
+| Brand property | Light mode | Dark mode |
+|---|---|---|
+| `accent` | Brand, darkened until ≥ 4.5:1 on white | Brand, lightened until ≥ 5.5:1 on `#182234` |
+| `accent-strong` | Accent, 20% towards black (selected tile) | Accent, 35% towards white |
+| `accent-deep` | Light accent, 35% towards black (banner) | Same |
+| `accent-light` | Brand at 15% over white | Dark accent at 20% over `#0f1420` |
+| `accent-border` | Brand at 40% over white | Dark accent at 45% over `#0f1420` |
+| `bg` | Brand at 8% over white | `#0f1420` |
+| `on-accent` | White or `#0f1420`, whichever contrasts more | Same rule; in practice `#0f1420` |
+| `glow` / `edge` | Accent at 30% / 6% opacity | Accent at 30% / 8% opacity |
+
+Lightness is adjusted in HSL, so hue and saturation hold and the shifted colour still reads as the brand.
 
 ### Layout system
 
@@ -982,6 +1007,20 @@ $plugin->release   = '0.6.0';
 | Setting | Admin label | Type | Default | Description |
 |---------|-----------|------|---------|-------------|
 | `learningoutcomes` | Learning outcomes | Textarea | `''` | One outcome per line. Displayed in a collapsible popout panel. |
+
+### Site-level settings
+
+Site administration → Plugins → Course formats → Simple format. They apply to every course in this format.
+
+| Setting | Admin label | Type | Default | Description |
+|---------|-----------|------|---------|-------------|
+| `format_simple/colourscheme` | Colour source | Select | `default` | `default` keeps the built-in blue; `theme` reads `brandcolor` from the active theme, then each parent theme in turn; `custom` uses `brandcolour` below. A missing or non-hex colour falls back to the built-in blue. |
+| `format_simple/brandcolour` | Brand colour | Colour picker | `#2563eb` | Only shown, and only used, when the source is `custom`. |
+
+`format_simple\local\brand_palette` derives the full palette from the one colour, and
+`format_simple\hook_callbacks` writes it into the page head as `--simple-brand-*` properties
+(see [Design tokens](#design-tokens)). The output is inline rather than in `styles.css`
+because that file is baked into the theme's cached CSS, so changing the colour needs no cache purge.
 
 ### Site-level dependencies
 

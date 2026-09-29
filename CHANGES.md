@@ -2,6 +2,22 @@
 
 All notable changes to the Simple course format plugin are documented in this file.
 
+## v1.2.0 (2026-09-29) - Stable
+
+### Added
+- Site-wide brand colour, under Site administration > Plugins > Course formats > Simple format.
+  The accent can stay the built-in blue, follow the theme's brand colour (or its parent theme's),
+  or be set to a custom colour. The lighter tints (the page wash, the active unit's band, the
+  Course Info badge, the course tool buttons and popovers) are worked out from that one colour for
+  light and dark mode. Where a colour would be too pale for text on white, or too dark for text in
+  dark mode, its shade is adjusted for that use only.
+
+### Fixed
+- In dark mode, the selected Course Info badge drew a white icon on a light blue circle, under
+  3:1 contrast. The icon is now dark.
+- In dark mode, a collapsed navigation panel's active unit blended flat into the page, as it
+  already did in light mode, instead of carrying the gradient band meant for the open panel.
+
 ## v1.1.3 (2026-09-28) - Stable
 
 ### Added

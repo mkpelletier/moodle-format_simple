@@ -14,16 +14,29 @@
    Design Tokens
    ========================================================================= */
 
+/* ---- Brand colours ----
+   The accent colours read from --simple-brand-* properties, which the site's
+   colour setting puts on <body> as a small inline rule
+   (format_simple\local\brand_palette, emitted from the page head). They
+   cannot live in this file: it is compiled into the theme's cached
+   stylesheet, where an admin setting cannot reach it. Each var() carries this
+   format's original blue as its fallback, so a site that picks no brand
+   colour looks exactly as before.
+   The rail buttons and popovers further down sit outside the wrapper, so they
+   read the --simple-brand-* properties directly rather than these tokens. */
 .format-simple .format-simple-wrapper {
-    --simple-bg: #eef2ff;
+    --simple-bg: var(--simple-brand-bg, #eef2ff);
     --simple-surface: #fff;
     --simple-text: #1a1a1a;
     --simple-text-secondary: #6b7280;
     --simple-text-muted: #9ca3af;
     --simple-border: #e5e7eb;
     --simple-border-light: #f3f4f6;
-    --simple-accent: #2563eb;
-    --simple-accent-light: #dbeafe;
+    --simple-accent: var(--simple-brand-accent, #2563eb);
+    --simple-accent-light: var(--simple-brand-accent-light, #dbeafe);
+    --simple-accent-deep: var(--simple-brand-accent-deep, #1e40af);
+    --simple-accent-edge: var(--simple-brand-edge, rgba(37, 99, 235, 0.06));
+    --simple-on-accent: var(--simple-brand-on-accent, #fff);
     --simple-success: #10b981;
     --simple-success-light: #d1fae5;
     --simple-warning: #f59e0b;
@@ -85,8 +98,8 @@ body.format-simple .page-context-header {
 }
 
 .format-simple .simple-home-btn:hover {
-    color: #2563eb;
-    background: #f0f4ff;
+    color: var(--simple-brand-accent, #2563eb);
+    background: var(--simple-brand-bg, #f0f4ff);
     text-decoration: none;
 }
 
@@ -110,8 +123,8 @@ body.format-simple .page-context-header {
 }
 
 .format-simple .simple-s0-modal-btn:hover {
-    color: #2563eb;
-    background: #f0f4ff;
+    color: var(--simple-brand-accent, #2563eb);
+    background: var(--simple-brand-bg, #f0f4ff);
 }
 
 /* Section 0 modal backdrop. */
@@ -227,13 +240,13 @@ body.format-simple .page-context-header {
 }
 
 .format-simple .simple-cog-btn:hover {
-    color: #2563eb;
-    background: #f0f4ff;
+    color: var(--simple-brand-accent, #2563eb);
+    background: var(--simple-brand-bg, #f0f4ff);
 }
 
 .format-simple .simple-cog-btn.is-open {
-    color: #2563eb;
-    background: #dbeafe;
+    color: var(--simple-brand-accent, #2563eb);
+    background: var(--simple-brand-accent-light, #dbeafe);
 }
 
 .format-simple .simple-cog-btn.is-open i {
@@ -307,9 +320,9 @@ body.format-simple .page-context-header {
 }
 
 .format-simple .simple-cog-tile:hover {
-    background: #eef2ff;
-    border-color: #c7d2fe;
-    color: #2563eb;
+    background: var(--simple-brand-bg, #eef2ff);
+    border-color: var(--simple-brand-accent-border, #c7d2fe);
+    color: var(--simple-brand-accent, #2563eb);
     transform: translateY(-1px);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
     text-decoration: none;
@@ -321,9 +334,9 @@ body.format-simple .page-context-header {
 }
 
 .format-simple .simple-cog-tile.is-active {
-    background: #dbeafe;
-    border-color: #93c5fd;
-    color: #1d4ed8;
+    background: var(--simple-brand-accent-light, #dbeafe);
+    border-color: var(--simple-brand-accent-border, #93c5fd);
+    color: var(--simple-brand-accent-strong, #1d4ed8);
 }
 
 .format-simple .simple-cog-tile-icon {
@@ -339,9 +352,9 @@ body.format-simple .page-context-header {
 }
 
 .format-simple .simple-cog-tile.is-active .simple-cog-tile-icon {
-    background: #2563eb;
-    color: #fff;
-    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
+    background: var(--simple-brand-accent, #2563eb);
+    color: var(--simple-brand-on-accent, #fff);
+    box-shadow: 0 2px 4px var(--simple-brand-glow, rgba(37, 99, 235, 0.3));
 }
 
 .format-simple .simple-cog-tile-img {
@@ -551,7 +564,7 @@ body.format-simple .drawer.drawer-right {
 
 /* Active state — seamless gradient band flowing into content. */
 .format-simple .simple-nav-item.is-active {
-    background: linear-gradient(to right, #dbeafe, var(--simple-bg));
+    background: linear-gradient(to right, var(--simple-accent-light), var(--simple-bg));
     color: var(--simple-accent);
     font-weight: 600;
     margin-right: -1px;
@@ -619,9 +632,11 @@ body.format-simple .simple-nav-callout {
     font-size: 1rem;
 }
 
+/* The icon colour is a token rather than white because the dark-mode accent is
+   a light shade, where a white glyph falls to under 3:1; there it goes dark. */
 .format-simple .simple-nav-item-section0.is-active .simple-nav-indicator-info {
     background: var(--simple-accent);
-    color: #fff;
+    color: var(--simple-on-accent);
 }
 
 .format-simple .simple-unread-badge {
@@ -821,7 +836,7 @@ body.format-simple .simple-nav-callout {
     background: linear-gradient(to bottom right, var(--simple-bg), var(--simple-surface) 40%);
     border-radius: 0 var(--simple-radius-lg) var(--simple-radius-lg) 0;
     margin: 12px 12px 12px 0;
-    border: 1px solid rgba(37, 99, 235, 0.06);
+    border: 1px solid var(--simple-accent-edge);
     border-left: none;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
@@ -865,7 +880,7 @@ body.format-simple .simple-nav-callout {
     min-height: 200px;
     display: flex;
     align-items: flex-end;
-    background: linear-gradient(135deg, var(--simple-accent) 0%, #1e40af 100%);
+    background: linear-gradient(135deg, var(--simple-accent) 0%, var(--simple-accent-deep) 100%);
 }
 
 .format-simple .simple-banner.has-image {
@@ -1670,7 +1685,7 @@ body.format-simple .simple-nav-callout {
 .format-simple.editing .simple-nav.is-collapsed .simple-nav-item.is-active {
     margin-right: -1px;
     padding-right: 21px;
-    background: linear-gradient(to right, #dbeafe, var(--simple-bg));
+    background: linear-gradient(to right, var(--simple-accent-light), var(--simple-bg));
 }
 
 .format-simple.editing .simple-nav.is-collapsed .simple-nav-item.is-active::before,
@@ -2336,17 +2351,25 @@ body.format-simple .moodle-dialogue-base .moodle-dialogue-wrap {
    built on var(--simple-*) — nav, cards, content, focus rings — repaints
    itself automatically. Every colour below was checked against its
    background for WCAG AA contrast (>=4.5:1 for text, >=3:1 for large text
-   and icons). */
+   and icons).
+   The accent tokens read the dark-mode --simple-brand-* values the same way
+   the light ones do. The brand palette is lifted to at least 5.5:1 against
+   the surface before it gets here, matching the stock #5b9bf5. On-accent is
+   dark here: the accent is a light shade in this mode, and a white glyph on
+   it would fall below 3:1. */
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .format-simple-wrapper {
-    --simple-bg: #0f1420;
+    --simple-bg: var(--simple-brand-bg, #0f1420);
     --simple-surface: #182234;
     --simple-text: #e8eaf0;
     --simple-text-secondary: #a8b0c3;
     --simple-text-muted: #7c8598;
     --simple-border: #2a3346;
     --simple-border-light: #232b3d;
-    --simple-accent: #5b9bf5;
-    --simple-accent-light: #142943;
+    --simple-accent: var(--simple-brand-accent, #5b9bf5);
+    --simple-accent-light: var(--simple-brand-accent-light, #142943);
+    --simple-accent-deep: var(--simple-brand-accent-deep, #1e40af);
+    --simple-accent-edge: var(--simple-brand-edge, rgba(91, 155, 245, 0.08));
+    --simple-on-accent: var(--simple-brand-on-accent, #0f1420);
     --simple-success: #34d399;
     --simple-success-light: #0f2e22;
     --simple-warning: #fbbf24;
@@ -3182,14 +3205,6 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .format-s
     color: rgba(96, 165, 226, 1);
 }
 
-/* Two spots build their active-tab gradient from a literal light-mode hex
-   rather than the accent-light token; point them at the token so dark mode
-   repaints them too. */
-body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-nav-item.is-active,
-body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-nav.is-collapsed .simple-nav-item.is-active {
-    background: linear-gradient(to right, var(--simple-accent-light), var(--simple-bg));
-}
-
 /* ---- Progress ring SVGs ----
    These circles are drawn with literal fill/stroke attributes (inline SVG
    presentation attributes carry the lowest CSS priority), so any rule here
@@ -3630,8 +3645,8 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .twh-frag
 
 .format-simple .simple-darkmode-btn:hover,
 .format-simple .simple-darkmode-btn[aria-expanded="true"] {
-    color: #2563eb;
-    background: #f0f4ff;
+    color: var(--simple-brand-accent, #2563eb);
+    background: var(--simple-brand-bg, #f0f4ff);
 }
 
 .format-simple .simple-darkmode-popover {
@@ -3695,17 +3710,17 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .twh-frag
 }
 
 .format-simple .simple-darkmode-option:hover {
-    background: #f0f4ff;
+    background: var(--simple-brand-bg, #f0f4ff);
 }
 
 .format-simple .simple-darkmode-option.is-active {
-    background: #dbeafe;
-    border-color: #93c5fd;
-    color: #1d4ed8;
+    background: var(--simple-brand-accent-light, #dbeafe);
+    border-color: var(--simple-brand-accent-border, #93c5fd);
+    color: var(--simple-brand-accent-strong, #1d4ed8);
 }
 
 .format-simple .simple-darkmode-option.is-active i {
-    color: #1d4ed8;
+    color: var(--simple-brand-accent-strong, #1d4ed8);
 }
 
 .format-simple .simple-darkmode-schedule {
@@ -3756,13 +3771,13 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-d
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-cog-btn:hover,
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-home-btn:hover,
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-s0-modal-btn:hover {
-    background: #142943;
-    color: #5b9bf5;
+    background: var(--simple-brand-accent-light, #142943);
+    color: var(--simple-brand-accent, #5b9bf5);
 }
 
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-cog-btn.is-open {
-    background: #142943;
-    color: #5b9bf5;
+    background: var(--simple-brand-accent-light, #142943);
+    color: var(--simple-brand-accent, #5b9bf5);
 }
 
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-darkmode-popover,
@@ -3789,20 +3804,20 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-d
 
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-darkmode-option:hover,
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-cog-tile:hover {
-    background: #142943;
-    color: #5b9bf5;
-    border-color: #1e3a5f;
+    background: var(--simple-brand-accent-light, #142943);
+    color: var(--simple-brand-accent, #5b9bf5);
+    border-color: var(--simple-brand-accent-border, #1e3a5f);
 }
 
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-darkmode-option.is-active,
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-cog-tile.is-active {
-    background: #16304d;
-    border-color: #2b5484;
-    color: #8fbdfb;
+    background: var(--simple-brand-accent-light, #16304d);
+    border-color: var(--simple-brand-accent-border, #2b5484);
+    color: var(--simple-brand-accent-strong, #8fbdfb);
 }
 
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-darkmode-option.is-active i {
-    color: #8fbdfb;
+    color: var(--simple-brand-accent-strong, #8fbdfb);
 }
 
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-cog-tile-icon {
@@ -3810,8 +3825,8 @@ body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-c
 }
 
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-cog-tile.is-active .simple-cog-tile-icon {
-    background: #5b9bf5;
-    color: #0f1420;
+    background: var(--simple-brand-accent, #5b9bf5);
+    color: var(--simple-brand-on-accent, #0f1420);
 }
 
 body.format-simple[data-simple-theme="dark"][data-simple-theme="dark"] .simple-darkmode-schedule {
