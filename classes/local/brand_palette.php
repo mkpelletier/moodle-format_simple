@@ -197,7 +197,7 @@ class brand_palette {
      * One CSS rule declaring the given tokens.
      *
      * @param string $selector The selector.
-     * @param array<string, string> $tokens Token name => value, all generated here, never raw input.
+     * @param array $tokens Token name => value, all generated here, never raw input.
      * @return string
      */
     private static function rule(string $selector, array $tokens): string {
