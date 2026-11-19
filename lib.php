@@ -291,7 +291,7 @@ class format_simple extends core_courseformat\base {
                     'type' => PARAM_INT,
                 ],
                 'navcollapse' => [
-                    'default' => -1,
+                    'default' => 0,
                     'type' => PARAM_INT,
                 ],
                 'showindexactivities' => [
@@ -360,7 +360,6 @@ class format_simple extends core_courseformat\base {
                     'element_type' => 'select',
                     'element_attributes' => [
                         [
-                            -1 => new \lang_string('navcollapse_sitedefault', 'format_simple'),
                             0 => new \lang_string('navcollapse_never', 'format_simple'),
                             1 => new \lang_string('navcollapse_second', 'format_simple'),
                             3 => new \lang_string('navcollapse_seconds', 'format_simple', 3),

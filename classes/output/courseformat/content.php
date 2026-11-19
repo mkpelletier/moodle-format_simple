@@ -81,11 +81,7 @@ class content extends content_base {
 
         // Handle section 0 (Course Info) separately.
         $formatoptions = $format->get_format_options();
-        $navcollapse = (int) ($formatoptions['navcollapse'] ?? -1);
-        if ($navcollapse === -1) {
-            $navcollapse = get_config('format_simple', 'navcollapse');
-        }
-        $data->navcollapse = $navcollapse === false ? 0 : (int) $navcollapse;
+        $data->navcollapse = max(0, (int) ($formatoptions['navcollapse'] ?? 0));
         $section0modal = !empty($formatoptions['section0modal']);
         $showindexactivities = !empty($formatoptions['showindexactivities']);
         $data->hassection0 = false;

@@ -242,7 +242,7 @@ final class format_simple_test extends \advanced_testcase {
         $this->assertEquals(1, $options['hiddensections']['default']);
         $this->assertEquals(1, $options['showsection0banner']['default']);
         $this->assertEquals(0, $options['section0modal']['default']);
-        $this->assertEquals(-1, $options['navcollapse']['default']);
+        $this->assertEquals(0, $options['navcollapse']['default']);
 
         $this->assertEquals(PARAM_INT, $options['hiddensections']['type']);
         $this->assertEquals(PARAM_INT, $options['showsection0banner']['type']);
@@ -273,7 +273,7 @@ final class format_simple_test extends \advanced_testcase {
 
         $this->assertArrayHasKey('label', $options['navcollapse']);
         $this->assertEquals('select', $options['navcollapse']['element_type']);
-        $this->assertEquals([-1, 0, 1, 3, 5, 10, 30, 60], array_keys($options['navcollapse']['element_attributes'][0]));
+        $this->assertEquals([0, 1, 3, 5, 10, 30, 60], array_keys($options['navcollapse']['element_attributes'][0]));
     }
 
     /**

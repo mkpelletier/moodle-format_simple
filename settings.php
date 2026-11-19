@@ -52,20 +52,4 @@ if ($ADMIN->fulltree) {
         '#2563eb'
     ));
     $settings->hide_if('format_simple/brandcolour', 'format_simple/colourscheme', 'neq', brand_palette::SCHEME_CUSTOM);
-
-    $settings->add(new admin_setting_configselect(
-        'format_simple/navcollapse',
-        get_string('navcollapse', 'format_simple'),
-        get_string('navcollapse_desc', 'format_simple'),
-        0,
-        [
-            0 => get_string('navcollapse_never', 'format_simple'),
-            1 => get_string('navcollapse_second', 'format_simple'),
-            3 => get_string('navcollapse_seconds', 'format_simple', 3),
-            5 => get_string('navcollapse_seconds', 'format_simple', 5),
-            10 => get_string('navcollapse_seconds', 'format_simple', 10),
-            30 => get_string('navcollapse_seconds', 'format_simple', 30),
-            60 => get_string('navcollapse_seconds', 'format_simple', 60),
-        ]
-    ));
 }

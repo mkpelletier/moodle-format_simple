@@ -132,35 +132,19 @@ final class index_activities_test extends \advanced_testcase {
 
         $this->resetAfterTest(true);
         [$course, $student] = $this->make_course(0);
-        [$othercourse, $otherstudent] = $this->make_course(0);
-        unset_config('navcollapse', 'format_simple');
 
         $data = $this->export_content($course, $student);
         $this->assertSame(0, $data->navcollapse);
 
+        $format = course_get_format($course->id);
         foreach ([0, 3, 10] as $delay) {
-            set_config('navcollapse', $delay, 'format_simple');
+            $format->update_course_format_options(['id' => $course->id, 'navcollapse' => $delay]);
             $data = $this->export_content($course, $student);
             $this->assertSame($delay, $data->navcollapse);
             $renderer = course_get_format($course->id)->get_renderer($PAGE);
             $html = $renderer->render_from_template('format_simple/local/content', $data);
             $this->assertStringContainsString('data-navcollapse="' . $delay . '"', $html);
         }
-
-        $format = course_get_format($course->id);
-        foreach ([0, 1, 60] as $delay) {
-            $format->update_course_format_options(['id' => $course->id, 'navcollapse' => $delay]);
-            $data = $this->export_content($course, $student);
-            $this->assertSame($delay, $data->navcollapse);
-        }
-
-        set_config('navcollapse', 5, 'format_simple');
-        $this->assertSame(60, $this->export_content($course, $student)->navcollapse);
-        $this->assertSame(5, $this->export_content($othercourse, $otherstudent)->navcollapse);
-        $format->update_course_format_options(['id' => $course->id, 'navcollapse' => -1]);
-        $this->assertSame(5, $this->export_content($course, $student)->navcollapse);
-        set_config('navcollapse', 3, 'format_simple');
-        $this->assertSame(3, $this->export_content($course, $student)->navcollapse);
     }
 
     /**

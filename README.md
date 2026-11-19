@@ -52,12 +52,6 @@ The first learning content item in each section is rendered inline (embedded) ra
 
 ## Configuration
 
-Site-wide settings (under **Site administration > Plugins > Course formats > Simple format**):
-
-| Setting | Description | Default |
-|---------|-------------|---------|
-| Navigation auto-collapse delay | Default for Simple format courses: choose when the navigation panel collapses in view mode, or never | Never |
-
 Course-level settings (under **Course settings > Course format**):
 
 | Setting | Description | Default |
@@ -65,7 +59,7 @@ Course-level settings (under **Course settings > Course format**):
 | Hidden sections | Whether hidden sections are collapsed or invisible | Invisible |
 | Show course banner | Display a hero banner on the Course Info section | Yes |
 | Show Course Info as overlay | Display section 0 in a floating overlay instead of inline | No |
-| Navigation auto-collapse delay | Override the site default for this course, or keep following it | Use site default |
+| Navigation auto-collapse delay | Choose when the navigation panel collapses in view mode, or never, for this course | Never |
 | Open single Q&A discussions directly | A Q&A forum with one discussion visible to a student opens that discussion from the course page | Yes |
 
 Section-level settings (under **Edit section**):

@@ -53,9 +53,7 @@ Feature: Simple format course display and navigation
 
   @javascript
   Scenario: Navigation stays expanded when auto-collapse is disabled
-    Given the following config values are set as admin:
-      | navcollapse | 0 | format_simple |
-    And I log in as "student1"
+    Given I log in as "student1"
     And I am on "Course 1" course homepage
     And I hover ".simple-content" "css_element"
     And I wait "4" seconds
@@ -67,8 +65,13 @@ Feature: Simple format course display and navigation
 
   @javascript
   Scenario: Navigation collapses after the configured delay and expands on hover
-    Given the following config values are set as admin:
-      | navcollapse | 1 | format_simple |
+    Given I log in as "teacher1"
+    And I am on "Course 1" course homepage
+    And I navigate to "Settings" in current page administration
+    And I expand all fieldsets
+    And I set the field "Navigation auto-collapse delay" to "1 second"
+    And I press "Save and display"
+    And I log out
     And I log in as "student1"
     And I am on "Course 1" course homepage
     And I hover ".simple-content" "css_element"
@@ -81,10 +84,8 @@ Feature: Simple format course display and navigation
     Then ".simple-nav.is-collapsed" "css_element" should exist
 
   @javascript
-  Scenario: A course can override and then follow the site navigation delay
-    Given the following config values are set as admin:
-      | navcollapse | 1 | format_simple |
-    And I log in as "teacher1"
+  Scenario: A course navigation delay can be changed
+    Given I log in as "teacher1"
     And I am on "Course 1" course homepage
     And I navigate to "Settings" in current page administration
     And I expand all fieldsets
@@ -93,7 +94,7 @@ Feature: Simple format course display and navigation
     Then "#format-simple-root[data-navcollapse='0']" "css_element" should exist
     When I navigate to "Settings" in current page administration
     And I expand all fieldsets
-    And I set the field "Navigation auto-collapse delay" to "Use site default"
+    And I set the field "Navigation auto-collapse delay" to "1 second"
     And I press "Save and display"
     Then "#format-simple-root[data-navcollapse='1']" "css_element" should exist
 
