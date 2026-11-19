@@ -63,8 +63,6 @@ class content extends content_base {
         $data->editing = $PAGE->user_is_editing();
         $data->sectionreturn = $format->get_sectionnum() ?? 'null';
         $data->pagesectionid = $format->get_sectionid() ?? 'null';
-        $navcollapse = get_config('format_simple', 'navcollapse');
-        $data->navcollapse = $navcollapse === false ? 0 : (int) $navcollapse;
 
         // Dark mode preferences — read early so the inline theme script can run
         // before the wrapper paints, avoiding a flash of the wrong theme.
@@ -83,6 +81,11 @@ class content extends content_base {
 
         // Handle section 0 (Course Info) separately.
         $formatoptions = $format->get_format_options();
+        $navcollapse = (int) ($formatoptions['navcollapse'] ?? -1);
+        if ($navcollapse === -1) {
+            $navcollapse = get_config('format_simple', 'navcollapse');
+        }
+        $data->navcollapse = $navcollapse === false ? 0 : (int) $navcollapse;
         $section0modal = !empty($formatoptions['section0modal']);
         $showindexactivities = !empty($formatoptions['showindexactivities']);
         $data->hassection0 = false;

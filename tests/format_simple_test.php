@@ -237,14 +237,17 @@ final class format_simple_test extends \advanced_testcase {
         $this->assertArrayHasKey('hiddensections', $options);
         $this->assertArrayHasKey('showsection0banner', $options);
         $this->assertArrayHasKey('section0modal', $options);
+        $this->assertArrayHasKey('navcollapse', $options);
 
         $this->assertEquals(1, $options['hiddensections']['default']);
         $this->assertEquals(1, $options['showsection0banner']['default']);
         $this->assertEquals(0, $options['section0modal']['default']);
+        $this->assertEquals(-1, $options['navcollapse']['default']);
 
         $this->assertEquals(PARAM_INT, $options['hiddensections']['type']);
         $this->assertEquals(PARAM_INT, $options['showsection0banner']['type']);
         $this->assertEquals(PARAM_INT, $options['section0modal']['type']);
+        $this->assertEquals(PARAM_INT, $options['navcollapse']['type']);
     }
 
     /**
@@ -267,6 +270,10 @@ final class format_simple_test extends \advanced_testcase {
 
         $this->assertArrayHasKey('label', $options['section0modal']);
         $this->assertEquals('select', $options['section0modal']['element_type']);
+
+        $this->assertArrayHasKey('label', $options['navcollapse']);
+        $this->assertEquals('select', $options['navcollapse']['element_type']);
+        $this->assertEquals([-1, 0, 1, 3, 5, 10, 30, 60], array_keys($options['navcollapse']['element_attributes'][0]));
     }
 
     /**

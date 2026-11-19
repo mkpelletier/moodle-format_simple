@@ -1001,6 +1001,7 @@ $plugin->release   = '0.6.0';
 | `hiddensections` | Hidden sections | Select | `1` (Invisible) | `0` = collapsed (visible but closed), `1` = invisible (completely hidden) |
 | `showsection0banner` | Show course banner | Checkbox | `1` (Yes) | Display hero banner with course image and name on section 0 |
 | `section0modal` | Show Course Info as overlay | Checkbox | `0` (No) | Display section 0 in a floating modal instead of inline in navigation |
+| `navcollapse` | Navigation auto-collapse delay | Select | `-1` (Use site default) | Follow the site setting or override it with Never or a delay for this course. |
 | `skipsingleforumindex` | Open single Q&A discussions directly | Select | `1` (Yes) | A Q&A forum whose only visible discussion (per group in separate groups mode) is one opens straight into it via `forumview.php`, which marks the forum viewed. Users with `moodle/site:accessallgroups` always get the list. Only course-page links change; other entry points (activity navigation, notifications, calendar) still open the list. |
 
 ### Section-level settings
@@ -1011,13 +1012,13 @@ $plugin->release   = '0.6.0';
 
 ### Site-level settings
 
-Site administration → Plugins → Course formats → Simple format. They apply to every course in this format.
+Site administration → Plugins → Course formats → Simple format. These settings apply to courses in this format; the navigation delay can be overridden per course.
 
 | Setting | Admin label | Type | Default | Description |
 |---------|-----------|------|---------|-------------|
 | `format_simple/colourscheme` | Colour source | Select | `default` | `default` keeps the built-in blue; `theme` reads `brandcolor` from the active theme, then each parent theme in turn; `custom` uses `brandcolour` below. A missing or non-hex colour falls back to the built-in blue. |
 | `format_simple/brandcolour` | Brand colour | Colour picker | `#2563eb` | Only shown, and only used, when the source is `custom`. |
-| `format_simple/navcollapse` | Navigation auto-collapse delay | Select | `0` (Never) | Keep the navigation expanded or collapse it after the selected delay in view mode. |
+| `format_simple/navcollapse` | Navigation auto-collapse delay | Select | `0` (Never) | Default for courses that use the site setting: keep the navigation expanded or collapse it after the selected delay in view mode. |
 
 `format_simple\local\brand_palette` derives the full palette from the one colour, and
 `format_simple\hook_callbacks` writes it into the page head as `--simple-brand-*` properties

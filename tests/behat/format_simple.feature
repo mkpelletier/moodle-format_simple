@@ -81,6 +81,23 @@ Feature: Simple format course display and navigation
     Then ".simple-nav.is-collapsed" "css_element" should exist
 
   @javascript
+  Scenario: A course can override and then follow the site navigation delay
+    Given the following config values are set as admin:
+      | navcollapse | 1 | format_simple |
+    And I log in as "teacher1"
+    And I am on "Course 1" course homepage
+    And I navigate to "Settings" in current page administration
+    And I expand all fieldsets
+    And I set the field "Navigation auto-collapse delay" to "Never"
+    And I press "Save and display"
+    Then "#format-simple-root[data-navcollapse='0']" "css_element" should exist
+    When I navigate to "Settings" in current page administration
+    And I expand all fieldsets
+    And I set the field "Navigation auto-collapse delay" to "Use site default"
+    And I press "Save and display"
+    Then "#format-simple-root[data-navcollapse='1']" "css_element" should exist
+
+  @javascript
   Scenario: A blocks drawer button's tooltip does not stay up over the other button
     Given the following "blocks" exist:
       | blockname    | contextlevel | reference | pagetypepattern | defaultregion |
