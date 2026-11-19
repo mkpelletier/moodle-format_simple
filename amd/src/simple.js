@@ -50,8 +50,8 @@ define([
     /** @type {number|null} Timer ID for nav auto-collapse. */
     let collapseTimer = null;
 
-    /** @type {number} Delay in ms before nav collapses. */
-    const COLLAPSE_DELAY = 3000;
+    /** @type {number} Delay in ms before nav collapses; 0 disables auto-collapse. */
+    let collapseDelay = 0;
 
     /** @type {Set<string>} Module view events already raised this session. */
     const viewedUrls = new Set();
@@ -102,6 +102,9 @@ define([
 
         isEditing = root.dataset.editing === 'true';
         activeSection = parseInt(root.dataset.activesection, 10) || 0;
+        const navCollapse = Number(root.dataset.navcollapse);
+        collapseDelay = root.dataset.navcollapse !== undefined && Number.isFinite(navCollapse) && navCollapse >= 0
+            ? navCollapse * 1000 : 0;
 
         // Cog nav is loaded globally via cognav.js on all course pages.
         // No need to call it here — it runs independently.
@@ -333,12 +336,12 @@ define([
     /**
      * Set up auto-collapse of the navigation panel.
      *
-     * After 5 seconds of inactivity the nav slides down to show only
-     * progress indicators. Hovering expands it again.
+     * After the configured delay the nav shows only progress indicators.
+     * Hovering expands it again.
      */
     const setupNavCollapse = function() {
         const nav = root.querySelector('.simple-nav');
-        if (!nav) {
+        if (!nav || !collapseDelay) {
             return;
         }
 
@@ -364,9 +367,12 @@ define([
      */
     const startCollapseTimer = function(nav) {
         clearTimeout(collapseTimer);
+        if (!collapseDelay) {
+            return;
+        }
         collapseTimer = setTimeout(function() {
             nav.classList.add('is-collapsed');
-        }, COLLAPSE_DELAY);
+        }, collapseDelay);
     };
 
     /**

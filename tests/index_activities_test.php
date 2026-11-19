@@ -125,6 +125,29 @@ final class index_activities_test extends \advanced_testcase {
     }
 
     /**
+     * The configured delay, including zero, is exported to the course page.
+     */
+    public function test_navigation_collapse_delay_is_exported(): void {
+        global $PAGE;
+
+        $this->resetAfterTest(true);
+        [$course, $student] = $this->make_course(0);
+        unset_config('navcollapse', 'format_simple');
+
+        $data = $this->export_content($course, $student);
+        $this->assertSame(0, $data->navcollapse);
+
+        foreach ([0, 3, 10] as $delay) {
+            set_config('navcollapse', $delay, 'format_simple');
+            $data = $this->export_content($course, $student);
+            $this->assertSame($delay, $data->navcollapse);
+            $renderer = course_get_format($course->id)->get_renderer($PAGE);
+            $html = $renderer->render_from_template('format_simple/local/content', $data);
+            $this->assertStringContainsString('data-navcollapse="' . $delay . '"', $html);
+        }
+    }
+
+    /**
      * Find a unit's nav item by section number.
      *
      * @param \stdClass $data The exported content data.

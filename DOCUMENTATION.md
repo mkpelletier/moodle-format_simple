@@ -412,7 +412,7 @@ const DRAWER_HIDE_DELAY = 3000;   // Close drawer after 3s inactivity
 | `setupNavigation()` | View mode: click handlers for single-section switching |
 | `setupEditingNavigation()` | Editing mode: IntersectionObserver scroll-spy highlights topmost visible section |
 | `switchSection(sectionNum)` | Crossfade transition to target section (fade out → swap → fade in) |
-| `setupNavCollapse()` | Auto-collapse nav panel after 3s of inactivity |
+| `setupNavCollapse()` | Auto-collapse nav panel after the configured delay, unless disabled |
 | `setupOutcomesPopovers()` | Toggle outcomes panels with outside-click dismissal |
 | `setupTopNavHover()` | Breadcrumb hover-reveal with delay |
 | `setupKeyboardNav()` | Arrow Up/Down, Home/End navigation within nav panel |
@@ -570,6 +570,7 @@ When `section0modal` is enabled:
 **Data attributes on root:**
 - `data-courseid` — course ID
 - `data-activesection` — currently active section number
+- `data-navcollapse` — navigation auto-collapse delay in seconds, or `0` to disable it
 - `data-editing` — `'true'` if editing mode
 
 **Structure:**
@@ -1016,6 +1017,7 @@ Site administration → Plugins → Course formats → Simple format. They apply
 |---------|-----------|------|---------|-------------|
 | `format_simple/colourscheme` | Colour source | Select | `default` | `default` keeps the built-in blue; `theme` reads `brandcolor` from the active theme, then each parent theme in turn; `custom` uses `brandcolour` below. A missing or non-hex colour falls back to the built-in blue. |
 | `format_simple/brandcolour` | Brand colour | Colour picker | `#2563eb` | Only shown, and only used, when the source is `custom`. |
+| `format_simple/navcollapse` | Navigation auto-collapse delay | Select | `0` (Never) | Keep the navigation expanded or collapse it after the selected delay in view mode. |
 
 `format_simple\local\brand_palette` derives the full palette from the one colour, and
 `format_simple\hook_callbacks` writes it into the page head as `--simple-brand-*` properties

@@ -52,6 +52,35 @@ Feature: Simple format course display and navigation
     And I should see "Unit 3"
 
   @javascript
+  Scenario: Navigation stays expanded when auto-collapse is disabled
+    Given the following config values are set as admin:
+      | navcollapse | 0 | format_simple |
+    And I log in as "student1"
+    And I am on "Course 1" course homepage
+    And I hover ".simple-content" "css_element"
+    And I wait "4" seconds
+    Then ".simple-nav.is-collapsed" "css_element" should not exist
+    When I click on ".simple-nav-item[data-section='2']" "css_element"
+    And I hover ".simple-content" "css_element"
+    And I wait "4" seconds
+    Then ".simple-nav.is-collapsed" "css_element" should not exist
+
+  @javascript
+  Scenario: Navigation collapses after the configured delay and expands on hover
+    Given the following config values are set as admin:
+      | navcollapse | 1 | format_simple |
+    And I log in as "student1"
+    And I am on "Course 1" course homepage
+    And I hover ".simple-content" "css_element"
+    And I wait "2" seconds
+    Then ".simple-nav.is-collapsed" "css_element" should exist
+    When I hover ".simple-nav" "css_element"
+    Then ".simple-nav.is-collapsed" "css_element" should not exist
+    When I hover ".simple-content" "css_element"
+    And I wait "2" seconds
+    Then ".simple-nav.is-collapsed" "css_element" should exist
+
+  @javascript
   Scenario: A blocks drawer button's tooltip does not stay up over the other button
     Given the following "blocks" exist:
       | blockname    | contextlevel | reference | pagetypepattern | defaultregion |

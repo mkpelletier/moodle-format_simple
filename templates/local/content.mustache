@@ -27,6 +27,7 @@
     * navitems - Array of navigation items for the sidebar.
     * sections - Array of section content data.
     * activesection - The currently active section number.
+    * navcollapse - Navigation auto-collapse delay in seconds (0 disables it).
 
     @package    format_simple
     @copyright  2025 South African Theological Seminary <ict@sats.ac.za>
@@ -38,6 +39,7 @@
         "editing": false,
         "hassections": true,
         "activesection": 1,
+        "navcollapse": 0,
         "sectionreturn": 0,
         "navitems": [{"num": 1, "name": "Unit 1", "isactive": true, "progress": "notstarted", "percentage": 0}],
         "sections": []
@@ -71,6 +73,7 @@
      class="format-simple-wrapper"
      data-courseid="{{courseid}}"
      data-activesection="{{activesection}}"
+     data-navcollapse="{{navcollapse}}"
      {{#editing}}data-editing="true"{{/editing}}>
 
     {{#hassections}}

@@ -63,6 +63,8 @@ class content extends content_base {
         $data->editing = $PAGE->user_is_editing();
         $data->sectionreturn = $format->get_sectionnum() ?? 'null';
         $data->pagesectionid = $format->get_sectionid() ?? 'null';
+        $navcollapse = get_config('format_simple', 'navcollapse');
+        $data->navcollapse = $navcollapse === false ? 0 : (int) $navcollapse;
 
         // Dark mode preferences — read early so the inline theme script can run
         // before the wrapper paints, avoiding a flash of the wrong theme.

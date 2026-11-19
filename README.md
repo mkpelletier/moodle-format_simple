@@ -52,6 +52,12 @@ The first learning content item in each section is rendered inline (embedded) ra
 
 ## Configuration
 
+Site-wide settings (under **Site administration > Plugins > Course formats > Simple format**):
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| Navigation auto-collapse delay | Choose when the navigation panel collapses in view mode, or never | Never |
+
 Course-level settings (under **Course settings > Course format**):
 
 | Setting | Description | Default |
