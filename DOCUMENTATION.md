@@ -412,7 +412,7 @@ const DRAWER_HIDE_DELAY = 3000;   // Close drawer after 3s inactivity
 | `setupNavigation()` | View mode: click handlers for single-section switching |
 | `setupEditingNavigation()` | Editing mode: IntersectionObserver scroll-spy highlights topmost visible section |
 | `switchSection(sectionNum)` | Crossfade transition to target section (fade out → swap → fade in) |
-| `setupNavCollapse()` | Auto-collapse nav panel after 3s of inactivity |
+| `setupNavCollapse()` | Auto-collapse nav panel after the configured delay, unless disabled |
 | `setupOutcomesPopovers()` | Toggle outcomes panels with outside-click dismissal |
 | `setupTopNavHover()` | Breadcrumb hover-reveal with delay |
 | `setupKeyboardNav()` | Arrow Up/Down, Home/End navigation within nav panel |
@@ -570,6 +570,7 @@ When `section0modal` is enabled:
 **Data attributes on root:**
 - `data-courseid` — course ID
 - `data-activesection` — currently active section number
+- `data-navcollapse` — navigation auto-collapse delay in seconds, or `0` to disable it
 - `data-editing` — `'true'` if editing mode
 
 **Structure:**
@@ -1000,6 +1001,7 @@ $plugin->release   = '0.6.0';
 | `hiddensections` | Hidden sections | Select | `1` (Invisible) | `0` = collapsed (visible but closed), `1` = invisible (completely hidden) |
 | `showsection0banner` | Show course banner | Checkbox | `1` (Yes) | Display hero banner with course image and name on section 0 |
 | `section0modal` | Show Course Info as overlay | Checkbox | `0` (No) | Display section 0 in a floating modal instead of inline in navigation |
+| `navcollapse` | Navigation auto-collapse delay | Select | `0` (Never) | Keep the navigation expanded or collapse it after the selected delay for this course. |
 | `skipsingleforumindex` | Open single Q&A discussions directly | Select | `1` (Yes) | A Q&A forum whose only visible discussion (per group in separate groups mode) is one opens straight into it via `forumview.php`, which marks the forum viewed. Users with `moodle/site:accessallgroups` always get the list. Only course-page links change; other entry points (activity navigation, notifications, calendar) still open the list. |
 
 ### Section-level settings
@@ -1010,7 +1012,7 @@ $plugin->release   = '0.6.0';
 
 ### Site-level settings
 
-Site administration → Plugins → Course formats → Simple format. They apply to every course in this format.
+Site administration → Plugins → Course formats → Simple format. These settings apply to every course in this format.
 
 | Setting | Admin label | Type | Default | Description |
 |---------|-----------|------|---------|-------------|

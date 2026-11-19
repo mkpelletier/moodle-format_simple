@@ -59,6 +59,7 @@ Course-level settings (under **Course settings > Course format**):
 | Hidden sections | Whether hidden sections are collapsed or invisible | Invisible |
 | Show course banner | Display a hero banner on the Course Info section | Yes |
 | Show Course Info as overlay | Display section 0 in a floating overlay instead of inline | No |
+| Navigation auto-collapse delay | Choose when the navigation panel collapses in view mode, or never, for this course | Never |
 | Open single Q&A discussions directly | A Q&A forum with one discussion visible to a student opens that discussion from the course page | Yes |
 
 Section-level settings (under **Edit section**):

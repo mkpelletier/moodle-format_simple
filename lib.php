@@ -290,6 +290,10 @@ class format_simple extends core_courseformat\base {
                     'default' => 0,
                     'type' => PARAM_INT,
                 ],
+                'navcollapse' => [
+                    'default' => 0,
+                    'type' => PARAM_INT,
+                ],
                 'showindexactivities' => [
                     'default' => 0,
                     'type' => PARAM_INT,
@@ -343,6 +347,26 @@ class format_simple extends core_courseformat\base {
                         [
                             0 => new \lang_string('no'),
                             1 => new \lang_string('yes'),
+                        ],
+                    ],
+                ]
+            );
+            $courseformatoptions['navcollapse'] = array_merge(
+                $courseformatoptions['navcollapse'],
+                [
+                    'label' => new \lang_string('navcollapse', 'format_simple'),
+                    'help' => 'navcollapse',
+                    'help_component' => 'format_simple',
+                    'element_type' => 'select',
+                    'element_attributes' => [
+                        [
+                            0 => new \lang_string('navcollapse_never', 'format_simple'),
+                            1 => new \lang_string('navcollapse_second', 'format_simple'),
+                            3 => new \lang_string('navcollapse_seconds', 'format_simple', 3),
+                            5 => new \lang_string('navcollapse_seconds', 'format_simple', 5),
+                            10 => new \lang_string('navcollapse_seconds', 'format_simple', 10),
+                            30 => new \lang_string('navcollapse_seconds', 'format_simple', 30),
+                            60 => new \lang_string('navcollapse_seconds', 'format_simple', 60),
                         ],
                     ],
                 ]

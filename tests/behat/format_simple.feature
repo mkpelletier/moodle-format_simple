@@ -52,6 +52,53 @@ Feature: Simple format course display and navigation
     And I should see "Unit 3"
 
   @javascript
+  Scenario: Navigation stays expanded when auto-collapse is disabled
+    Given I log in as "student1"
+    And I am on "Course 1" course homepage
+    And I hover ".simple-content" "css_element"
+    And I wait "4" seconds
+    Then ".simple-nav.is-collapsed" "css_element" should not exist
+    When I click on ".simple-nav-item[data-section='2']" "css_element"
+    And I hover ".simple-content" "css_element"
+    And I wait "4" seconds
+    Then ".simple-nav.is-collapsed" "css_element" should not exist
+
+  @javascript
+  Scenario: Navigation collapses after the configured delay and expands on hover
+    Given I log in as "teacher1"
+    And I am on "Course 1" course homepage
+    And I navigate to "Settings" in current page administration
+    And I expand all fieldsets
+    And I set the field "Navigation auto-collapse delay" to "1 second"
+    And I press "Save and display"
+    And I log out
+    And I log in as "student1"
+    And I am on "Course 1" course homepage
+    And I hover ".simple-content" "css_element"
+    And I wait "2" seconds
+    Then ".simple-nav.is-collapsed" "css_element" should exist
+    When I hover ".simple-nav" "css_element"
+    Then ".simple-nav.is-collapsed" "css_element" should not exist
+    When I hover ".simple-content" "css_element"
+    And I wait "2" seconds
+    Then ".simple-nav.is-collapsed" "css_element" should exist
+
+  @javascript
+  Scenario: A course navigation delay can be changed
+    Given I log in as "teacher1"
+    And I am on "Course 1" course homepage
+    And I navigate to "Settings" in current page administration
+    And I expand all fieldsets
+    And I set the field "Navigation auto-collapse delay" to "Never"
+    And I press "Save and display"
+    Then "#format-simple-root[data-navcollapse='0']" "css_element" should exist
+    When I navigate to "Settings" in current page administration
+    And I expand all fieldsets
+    And I set the field "Navigation auto-collapse delay" to "1 second"
+    And I press "Save and display"
+    Then "#format-simple-root[data-navcollapse='1']" "css_element" should exist
+
+  @javascript
   Scenario: A blocks drawer button's tooltip does not stay up over the other button
     Given the following "blocks" exist:
       | blockname    | contextlevel | reference | pagetypepattern | defaultregion |
